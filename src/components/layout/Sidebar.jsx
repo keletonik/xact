@@ -2,36 +2,38 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
-  ClipboardCheck,
-  Building2,
-  Wrench,
-  ShieldCheck,
-  FileBarChart,
-  CalendarClock,
-  Settings,
   Users,
+  FolderOpen,
+  Ruler,
+  Calculator,
+  FileText,
+  BookOpen,
+  Building2,
+  BarChart3,
+  Shield,
+  Settings,
   ChevronLeft,
   ChevronRight,
   HelpCircle,
-  Flame,
 } from 'lucide-react';
 import EvaluxLogo from '../common/EvaluxLogo';
 
 const mainNav = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/inspections', label: 'Inspections', icon: ClipboardCheck },
-  { path: '/buildings', label: 'Buildings', icon: Building2 },
-  { path: '/equipment', label: 'Equipment', icon: Flame },
-  { path: '/work-orders', label: 'Work Orders', icon: Wrench },
-  { path: '/compliance', label: 'Compliance', icon: ShieldCheck },
-  { path: '/reports', label: 'Reports', icon: FileBarChart },
-  { path: '/schedule', label: 'Schedule', icon: CalendarClock },
+  { path: '/opportunities', label: 'Opportunities', icon: Users },
+  { path: '/projects', label: 'Projects', icon: FolderOpen },
+  { path: '/takeoff', label: 'Takeoff', icon: Ruler },
+  { path: '/estimates', label: 'Estimates', icon: Calculator },
+  { path: '/proposals', label: 'Proposals', icon: FileText },
+  { path: '/price-book', label: 'Price Book', icon: BookOpen },
+  { path: '/vendors', label: 'Vendors', icon: Building2 },
+  { path: '/reports', label: 'Reports', icon: BarChart3 },
 ];
 
 const bottomNav = [
-  { path: '/team', label: 'Team', icon: Users },
+  { path: '/admin', label: 'Admin', icon: Shield },
   { path: '/settings', label: 'Settings', icon: Settings },
-  { path: '/help', label: 'Help Center', icon: HelpCircle },
+  { path: '/help', label: 'Help', icon: HelpCircle },
 ];
 
 export default function Sidebar({ collapsed, onToggle }) {
@@ -84,7 +86,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           whiteSpace: 'nowrap',
           overflow: 'hidden',
         }}>
-          {!collapsed && 'Main Menu'}
+          {!collapsed && 'Estimating'}
         </div>
         {mainNav.map((item) => (
           <SidebarLink
