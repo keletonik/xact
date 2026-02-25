@@ -14,7 +14,7 @@ const faqCategories = [
     title: 'Getting Started',
     icon: BookOpen,
     items: [
-      { q: 'How do I create my first project?', a: 'Navigate to Projects from the sidebar and click "New Project". Fill in the project name, client details, building class, region, and fire scope. The project will appear in your pipeline and can be linked to estimates and proposals.' },
+      { q: 'How do I create my first project?', a: 'Navigate to Projects from the sidebar and click "New Project". Fill in the project name, client details, region, and estimation scope. The project will appear in your pipeline and can be linked to estimates and proposals.' },
       { q: 'What is the typical estimating workflow?', a: 'The standard workflow is: Create a Project → Upload plans in Takeoff → Measure quantities using the takeoff tools → Build an Estimate from takeoff data or manually → Generate a Proposal to send to the client. Each step feeds into the next for a seamless process.' },
       { q: 'How do I navigate quickly between pages?', a: 'Use the Command Palette by pressing Cmd+K (or Ctrl+K on Windows). You can search for any page, create new projects, estimates, or proposals directly from the palette.' },
     ],

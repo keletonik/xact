@@ -29,9 +29,9 @@ const useProposalStore = create((set, get) => ({
   inclusionsLibrary: [
     'Supply and installation of all specified equipment',
     'Commissioning and testing in accordance with Australian Standards',
-    'As-built documentation and compliance certificates',
+    'As-built documentation and completion certificates',
     'Project management and site supervision',
-    'All statutory inspections and approvals',
+    'All statutory approvals and certifications',
     'Warranty period as per manufacturer specifications',
     'Clean-up and removal of waste materials',
   ],
