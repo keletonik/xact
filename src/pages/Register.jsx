@@ -48,7 +48,7 @@ export default function Register() {
             Create your account
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-            Start managing fire safety with Evalux
+            Start estimating smarter with Evalux
           </p>
         </div>
 

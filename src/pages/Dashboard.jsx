@@ -1,390 +1,250 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  Building2,
-  ClipboardCheck,
-  ShieldCheck,
-  Wrench,
-  AlertTriangle,
-  Flame,
-  TrendingUp,
-  Calendar,
-  ChevronRight,
-  Plus,
-  ArrowUpRight,
-  Activity,
+  DollarSign, TrendingUp, FolderOpen, Calculator, FileText,
+  BookOpen, ArrowRight, AlertTriangle, CheckCircle,
+  Ruler, BarChart3, Activity,
 } from 'lucide-react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart,
-  Legend,
-} from 'recharts';
-import StatsCard from '../components/common/StatsCard';
-import Card, { CardHeader } from '../components/common/Card';
+import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import EmptyState from '../components/common/EmptyState';
-import StatusBadge from '../components/common/StatusBadge';
-import {
-  dashboardStats,
-  monthlyInspections,
-  complianceByCategory,
-  buildingRiskDistribution,
-  workOrderTrend,
-  recentActivity,
-  inspections,
-  buildings,
-  workOrders,
-} from '../data/mockData';
-import { formatDate, timeAgo } from '../utils/helpers';
+import useProjectStore from '../stores/useProjectStore';
+import useEstimateStore from '../stores/useEstimateStore';
+import usePriceBookStore from '../stores/usePriceBookStore';
+import useAuditStore from '../stores/useAuditStore';
+import { formatCurrency, formatRelativeTime, formatPercent } from '../utils/formatters';
 
-const CHART_COLORS = ['#f97316', '#22c55e', '#3b82f6', '#a855f7', '#ef4444', '#14b8a6'];
+const CHART_COLORS = ['#f97316', '#3b82f6', '#22c55e', '#8b5cf6', '#ef4444', '#eab308'];
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const stats = dashboardStats;
+  const pipelineStats = useProjectStore((s) => s.getPipelineStats());
+  const estimates = useEstimateStore((s) => s.estimates);
+  const items = usePriceBookStore((s) => s.items);
+  const pendingUpdates = usePriceBookStore((s) => s.pendingUpdates);
+  const auditEntries = useAuditStore((s) => s.entries);
 
-  const hasData = buildings.length > 0;
+  const pending = pendingUpdates.filter((u) => u.status === 'pending');
+
+  const stats = useMemo(() => {
+    const totalEstimateValue = estimates.reduce((s, e) => s + e.totals.totalIncTax, 0);
+    const avgMargin = estimates.length > 0
+      ? estimates.reduce((s, e) => s + e.totals.effectiveMargin, 0) / estimates.length
+      : 0;
+
+    return { totalEstimateValue, avgMargin };
+  }, [estimates]);
+
+  const pipelineData = [
+    { stage: 'Leads', value: pipelineStats.leads },
+    { stage: 'Opps', value: pipelineStats.opportunities },
+    { stage: 'Quoting', value: pipelineStats.quoting },
+    { stage: 'Quoted', value: pipelineStats.quoted },
+    { stage: 'Won', value: pipelineStats.won },
+    { stage: 'Lost', value: pipelineStats.lost },
+  ];
+
+  const categoryBreakdown = useMemo(() => {
+    const cats = { Material: 0, Labour: 0, Plant: 0, Subcontract: 0, Preliminary: 0 };
+    for (const est of estimates) {
+      cats.Material += est.totals.breakdown.material;
+      cats.Labour += est.totals.breakdown.labour;
+      cats.Plant += est.totals.breakdown.plant;
+      cats.Subcontract += est.totals.breakdown.subcontract;
+      cats.Preliminary += est.totals.breakdown.preliminary;
+    }
+    return Object.entries(cats)
+      .filter(([, v]) => v > 0)
+      .map(([name, value]) => ({ name, value: Math.round(value) }));
+  }, [estimates]);
+
+  const recentActivity = auditEntries.slice(0, 8);
 
   return (
-    <div>
-      {/* Welcome Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '28px 32px',
-          marginBottom: 24,
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <h2 style={{ fontSize: '1.375rem', fontWeight: 700, color: '#fff', marginBottom: 6 }}>
-            Welcome to Evalux
-          </h2>
-          <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', maxWidth: 500, lineHeight: 1.6 }}>
-            Your comprehensive fire safety management platform. Monitor inspections, track compliance, and manage equipment all in one place.
-          </p>
-          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-            <Button size="sm" icon={Plus} onClick={() => navigate('/inspections')}>
-              New Inspection
-            </Button>
-            <Button size="sm" variant="ghost" icon={Calendar} onClick={() => navigate('/schedule')}
-              style={{ color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.2)' }}>
-              View Schedule
-            </Button>
-          </div>
-        </div>
-        {/* Decorative flame element */}
-        <div style={{
-          position: 'absolute',
-          right: 32,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          opacity: 0.08,
-        }}>
-          <Flame size={140} />
-        </div>
-      </motion.div>
-
-      {/* KPI Stats */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: 16,
-        marginBottom: 24,
-      }}>
-        <StatsCard
-          title="Total Buildings"
-          value={stats.totalBuildings}
-          subtitle="properties managed"
-          icon={Building2}
-          color="fire"
-          delay={0}
-        />
-        <StatsCard
-          title="Inspections"
-          value={stats.completedInspections}
-          subtitle={`of ${stats.totalInspections} total`}
-          icon={ClipboardCheck}
-          color="info"
-          delay={1}
-        />
-        <StatsCard
-          title="Compliance Rate"
-          value={`${stats.complianceRate}%`}
-          subtitle="across all properties"
-          icon={ShieldCheck}
-          color={stats.complianceRate >= 80 ? 'success' : stats.complianceRate >= 60 ? 'warning' : 'danger'}
-          delay={2}
-        />
-        <StatsCard
-          title="Open Work Orders"
-          value={stats.openWorkOrders}
-          subtitle={stats.criticalWorkOrders > 0 ? `${stats.criticalWorkOrders} critical` : 'none critical'}
-          icon={Wrench}
-          color={stats.criticalWorkOrders > 0 ? 'danger' : 'warning'}
-          delay={3}
-        />
+    <div style={{ padding: '24px 32px' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Dashboard</h1>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-tertiary)', margin: '4px 0 0' }}>
+          Estimating overview and activity
+        </p>
       </div>
 
-      {!hasData ? (
-        /* Empty State for new users */
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
+        {[
+          { label: 'Pipeline Value', value: formatCurrency(pipelineStats.pipelineValue, 0), icon: DollarSign, color: 'var(--color-fire-500)', onClick: () => navigate('/opportunities') },
+          { label: 'Active Estimates', value: estimates.filter((e) => e.status === 'draft').length, icon: Calculator, color: 'var(--color-info-500)', onClick: () => navigate('/estimates') },
+          { label: 'Total Estimate Value', value: formatCurrency(stats.totalEstimateValue, 0), icon: TrendingUp, color: 'var(--color-success-500)' },
+          { label: 'Avg. Margin', value: formatPercent(stats.avgMargin), icon: BarChart3, color: 'var(--color-warning-500)' },
+          { label: 'Price Book Items', value: items.length, icon: BookOpen, color: 'var(--color-text-secondary)', onClick: () => navigate('/price-book') },
+        ].map((stat) => (
+          <motion.div key={stat.label} whileHover={{ y: -2 }} transition={{ duration: 0.15 }}>
+            <Card hover={!!stat.onClick} onClick={stat.onClick}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--color-text-tertiary)', marginBottom: 4 }}>{stat.label}</div>
+                  <div style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>{stat.value}</div>
+                </div>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 'var(--radius-md)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', background: `${stat.color}12`,
+                }}>
+                  <stat.icon size={20} style={{ color: stat.color }} />
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, marginBottom: 24 }}>
+        {/* Pipeline Chart */}
         <Card>
-          <EmptyState
-            icon={Flame}
-            title="Get Started with Evalux"
-            description="Add your first building to start managing fire safety inspections, equipment, and compliance. Your dashboard analytics will appear here once you have data."
-            actionLabel="Add Building"
-            onAction={() => navigate('/buildings')}
-            secondaryLabel="Explore Demo"
-            onSecondary={() => {}}
-          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>Project Pipeline</h3>
+            <Button size="sm" variant="ghost" onClick={() => navigate('/opportunities')}>View All <ArrowRight size={12} /></Button>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={pipelineData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="stage" tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }} />
+              <YAxis tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }} allowDecimals={false} />
+              <Tooltip contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 12 }} />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                {pipelineData.map((_, i) => (
+                  <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </Card>
-      ) : (
-        /* Charts & Data Grid */
-        <>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '2fr 1fr',
-            gap: 16,
-            marginBottom: 24,
-          }}>
-            {/* Inspections Chart */}
-            <Card>
-              <CardHeader
-                title="Inspection Activity"
-                subtitle="Monthly completed vs scheduled"
-                icon={Activity}
-                action={
-                  <Button size="sm" variant="ghost" iconRight={ChevronRight} onClick={() => navigate('/inspections')}>
-                    View All
-                  </Button>
-                }
-              />
-              {monthlyInspections.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <AreaChart data={monthlyInspections}>
-                    <defs>
-                      <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorScheduled" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
-                    <XAxis dataKey="month" tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }} />
-                    <YAxis tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--bg-card)',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                    />
-                    <Area type="monotone" dataKey="scheduled" stroke="#3b82f6" fill="url(#colorScheduled)" strokeWidth={2} />
-                    <Area type="monotone" dataKey="completed" stroke="#f97316" fill="url(#colorCompleted)" strokeWidth={2} />
-                    <Legend />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>
-                  No inspection data available yet
-                </div>
-              )}
-            </Card>
 
-            {/* Risk Distribution */}
-            <Card>
-              <CardHeader
-                title="Building Risk Levels"
-                subtitle="Current risk assessment"
-                icon={AlertTriangle}
-              />
-              {buildingRiskDistribution.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <PieChart>
-                    <Pie
-                      data={buildingRiskDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={95}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {buildingRiskDistribution.map((entry, index) => (
-                        <Cell key={index} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--bg-card)',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>
-                  No buildings added yet
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {/* Work Orders + Compliance Charts */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 16,
-            marginBottom: 24,
-          }}>
-            <Card>
-              <CardHeader
-                title="Work Order Trend"
-                subtitle="Opened vs closed per month"
-                icon={Wrench}
-              />
-              {workOrderTrend.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={workOrderTrend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
-                    <XAxis dataKey="month" tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }} />
-                    <YAxis tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--bg-card)',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                    />
-                    <Bar dataKey="opened" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="closed" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                    <Legend />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>
-                  No work order data yet
-                </div>
-              )}
-            </Card>
-
-            <Card>
-              <CardHeader
-                title="Compliance by Category"
-                subtitle="NFPA code compliance status"
-                icon={ShieldCheck}
-              />
-              {complianceByCategory.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={complianceByCategory} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
-                    <XAxis type="number" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} />
-                    <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} width={130} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--bg-card)',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                    />
-                    <Bar dataKey="compliant" fill="#22c55e" stackId="a" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="nonCompliant" fill="#ef4444" stackId="a" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>
-                  No compliance data yet
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader
-              title="Recent Activity"
-              subtitle="Latest actions across all modules"
-              icon={TrendingUp}
-            />
-            {recentActivity.length > 0 ? (
-              <div>
-                {recentActivity.map((item, i) => (
-                  <div
-                    key={item.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 16,
-                      padding: '12px 0',
-                      borderBottom: i < recentActivity.length - 1 ? '1px solid var(--border-secondary)' : 'none',
-                    }}
-                  >
-                    <div style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 'var(--radius-md)',
-                      backgroundColor: 'var(--bg-tertiary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}>
-                      <Activity size={16} style={{ color: 'var(--color-fire-500)' }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        {item.action}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                        {item.detail}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                        {timeAgo(item.time)}
-                      </div>
-                      <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', marginTop: 2 }}>
-                        {item.user}
-                      </div>
-                    </div>
-                  </div>
+        {/* Cost Category Breakdown */}
+        <Card>
+          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: '0 0 16px' }}>Cost Breakdown</h3>
+          {categoryBreakdown.length > 0 ? (
+            <>
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie data={categoryBreakdown} dataKey="value" cx="50%" cy="50%" outerRadius={60} strokeWidth={2}>
+                    {categoryBreakdown.map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 12 }} formatter={(v) => formatCurrency(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8, justifyContent: 'center' }}>
+                {categoryBreakdown.map((cat, i) => (
+                  <span key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 2, background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                    {cat.name}
+                  </span>
                 ))}
               </div>
-            ) : (
-              <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>
-                No recent activity to display
+            </>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 160, color: 'var(--color-text-tertiary)', fontSize: '0.8125rem' }}>
+              No estimate data yet
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
+        {/* Recent Activity */}
+        <Card>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>Recent Activity</h3>
+            <Button size="sm" variant="ghost" onClick={() => navigate('/admin')}>View All</Button>
+          </div>
+          {recentActivity.length === 0 ? (
+            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: '0.8125rem' }}>No activity yet</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {recentActivity.map((entry) => (
+                <div key={entry.id} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--color-border)' }}>
+                  <Activity size={14} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0, marginTop: 2 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-primary)' }}>{entry.description}</div>
+                    <div style={{ fontSize: '0.625rem', color: 'var(--color-text-tertiary)' }}>{formatRelativeTime(entry.timestamp)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Quick Actions */}
+        <Card>
+          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: '0 0 12px' }}>Quick Actions</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { label: 'New Project', icon: FolderOpen, path: '/projects', color: 'var(--color-info-500)' },
+              { label: 'New Estimate', icon: Calculator, path: '/estimates', color: 'var(--color-success-500)' },
+              { label: 'Open Takeoff', icon: Ruler, path: '/takeoff', color: 'var(--color-warning-500)' },
+              { label: 'New Proposal', icon: FileText, path: '/proposals', color: 'var(--color-fire-500)' },
+              { label: 'Browse Price Book', icon: BookOpen, path: '/price-book', color: 'var(--color-text-secondary)' },
+            ].map((action) => (
+              <button
+                key={action.label}
+                onClick={() => navigate(action.path)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                  borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
+                  background: 'var(--color-bg-secondary)', cursor: 'pointer', width: '100%',
+                  transition: 'all var(--transition-fast)',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = action.color}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--color-border)'}
+              >
+                <action.icon size={16} style={{ color: action.color }} />
+                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text-primary)', flex: 1, textAlign: 'left' }}>{action.label}</span>
+                <ArrowRight size={14} style={{ color: 'var(--color-text-tertiary)' }} />
+              </button>
+            ))}
+          </div>
+        </Card>
+
+        {/* Alerts */}
+        <Card>
+          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: '0 0 12px' }}>Alerts</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {pending.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, padding: '10px', borderRadius: 'var(--radius-md)', background: 'var(--color-warning-50)', border: '1px solid var(--color-warning-200)' }}>
+                <AlertTriangle size={16} style={{ color: 'var(--color-warning-600)', flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-warning-800)' }}>{pending.length} Price Updates Pending</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--color-warning-600)' }}>Review in Price Book</div>
+                </div>
               </div>
             )}
-          </Card>
-        </>
-      )}
+
+            {estimates.filter((e) => e.status === 'draft' && e.lines.length === 0).length > 0 && (
+              <div style={{ display: 'flex', gap: 8, padding: '10px', borderRadius: 'var(--radius-md)', background: 'var(--color-info-50)', border: '1px solid var(--color-info-200)' }}>
+                <Calculator size={16} style={{ color: 'var(--color-info-600)', flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-info-800)' }}>Empty Estimates</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--color-info-600)' }}>
+                    {estimates.filter((e) => e.status === 'draft' && e.lines.length === 0).length} estimates need line items
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {pending.length === 0 && estimates.filter((e) => e.status === 'draft' && e.lines.length === 0).length === 0 && (
+              <div style={{ display: 'flex', gap: 8, padding: '10px', borderRadius: 'var(--radius-md)', background: 'var(--color-success-50)', border: '1px solid var(--color-success-200)' }}>
+                <CheckCircle size={16} style={{ color: 'var(--color-success-600)', flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-success-800)' }}>All Clear</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--color-success-600)' }}>No pending actions</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

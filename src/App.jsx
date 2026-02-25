@@ -2,15 +2,17 @@ import { useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
+import CommandPalette from './components/common/CommandPalette';
 import Dashboard from './pages/Dashboard';
-import Inspections from './pages/Inspections';
-import Buildings from './pages/Buildings';
-import Equipment from './pages/Equipment';
-import WorkOrders from './pages/WorkOrders';
-import Compliance from './pages/Compliance';
+import Opportunities from './pages/Opportunities';
+import Projects from './pages/Projects';
+import Takeoff from './pages/Takeoff';
+import Estimates from './pages/Estimates';
+import Proposals from './pages/Proposals';
+import PriceBook from './pages/PriceBook';
+import Vendors from './pages/Vendors';
 import Reports from './pages/Reports';
-import Schedule from './pages/Schedule';
-import Team from './pages/Team';
+import Admin from './pages/Admin';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 import Help from './pages/Help';
@@ -53,14 +55,16 @@ export default function App() {
         <main className="app-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/inspections" element={<Inspections />} />
-            <Route path="/buildings" element={<Buildings />} />
-            <Route path="/equipment" element={<Equipment />} />
-            <Route path="/work-orders" element={<WorkOrders />} />
-            <Route path="/compliance" element={<Compliance />} />
+            <Route path="/opportunities" element={<Opportunities />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/:id" element={<Projects />} />
+            <Route path="/takeoff" element={<Takeoff />} />
+            <Route path="/estimates" element={<Estimates />} />
+            <Route path="/proposals" element={<Proposals />} />
+            <Route path="/price-book" element={<PriceBook />} />
+            <Route path="/vendors" element={<Vendors />} />
             <Route path="/reports" element={<Reports />} />
-            <Route path="/schedule" element={<Schedule />} />
-            <Route path="/team" element={<Team />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/help" element={<Help />} />
@@ -68,6 +72,7 @@ export default function App() {
           </Routes>
         </main>
       </div>
+      <CommandPalette />
     </div>
   );
 }
