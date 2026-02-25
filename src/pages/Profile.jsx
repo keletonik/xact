@@ -17,7 +17,7 @@ const currentUser = {
   phone: '02 9000 1234',
   company: 'Evalux Fire Estimating',
   role: 'Senior Estimator',
-  certifications: ['CFPS', 'NFPA Certified', 'AS 2118'],
+  certifications: ['AIQS', 'CostPro', 'AS 2118'],
   lastLogin: new Date().toISOString(),
 };
 

@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Plus, Search, FolderOpen, Calendar, MapPin, Building2,
-  Layers, ArrowRight, Clock, DollarSign,
+  Plus, FolderOpen, Calendar, MapPin,
+  Layers, DollarSign,
 } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
@@ -15,8 +15,8 @@ import Tabs from '../components/common/Tabs';
 import useProjectStore from '../stores/useProjectStore';
 import useEstimateStore from '../stores/useEstimateStore';
 import {
-  PROJECT_STATUSES, PROJECT_STATUS_LABELS, FIRE_SCOPE_LABELS,
-  BUILDING_CLASSES, RISK_CLASSIFICATIONS, REGIONS, REGION_LABELS,
+  PROJECT_STATUSES, FIRE_SCOPE_LABELS,
+  REGIONS, REGION_LABELS,
 } from '../utils/constants';
 import { formatCurrency, formatDate, formatRelativeTime } from '../utils/formatters';
 
@@ -30,9 +30,7 @@ export default function Projects() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [form, setForm] = useState({
     name: '', client: '', clientContact: '', status: PROJECT_STATUSES.QUOTING,
-    address: '', suburb: '', state: 'nsw', postcode: '', buildingClass: '',
-    storeys: 1, constructionType: '', riskClassification: '', estimatedValue: '',
-    dueDate: '', scopes: [], notes: '',
+    region: 'nsw', estimatedValue: '', dueDate: '', scopes: [], notes: '',
   });
 
   const filtered = useMemo(() => {
@@ -59,9 +57,16 @@ export default function Projects() {
   function handleCreate(e) {
     e.preventDefault();
     const project = createProject({ ...form, estimatedValue: parseFloat(form.estimatedValue) || 0 });
-    setForm({ name: '', client: '', clientContact: '', status: PROJECT_STATUSES.QUOTING, address: '', suburb: '', state: 'nsw', postcode: '', buildingClass: '', storeys: 1, constructionType: '', riskClassification: '', estimatedValue: '', dueDate: '', scopes: [], notes: '' });
+    setForm({ name: '', client: '', clientContact: '', status: PROJECT_STATUSES.QUOTING, region: 'nsw', estimatedValue: '', dueDate: '', scopes: [], notes: '' });
     setShowCreate(false);
     navigate(`/projects/${project.id}`);
+  }
+
+  function toggleScope(scope) {
+    setForm((f) => ({
+      ...f,
+      scopes: f.scopes.includes(scope) ? f.scopes.filter((s) => s !== scope) : [...f.scopes, scope],
+    }));
   }
 
   function openProject(project) {
@@ -112,9 +117,9 @@ export default function Projects() {
                   <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginBottom: 12 }}>{project.client || 'No client assigned'}</div>
 
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: '0.75rem', color: 'var(--color-text-tertiary)', marginBottom: 12 }}>
-                    {project.address && (
+                    {project.region && (
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <MapPin size={12} /> {project.suburb || project.address}
+                        <MapPin size={12} /> {REGION_LABELS[project.region] || project.region}
                       </span>
                     )}
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -164,10 +169,7 @@ export default function Projects() {
               <DetailRow label="Contact" value={selectedProject.clientContact || '-'} />
               <DetailRow label="Estimated Value" value={formatCurrency(selectedProject.estimatedValue)} />
               <DetailRow label="Due Date" value={selectedProject.dueDate ? formatDate(selectedProject.dueDate) : '-'} />
-              <DetailRow label="Building Class" value={selectedProject.buildingClass || '-'} />
-              <DetailRow label="Risk Classification" value={selectedProject.riskClassification || '-'} />
-              <DetailRow label="Address" value={[selectedProject.address, selectedProject.suburb, selectedProject.state?.toUpperCase(), selectedProject.postcode].filter(Boolean).join(', ') || '-'} />
-              <DetailRow label="Storeys" value={selectedProject.storeys} />
+              <DetailRow label="Region" value={REGION_LABELS[selectedProject.region] || selectedProject.region || '-'} />
             </div>
 
             {selectedProject.scopes.length > 0 && (
@@ -180,6 +182,13 @@ export default function Projects() {
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {selectedProject.notes && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 8 }}>Notes</div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-primary)', lineHeight: 1.6 }}>{selectedProject.notes}</div>
               </div>
             )}
 
@@ -208,8 +217,8 @@ export default function Projects() {
               <input style={inputStyle} type="number" step="100" value={form.estimatedValue} onChange={(e) => setForm((f) => ({ ...f, estimatedValue: e.target.value }))} />
             </div>
             <div>
-              <label style={labelStyle}>State/Region</label>
-              <select style={inputStyle} value={form.state} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}>
+              <label style={labelStyle}>Region</label>
+              <select style={inputStyle} value={form.region} onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}>
                 {Object.entries(REGION_LABELS).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
                 ))}
@@ -219,18 +228,34 @@ export default function Projects() {
               <label style={labelStyle}>Due Date</label>
               <input style={inputStyle} type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} />
             </div>
-            <div>
-              <label style={labelStyle}>Building Class</label>
-              <select style={inputStyle} value={form.buildingClass} onChange={(e) => setForm((f) => ({ ...f, buildingClass: e.target.value }))}>
-                <option value="">Select...</option>
-                {Object.entries(BUILDING_CLASSES).map(([k, v]) => (
-                  <option key={k} value={v}>Class {v}</option>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>Estimation Scopes</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {Object.entries(FIRE_SCOPE_LABELS).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => toggleScope(key)}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '0.75rem',
+                      borderRadius: 'var(--radius-full)',
+                      border: '1px solid',
+                      borderColor: form.scopes.includes(key) ? 'var(--color-fire-500)' : 'var(--color-border)',
+                      background: form.scopes.includes(key) ? 'var(--color-fire-50)' : 'transparent',
+                      color: form.scopes.includes(key) ? 'var(--color-fire-700)' : 'var(--color-text-secondary)',
+                      cursor: 'pointer',
+                      fontWeight: form.scopes.includes(key) ? 600 : 400,
+                    }}
+                  >
+                    {label}
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
-            <div>
-              <label style={labelStyle}>Storeys</label>
-              <input style={inputStyle} type="number" min="1" value={form.storeys} onChange={(e) => setForm((f) => ({ ...f, storeys: parseInt(e.target.value) || 1 }))} />
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>Notes</label>
+              <textarea style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Additional notes..." />
             </div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>

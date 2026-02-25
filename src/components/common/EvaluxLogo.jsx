@@ -81,7 +81,7 @@ export default function EvaluxLogo({ size = 'md', showText = true, collapsed = f
               textTransform: 'uppercase',
               marginTop: 2,
             }}>
-              Fire Safety
+              Estimating
             </span>
           )}
         </motion.div>

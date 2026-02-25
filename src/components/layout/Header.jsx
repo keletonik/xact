@@ -16,14 +16,15 @@ import { useTheme } from '../../hooks/useTheme';
 
 const breadcrumbMap = {
   '/': 'Dashboard',
-  '/inspections': 'Inspections',
-  '/buildings': 'Buildings',
-  '/equipment': 'Equipment',
-  '/work-orders': 'Work Orders',
-  '/compliance': 'Compliance',
+  '/opportunities': 'Opportunities',
+  '/projects': 'Projects',
+  '/takeoff': 'Takeoff',
+  '/estimates': 'Estimates',
+  '/proposals': 'Proposals',
+  '/price-book': 'Price Book',
+  '/vendors': 'Vendors',
   '/reports': 'Reports',
-  '/schedule': 'Schedule',
-  '/team': 'Team',
+  '/admin': 'Admin',
   '/settings': 'Settings',
   '/help': 'Help Center',
   '/notifications': 'Notifications',
@@ -50,10 +51,10 @@ export default function Header({ onMobileMenuToggle }) {
   }, []);
 
   const pageTitle = breadcrumbMap[location.pathname] ||
-    Object.keys(breadcrumbMap).find(key => key !== '/' && location.pathname.startsWith(key))
+    Object.keys(breadcrumbMap).find((key) => key !== '/' && location.pathname.startsWith(key))
       ?.replace(/^\//, '')
       .replace(/-/g, ' ')
-      .replace(/\b\w/g, c => c.toUpperCase()) ||
+      .replace(/\b\w/g, (c) => c.toUpperCase()) ||
     'Page';
 
   return (
@@ -209,8 +210,8 @@ export default function Header({ onMobileMenuToggle }) {
               borderRadius: 'var(--radius-md)',
               transition: 'all var(--transition-fast)',
             }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <div style={{
               width: 32,
@@ -224,14 +225,14 @@ export default function Header({ onMobileMenuToggle }) {
               fontSize: '0.75rem',
               fontWeight: 700,
             }}>
-              U
+              PE
             </div>
             <div style={{ textAlign: 'left', lineHeight: 1.3 }}>
               <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                User
+                Estimator
               </div>
               <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)' }}>
-                Administrator
+                Senior Estimator
               </div>
             </div>
             <ChevronDown size={14} style={{ color: 'var(--text-tertiary)' }} />
@@ -288,8 +289,8 @@ function HeaderButton({ icon: Icon, onClick, tooltip, badge }) {
         position: 'relative',
         transition: 'all var(--transition-fast)',
       }}
-      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
     >
       <Icon size={18} />
       {badge && (
@@ -324,8 +325,8 @@ function DropdownItem({ icon: Icon, label, onClick, danger }) {
         color: danger ? 'var(--color-danger-600)' : 'var(--text-primary)',
         transition: 'all var(--transition-fast)',
       }}
-      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
     >
       <Icon size={16} />
       {label}
