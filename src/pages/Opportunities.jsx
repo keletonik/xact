@@ -182,7 +182,7 @@ export default function Opportunities() {
         <Card padding="0">
           {filtered.length === 0 ? (
             <EmptyState
-              icon={Users}
+              icon={TrendingUp}
               title="No opportunities yet"
               description="Create your first opportunity to start building your pipeline"
               primaryAction={{ label: 'New Opportunity', onClick: () => setShowCreate(true) }}
@@ -252,7 +252,7 @@ export default function Opportunities() {
               <input style={inputStyle} type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} />
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>Fire Safety Scopes</label>
+              <label style={labelStyle}>Estimation Scopes</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {Object.entries(FIRE_SCOPE_LABELS).map(([key, label]) => (
                   <button

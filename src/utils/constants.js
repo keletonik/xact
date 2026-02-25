@@ -101,32 +101,6 @@ export const FIRE_SCOPE_LABELS = {
   [FIRE_SCOPES.SUPPRESSION]: 'Special Suppression',
 };
 
-export const BUILDING_CLASSES = {
-  CLASS_1A: '1a',
-  CLASS_1B: '1b',
-  CLASS_2: '2',
-  CLASS_3: '3',
-  CLASS_4: '4',
-  CLASS_5: '5',
-  CLASS_6: '6',
-  CLASS_7A: '7a',
-  CLASS_7B: '7b',
-  CLASS_8: '8',
-  CLASS_9A: '9a',
-  CLASS_9B: '9b',
-  CLASS_9C: '9c',
-  CLASS_10A: '10a',
-  CLASS_10B: '10b',
-};
-
-export const RISK_CLASSIFICATIONS = {
-  LOW: 'low',
-  ORDINARY_1: 'ordinary_1',
-  ORDINARY_2: 'ordinary_2',
-  HIGH: 'high',
-  EXTRA_HIGH: 'extra_high',
-};
-
 export const MARKUP_TYPES = {
   MARGIN: 'margin',
   OVERHEAD: 'overhead',
