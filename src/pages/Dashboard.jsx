@@ -3,15 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   DollarSign, TrendingUp, FolderOpen, Calculator, FileText,
-  BookOpen, ArrowRight, Clock, AlertTriangle, CheckCircle,
-  Users, Ruler, BarChart3, Activity,
+  BookOpen, ArrowRight, AlertTriangle, CheckCircle,
+  Ruler, BarChart3, Activity,
 } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import useProjectStore from '../stores/useProjectStore';
 import useEstimateStore from '../stores/useEstimateStore';
-import useProposalStore from '../stores/useProposalStore';
 import usePriceBookStore from '../stores/usePriceBookStore';
 import useAuditStore from '../stores/useAuditStore';
 import { formatCurrency, formatRelativeTime, formatPercent } from '../utils/formatters';
@@ -20,10 +19,8 @@ const CHART_COLORS = ['#f97316', '#3b82f6', '#22c55e', '#8b5cf6', '#ef4444', '#e
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const projects = useProjectStore((s) => s.projects);
   const pipelineStats = useProjectStore((s) => s.getPipelineStats());
   const estimates = useEstimateStore((s) => s.estimates);
-  const proposals = useProposalStore((s) => s.proposals);
   const items = usePriceBookStore((s) => s.items);
   const pendingUpdates = usePriceBookStore((s) => s.pendingUpdates);
   const auditEntries = useAuditStore((s) => s.entries);

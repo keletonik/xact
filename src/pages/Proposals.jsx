@@ -13,7 +13,7 @@ import EmptyState from '../components/common/EmptyState';
 import useProposalStore from '../stores/useProposalStore';
 import useEstimateStore from '../stores/useEstimateStore';
 import useProjectStore from '../stores/useProjectStore';
-import { formatCurrency, formatDate, formatRelativeTime } from '../utils/formatters';
+import { formatCurrency, formatDate } from '../utils/formatters';
 
 const STATUS_COLORS = {
   draft: { bg: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' },
@@ -23,7 +23,7 @@ const STATUS_COLORS = {
 };
 
 export default function Proposals() {
-  const { proposals, templates, inclusionsLibrary, exclusionsLibrary, createProposal, sendProposal, updateProposal } = useProposalStore();
+  const { proposals, templates, inclusionsLibrary, exclusionsLibrary, createProposal, sendProposal } = useProposalStore();
   const estimates = useEstimateStore((s) => s.estimates);
   const projects = useProjectStore((s) => s.projects);
   const [search, setSearch] = useState('');

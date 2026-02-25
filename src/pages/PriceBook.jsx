@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import {
   BookOpen, Plus, Search, Edit3, Trash2, Package, DollarSign,
   Filter, Download, Upload, Tag, ArrowUpDown, AlertCircle, Check, X,
@@ -12,7 +11,7 @@ import EmptyState from '../components/common/EmptyState';
 import Tabs from '../components/common/Tabs';
 import usePriceBookStore from '../stores/usePriceBookStore';
 import { ITEM_CATEGORIES, ITEM_CATEGORY_LABELS, UNITS, FIRE_SCOPE_LABELS } from '../utils/constants';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 import { useToast } from '../components/common/Toast';
 
 export default function PriceBook() {
@@ -27,8 +26,7 @@ export default function PriceBook() {
   const [editForm, setEditForm] = useState({});
   const [editReason, setEditReason] = useState('');
 
-  let toast;
-  try { toast = useToast(); } catch { toast = { success: () => {}, error: () => {} }; }
+  const toast = useToast();
 
   const filteredItems = useMemo(() => {
     let result = items;
