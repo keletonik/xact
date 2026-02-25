@@ -8,8 +8,6 @@ import {
   Palette,
   Building2,
   Key,
-  Globe,
-  Mail,
   Save,
   Sun,
   Moon,
@@ -37,7 +35,7 @@ export default function Settings() {
       {/* Settings Navigation */}
       <Card style={{ alignSelf: 'start' }}>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {tabs.map(tab => {
+          {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
@@ -57,8 +55,8 @@ export default function Settings() {
                   transition: 'all var(--transition-fast)',
                   textAlign: 'left',
                 }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'; }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'; }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
               >
                 <Icon size={16} />
                 {tab.label}
@@ -86,10 +84,11 @@ export default function Settings() {
                   value=""
                   onChange={() => {}}
                   options={[
-                    { value: 'America/Chicago', label: 'Central Time (CT)' },
-                    { value: 'America/New_York', label: 'Eastern Time (ET)' },
-                    { value: 'America/Denver', label: 'Mountain Time (MT)' },
-                    { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+                    { value: 'Australia/Sydney', label: 'AEST (Sydney)' },
+                    { value: 'Australia/Melbourne', label: 'AEST (Melbourne)' },
+                    { value: 'Australia/Brisbane', label: 'AEST (Brisbane)' },
+                    { value: 'Australia/Perth', label: 'AWST (Perth)' },
+                    { value: 'Australia/Adelaide', label: 'ACST (Adelaide)' },
                   ]}
                   placeholder="Select timezone..."
                 />
@@ -99,25 +98,27 @@ export default function Settings() {
                   value=""
                   onChange={() => {}}
                   options={[
-                    { value: 'MM/dd/yyyy', label: 'MM/DD/YYYY' },
                     { value: 'dd/MM/yyyy', label: 'DD/MM/YYYY' },
+                    { value: 'MM/dd/yyyy', label: 'MM/DD/YYYY' },
                     { value: 'yyyy-MM-dd', label: 'YYYY-MM-DD' },
                   ]}
                   placeholder="Select format..."
                 />
               </FormField>
-              <FormField label="Default Inspection Frequency">
+              <FormField label="Default Currency">
                 <SelectInput
                   value=""
                   onChange={() => {}}
                   options={[
-                    { value: 'monthly', label: 'Monthly' },
-                    { value: 'quarterly', label: 'Quarterly' },
-                    { value: 'semi-annual', label: 'Semi-Annual' },
-                    { value: 'annual', label: 'Annual' },
+                    { value: 'AUD', label: 'AUD - Australian Dollar' },
+                    { value: 'NZD', label: 'NZD - New Zealand Dollar' },
+                    { value: 'USD', label: 'USD - US Dollar' },
                   ]}
-                  placeholder="Select frequency..."
+                  placeholder="Select currency..."
                 />
+              </FormField>
+              <FormField label="Default Tax Rate (%)">
+                <TextInput type="number" value="10" onChange={() => {}} placeholder="10" />
               </FormField>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
@@ -156,7 +157,7 @@ export default function Settings() {
                   fontSize: '1.5rem',
                   fontWeight: 700,
                 }}>
-                  U
+                  PE
                 </div>
                 <div>
                   <Button size="sm" variant="secondary">Upload Photo</Button>
@@ -177,13 +178,27 @@ export default function Settings() {
                   <TextInput type="email" value="" onChange={() => {}} placeholder="email@example.com" />
                 </FormField>
                 <FormField label="Phone">
-                  <TextInput type="tel" value="" onChange={() => {}} placeholder="(555) 123-4567" />
+                  <TextInput type="tel" value="" onChange={() => {}} placeholder="02 9000 1234" />
                 </FormField>
                 <FormField label="Job Title">
-                  <TextInput value="" onChange={() => {}} placeholder="Your title" />
+                  <TextInput value="" onChange={() => {}} placeholder="e.g. Senior Estimator" />
                 </FormField>
-                <FormField label="Certifications">
-                  <TextInput value="" onChange={() => {}} placeholder="e.g., CFPS, NICET Level IV" />
+                <FormField label="Region">
+                  <SelectInput
+                    value=""
+                    onChange={() => {}}
+                    options={[
+                      { value: 'nsw', label: 'New South Wales' },
+                      { value: 'vic', label: 'Victoria' },
+                      { value: 'qld', label: 'Queensland' },
+                      { value: 'wa', label: 'Western Australia' },
+                      { value: 'sa', label: 'South Australia' },
+                      { value: 'tas', label: 'Tasmania' },
+                      { value: 'nt', label: 'Northern Territory' },
+                      { value: 'act', label: 'Australian Capital Territory' },
+                    ]}
+                    placeholder="Select region..."
+                  />
                 </FormField>
               </div>
 
@@ -203,12 +218,12 @@ export default function Settings() {
               </p>
 
               {[
-                { title: 'Inspection Reminders', desc: 'Get notified before scheduled inspections' },
-                { title: 'Overdue Alerts', desc: 'Alert when inspections or work orders are overdue' },
-                { title: 'Compliance Warnings', desc: 'Warning when compliance deadlines approach' },
-                { title: 'Work Order Updates', desc: 'Updates when work order status changes' },
-                { title: 'Equipment Alerts', desc: 'Notifications for equipment service due dates' },
-                { title: 'Team Activity', desc: 'Updates on team member actions and assignments' },
+                { title: 'Estimate Updates', desc: 'Notified when estimates are created, updated, or approved' },
+                { title: 'Price Book Changes', desc: 'Alert when items or assemblies are modified in the Price Book' },
+                { title: 'Price Scout Updates', desc: 'Notified when new pricing suggestions are pending approval' },
+                { title: 'Proposal Activity', desc: 'Updates when proposals are sent, accepted, or declined' },
+                { title: 'Project Pipeline', desc: 'Alerts for project status changes and due date reminders' },
+                { title: 'Audit Trail', desc: 'Summary of all tracked changes across the platform' },
               ].map((item, i) => (
                 <div key={i} style={{
                   display: 'flex',
@@ -245,7 +260,7 @@ export default function Settings() {
                 {[
                   { id: 'light', label: 'Light', icon: Sun },
                   { id: 'dark', label: 'Dark', icon: Moon },
-                ].map(t => (
+                ].map((t) => (
                   <button
                     key={t.id}
                     onClick={() => { if (theme !== t.id) toggleTheme(); }}
@@ -308,12 +323,12 @@ export default function Settings() {
               <FormField label="Company Name">
                 <TextInput value="" onChange={() => {}} placeholder="Company name" />
               </FormField>
-              <FormField label="License Number">
-                <TextInput value="" onChange={() => {}} placeholder="Fire protection license #" />
+              <FormField label="ABN">
+                <TextInput value="" onChange={() => {}} placeholder="Australian Business Number" />
               </FormField>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
                 <FormField label="Phone">
-                  <TextInput type="tel" value="" onChange={() => {}} placeholder="(555) 123-4567" />
+                  <TextInput type="tel" value="" onChange={() => {}} placeholder="02 9000 1234" />
                 </FormField>
                 <FormField label="Email">
                   <TextInput type="email" value="" onChange={() => {}} placeholder="info@company.com" />
@@ -321,8 +336,8 @@ export default function Settings() {
                 <FormField label="Website">
                   <TextInput value="" onChange={() => {}} placeholder="www.company.com" />
                 </FormField>
-                <FormField label="State License">
-                  <TextInput value="" onChange={() => {}} placeholder="State license number" />
+                <FormField label="Default Markup (%)">
+                  <TextInput type="number" value="" onChange={() => {}} placeholder="e.g. 15" />
                 </FormField>
               </div>
 

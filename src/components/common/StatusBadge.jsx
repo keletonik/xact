@@ -1,4 +1,27 @@
-import { getStatusColor } from '../../utils/helpers';
+function getStatusColor(status) {
+  const map = {
+    // Estimating statuses
+    draft: 'neutral',
+    active: 'success',
+    approved: 'success',
+    accepted: 'success',
+    won: 'success',
+    completed: 'success',
+    sent: 'info',
+    quoting: 'info',
+    quoted: 'info',
+    lead: 'info',
+    opportunity: 'warning',
+    pending: 'warning',
+    review: 'warning',
+    declined: 'danger',
+    rejected: 'danger',
+    lost: 'danger',
+    cancelled: 'neutral',
+    closed: 'neutral',
+  };
+  return map[status?.toLowerCase()] || 'neutral';
+}
 
 const colorMap = {
   success: {
@@ -22,9 +45,9 @@ const colorMap = {
     dot: 'var(--color-info-500)',
   },
   neutral: {
-    bg: 'var(--bg-tertiary)',
-    text: 'var(--text-secondary)',
-    dot: 'var(--text-tertiary)',
+    bg: 'var(--color-bg-tertiary)',
+    text: 'var(--color-text-secondary)',
+    dot: 'var(--color-text-tertiary)',
   },
 };
 
@@ -32,7 +55,7 @@ export default function StatusBadge({ status, size = 'sm', showDot = true }) {
   const variant = getStatusColor(status);
   const colors = colorMap[variant] || colorMap.neutral;
 
-  const label = status?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown';
+  const label = status?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Unknown';
 
   const sizeStyles = {
     xs: { fontSize: '0.675rem', padding: '1px 6px' },

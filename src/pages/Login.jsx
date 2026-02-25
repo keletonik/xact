@@ -51,7 +51,7 @@ export default function Login() {
             marginTop: 40,
             maxWidth: 480,
           }}>
-            Fire Safety Management,{' '}
+            Precision Estimating,{' '}
             <span style={{
               background: 'linear-gradient(135deg, #F97316, #FBBF24)',
               WebkitBackgroundClip: 'text',
@@ -67,7 +67,7 @@ export default function Login() {
             maxWidth: 440,
             lineHeight: 1.7,
           }}>
-            Streamline inspections, track compliance, manage equipment, and generate reports — all from one powerful platform.
+            Take off quantities, build estimates, generate proposals, and win more work — all from one powerful platform.
           </p>
 
           <div style={{
@@ -76,10 +76,10 @@ export default function Login() {
             marginTop: 48,
           }}>
             {[
-              { value: '10K+', label: 'Inspections' },
-              { value: '500+', label: 'Buildings' },
+              { value: '$250M+', label: 'Estimated' },
+              { value: '6,000+', label: 'Proposals' },
               { value: '99.9%', label: 'Uptime' },
-            ].map(stat => (
+            ].map((stat) => (
               <div key={stat.label}>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#F97316' }}>{stat.value}</div>
                 <div style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>{stat.label}</div>
@@ -133,7 +133,7 @@ export default function Login() {
                 <input
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
                   style={{
                     width: '100%',
@@ -160,7 +160,7 @@ export default function Login() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   style={{
                     width: '100%',
