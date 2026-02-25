@@ -17,15 +17,15 @@ import useProjectStore from '../stores/useProjectStore';
 import usePriceBookStore from '../stores/usePriceBookStore';
 import { expandAssembly } from '../engine/assemblyExpander';
 import { ESTIMATE_STATUSES, ESTIMATE_STATUS_LABELS, ITEM_CATEGORIES, ITEM_CATEGORY_LABELS } from '../utils/constants';
-import { formatCurrency, formatDate, formatRelativeTime, formatPercent, formatNumber } from '../utils/formatters';
+import { formatCurrency, formatPercent, formatNumber } from '../utils/formatters';
 
 export default function Estimates() {
-  const { estimates, createEstimate, selectEstimate, addLine, addLines, updateLine, deleteLine, updateMarkups, createVersion, updateStatus } = useEstimateStore();
+  const { estimates, createEstimate, addLine, addLines, deleteLine, updateMarkups, createVersion } = useEstimateStore();
   const projects = useProjectStore((s) => s.projects);
   const assemblies = usePriceBookStore((s) => s.assemblies);
   const items = usePriceBookStore((s) => s.items);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter] = useState('all');
   const [showCreate, setShowCreate] = useState(false);
   const [selectedEstimate, setSelectedEstimate] = useState(null);
   const [showAddLine, setShowAddLine] = useState(false);

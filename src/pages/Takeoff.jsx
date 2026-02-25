@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Ruler, MousePointer, PenLine, Square, Circle, Minus,
@@ -13,7 +13,7 @@ import Tabs from '../components/common/Tabs';
 import useTakeoffStore from '../stores/useTakeoffStore';
 import useProjectStore from '../stores/useProjectStore';
 import { TAKEOFF_OBJECT_TYPES, UNITS, FIRE_SCOPE_LABELS } from '../utils/constants';
-import { formatNumber, formatQuantity } from '../utils/formatters';
+import { formatNumber } from '../utils/formatters';
 
 const TOOLS = [
   { id: 'select', label: 'Select', icon: MousePointer, shortcut: 'V' },

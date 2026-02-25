@@ -8,7 +8,7 @@ import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import SearchInput from '../components/common/SearchInput';
 import EmptyState from '../components/common/EmptyState';
-import { formatDate, formatCurrency } from '../utils/formatters';
+import { formatDate } from '../utils/formatters';
 
 const SAMPLE_VENDORS = [
   { id: 'v1', name: 'National Fire Supplies', contact: 'James Mitchell', email: 'sales@nfs.com.au', phone: '02 9876 5432', website: 'nfs.com.au', location: 'Sydney, NSW', rating: 4.5, categories: ['Sprinkler', 'Hydrant'], notes: 'Primary sprinkler supplier. Good pricing on Viking heads.', lastOrder: '2025-12-15' },

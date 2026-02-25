@@ -13,7 +13,7 @@ import usePriceBookStore from '../stores/usePriceBookStore';
 import useEstimateStore from '../stores/useEstimateStore';
 import useProjectStore from '../stores/useProjectStore';
 import { AUDIT_ACTIONS } from '../utils/constants';
-import { formatDateTime, formatRelativeTime } from '../utils/formatters';
+import { formatDateTime } from '../utils/formatters';
 import { detectAnomalies } from '../utils/validators';
 
 const ACTION_COLORS = {

@@ -24,7 +24,7 @@ const PIPELINE_STAGES = [
 ];
 
 export default function Opportunities() {
-  const { projects, createProject, updateProject } = useProjectStore();
+  const { projects, createProject } = useProjectStore();
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [view, setView] = useState('pipeline');

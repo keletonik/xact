@@ -104,7 +104,7 @@ export function submitPriceUpdate(searchResult, selectedResultId, itemId) {
   return update;
 }
 
-export function getScopeFlags(takeoffObjects, projectScopes) {
+export function getScopeFlags(takeoffObjects, _projectScopes) {
   const flags = [];
 
   const hasDevices = takeoffObjects.some((o) => o.tags?.includes('device') || o.system === 'alarm');
