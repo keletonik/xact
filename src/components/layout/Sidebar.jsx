@@ -15,6 +15,9 @@ import {
   ChevronLeft,
   ChevronRight,
   HelpCircle,
+  Pencil,
+  Package,
+  Wrench,
 } from 'lucide-react';
 import EvaluxLogo from '../common/EvaluxLogo';
 
@@ -23,10 +26,14 @@ const mainNav = [
   { path: '/opportunities', label: 'Opportunities', icon: Users },
   { path: '/projects', label: 'Projects', icon: FolderOpen },
   { path: '/takeoff', label: 'Takeoff', icon: Ruler },
+  { path: '/markup', label: 'Markup', icon: Pencil },
+  { path: '/quick-estimate', label: 'Quick estimate', icon: Calculator },
   { path: '/estimates', label: 'Estimates', icon: Calculator },
   { path: '/proposals', label: 'Proposals', icon: FileText },
+  { path: '/catalog', label: 'Catalog', icon: Package },
   { path: '/price-book', label: 'Price Book', icon: BookOpen },
   { path: '/vendors', label: 'Vendors', icon: Building2 },
+  { path: '/servicing', label: 'Servicing', icon: Wrench },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
 ];
 
