@@ -19,7 +19,7 @@ class EvalaxDB extends Dexie {
       // catalog
       products:        '&id, sku, name, category, brand, isCustom, isArchived, updatedAt',
       suppliers:       '&id, name, abn',
-      supplierPrices:  '&id, productId, supplierId, effectiveFrom, isPreferred',
+      supplierPrices:  '&id, productId, supplierId, effectiveFrom, isPreferred, importBatchId',
       assemblies:      '&id, name, scope',
       labourTasks:     '&id, trade, task',
 

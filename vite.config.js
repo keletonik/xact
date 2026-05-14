@@ -14,4 +14,21 @@ export default defineConfig({
   optimizeDeps: {
     include: ['pdfjs-dist'],
   },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Group heavy, route-specific libraries into their own chunks so the
+          // initial bundle stays lean. Each chunk only loads when its consumer
+          // route is visited.
+          'vendor-pdf': ['pdfjs-dist'],
+          'vendor-konva': ['konva', 'react-konva'],
+          'vendor-charts': ['recharts'],
+          'vendor-pdfgen': ['jspdf', 'jspdf-autotable', 'html2canvas'],
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
+  },
 })
