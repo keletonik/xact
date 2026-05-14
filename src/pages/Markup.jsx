@@ -7,6 +7,7 @@ import SymbolPicker from '../components/markup/SymbolPicker';
 import useMarkupStore from '../stores/useMarkupStore';
 import useProjectStore from '../stores/useProjectStore';
 import { buildLegend, downloadString, legendToCSV } from '../markup/exporters';
+import { getPdfDocument } from '../components/markup/pdfPageRender';
 
 export default function MarkupPage() {
   const projects = useProjectStore((s) => s.projects);
@@ -35,6 +36,7 @@ export default function MarkupPage() {
   const [placementSymbolId, setPlacementSymbolId] = useState(null);
   const [drawingBlob, setDrawingBlob] = useState(null);
   const [contentType, setContentType] = useState(null);
+  const [activeLayerOverride, setActiveLayerOverride] = useState(null);
 
   useEffect(() => { hydrate(); }, [hydrate]);
 
@@ -45,7 +47,9 @@ export default function MarkupPage() {
   const drawing = projectDrawings.find((d) => d.id === selectedDrawingId) || projectDrawings[0] || null;
   const markupDoc = drawing ? markupDocs.find((d) => d.drawingId === drawing.id) : null;
   const page = markupDoc?.pages.find((p) => p.pageNumber === pageNumber) ?? markupDoc?.pages[0] ?? null;
-  const activeLayerId = page?.layers[0]?.id;
+  const activeLayerId = page
+    ? (page.layers.find((l) => l.id === activeLayerOverride)?.id ?? page.layers[0]?.id)
+    : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +71,6 @@ export default function MarkupPage() {
       if (!drawing || !drawingBlob) return;
       if (drawing.contentType !== 'application/pdf') return;
       try {
-        const { getPdfDocument } = await import('../components/markup/pdfPageRender');
         const doc = await getPdfDocument(drawingBlob);
         if (cancelled) return;
         if (markupDoc && markupDoc.pages.length !== doc.numPages) {
@@ -110,9 +113,9 @@ export default function MarkupPage() {
     }
   }, [markupDoc, page, removeObject]);
 
-  const handleCalibrated = useCallback(({ mmPerPx }) => {
+  const handleCalibrated = useCallback(({ pointA, pointB, knownMm }) => {
     if (!markupDoc || !page) return;
-    calibrate(markupDoc.id, page.pageNumber, { x: 0, y: 0 }, { x: 1 / mmPerPx, y: 0 }, 1);
+    calibrate(markupDoc.id, page.pageNumber, pointA, pointB, knownMm);
     setCalibrationMode(false);
   }, [calibrate, markupDoc, page]);
 
@@ -195,7 +198,7 @@ export default function MarkupPage() {
             <LayerPanel
               page={page}
               activeLayerId={activeLayerId}
-              onSetActiveLayer={() => {}}
+              onSetActiveLayer={(id) => setActiveLayerOverride(id)}
               onAddLayer={() => addLayerFn(markupDoc.id, page.pageNumber, {})}
               onUpdateLayer={(layerId, patch) => updateLayerFn(markupDoc.id, page.pageNumber, layerId, patch)}
               onRemoveLayer={(layerId) => removeLayerFn(markupDoc.id, page.pageNumber, layerId)}

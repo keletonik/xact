@@ -111,9 +111,18 @@ export function getSymbolsByCategory(category) {
   return SYMBOLS.filter((s) => s.category === category);
 }
 
-/** Render a symbol to an inline SVG string. Used for toolbar buttons. */
+/**
+ * Render a symbol to an inline SVG string. Used for toolbar buttons via
+ * dangerouslySetInnerHTML.
+ *
+ * Inputs are validated even though every current caller passes a literal —
+ * this defends a future caller that wires `color` to user input.
+ */
+const COLOR_RE = /^#[0-9a-fA-F]{3,8}$|^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/;
 export function renderSymbolToSVG(symbolId, color = '#ef4444', size = 24) {
   const sym = getSymbol(symbolId);
   if (!sym) return '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color}">${sym.svg}</svg>`;
+  const safeColor = COLOR_RE.test(color) ? color : '#0f172a';
+  const safeSize = Number.isFinite(size) ? Math.max(8, Math.min(256, Math.floor(size))) : 24;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${safeSize}" height="${safeSize}" viewBox="0 0 24 24" style="color:${safeColor}">${sym.svg}</svg>`;
 }

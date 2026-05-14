@@ -64,6 +64,7 @@ export default function MarkupCanvas({
   const [calibState, setCalibState] = useState(null); // { points: [..], promptForLength: bool }
   const [isPanning, setIsPanning] = useState(false);
   const panOrigin = useRef(null);
+  const spacePressed = useRef(false);
   const [selectedId, setSelectedId] = useState(null);
 
   const page = useMemo(
@@ -128,10 +129,13 @@ export default function MarkupCanvas({
   }, []);
 
   const handlePointerDown = useCallback((e) => {
-    // pan
-    if (e.evt.button === 1 || (e.evt.button === 0 && e.evt.spaceKey)) {
+    // pan: middle-mouse drag, or hold Space + left-drag.
+    const isTouch = e.evt.touches != null;
+    const clientX = isTouch ? e.evt.touches[0]?.clientX : e.evt.clientX;
+    const clientY = isTouch ? e.evt.touches[0]?.clientY : e.evt.clientY;
+    if (!isTouch && (e.evt.button === 1 || (e.evt.button === 0 && spacePressed.current))) {
       setIsPanning(true);
-      panOrigin.current = { x: e.evt.clientX, y: e.evt.clientY, stage: { ...stagePos } };
+      panOrigin.current = { x: clientX, y: clientY, stage: { ...stagePos } };
       return;
     }
     const p = getStagePoint(); if (!p) return;
@@ -149,8 +153,10 @@ export default function MarkupCanvas({
           const mm = Number.parseFloat(input);
           if (!Number.isFinite(mm) || mm <= 0) { setCalibState(null); return; }
           try {
-            const newPage = calibratePage(page, pointA, pointB, mm);
-            if (onCalibrated) onCalibrated({ mmPerPx: newPage.scale.mmPerPx, points: newPage.scale.calibrationPoints, knownMm: mm });
+            // Validate by trial-calibrating a local page copy; the store action below
+            // performs the authoritative calibrate using the same inputs.
+            calibratePage(page, pointA, pointB, mm);
+            if (onCalibrated) onCalibrated({ pointA, pointB, knownMm: mm });
           } catch (err) {
             console.error('Calibration failed', err);
           }
@@ -186,8 +192,12 @@ export default function MarkupCanvas({
 
   const handlePointerMove = useCallback((e) => {
     if (isPanning && panOrigin.current) {
-      const dx = e.evt.clientX - panOrigin.current.x;
-      const dy = e.evt.clientY - panOrigin.current.y;
+      const isTouch = e.evt.touches != null;
+      const clientX = isTouch ? e.evt.touches[0]?.clientX : e.evt.clientX;
+      const clientY = isTouch ? e.evt.touches[0]?.clientY : e.evt.clientY;
+      if (clientX == null || clientY == null) return;
+      const dx = clientX - panOrigin.current.x;
+      const dy = clientY - panOrigin.current.y;
       setStagePos({ x: panOrigin.current.stage.x + dx, y: panOrigin.current.stage.y + dy });
       return;
     }
@@ -234,6 +244,17 @@ export default function MarkupCanvas({
       y: pointer.y - mousePointTo.y * newScale,
     });
   }, [stagePos, stageScale]);
+
+  useEffect(() => {
+    const onSpaceDown = (e) => { if (e.code === 'Space') spacePressed.current = true; };
+    const onSpaceUp = (e) => { if (e.code === 'Space') spacePressed.current = false; };
+    window.addEventListener('keydown', onSpaceDown);
+    window.addEventListener('keyup', onSpaceUp);
+    return () => {
+      window.removeEventListener('keydown', onSpaceDown);
+      window.removeEventListener('keyup', onSpaceUp);
+    };
+  }, []);
 
   useEffect(() => {
     const onKey = (e) => {
