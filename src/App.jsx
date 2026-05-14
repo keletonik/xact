@@ -7,6 +7,10 @@ import Dashboard from './pages/Dashboard';
 import Opportunities from './pages/Opportunities';
 import Projects from './pages/Projects';
 import Takeoff from './pages/Takeoff';
+import MarkupPage from './pages/Markup';
+import Catalog from './pages/Catalog';
+import Servicing from './pages/Servicing';
+import QuickEstimator from './pages/QuickEstimator';
 import Estimates from './pages/Estimates';
 import Proposals from './pages/Proposals';
 import PriceBook from './pages/PriceBook';
@@ -59,6 +63,10 @@ export default function App() {
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/:id" element={<Projects />} />
             <Route path="/takeoff" element={<Takeoff />} />
+            <Route path="/markup" element={<MarkupPage />} />
+            <Route path="/catalog" element={<Catalog />} />
+            <Route path="/servicing" element={<Servicing />} />
+            <Route path="/quick-estimate" element={<QuickEstimator />} />
             <Route path="/estimates" element={<Estimates />} />
             <Route path="/proposals" element={<Proposals />} />
             <Route path="/price-book" element={<PriceBook />} />
