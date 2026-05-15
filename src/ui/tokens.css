@@ -1,0 +1,240 @@
+/* ============================================================
+   Evalax design tokens — Geist-inspired light monochrome
+   ------------------------------------------------------------
+   Loaded once at app boot via src/index.css. Every component
+   that needs a colour / spacing / radius value reads from here
+   so the look is unified and theming is a one-file change.
+
+   Palette intent: near-black ink on white background, thin
+   1-px borders in mid-grey, single bright accent (#0070f3,
+   the classic Vercel blue) reserved for primary action.
+   ============================================================ */
+
+:root {
+  /* ---------- Greyscale (foreground & background) ---------- */
+  --geist-fg:           #000000;
+  --geist-fg-1:         #111111;
+  --geist-fg-2:         #333333;
+  --geist-fg-3:         #555555;
+  --geist-fg-4:         #888888;
+  --geist-fg-5:         #aaaaaa;
+
+  --geist-bg:           #ffffff;
+  --geist-bg-1:         #fafafa;
+  --geist-bg-2:         #f5f5f5;
+  --geist-bg-3:         #ececec;
+
+  --geist-border:       #e6e6e6;
+  --geist-border-strong:#d4d4d4;
+  --geist-border-soft:  #f0f0f0;
+
+  /* ---------- Accent (Vercel blue) ---------- */
+  --geist-accent:       #0070f3;
+  --geist-accent-fg:    #ffffff;
+  --geist-accent-soft:  rgba(0, 112, 243, 0.10);
+  --geist-accent-hover: #0061d5;
+
+  /* ---------- Semantic ---------- */
+  --geist-success:      #0f9d58;
+  --geist-success-soft: rgba(15, 157, 88, 0.10);
+  --geist-warning:      #f5a623;
+  --geist-warning-soft: rgba(245, 166, 35, 0.12);
+  --geist-error:        #e00000;
+  --geist-error-soft:   rgba(224, 0, 0, 0.08);
+  --geist-info:         var(--geist-accent);
+  --geist-info-soft:    var(--geist-accent-soft);
+
+  /* ---------- Typography ---------- */
+  --geist-font-sans:    "Inter", ui-sans-serif, system-ui, -apple-system,
+                        BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --geist-font-mono:    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+
+  --geist-text-xs:      0.6875rem;  /* 11 */
+  --geist-text-sm:      0.8125rem;  /* 13 */
+  --geist-text-md:      0.9375rem;  /* 15 — body */
+  --geist-text-lg:      1.0625rem;  /* 17 */
+  --geist-text-xl:      1.25rem;    /* 20 */
+  --geist-text-2xl:     1.5rem;     /* 24 */
+  --geist-text-3xl:     2rem;       /* 32 */
+  --geist-text-4xl:     2.5rem;     /* 40 */
+
+  --geist-weight-regular: 400;
+  --geist-weight-medium:  500;
+  --geist-weight-semibold:600;
+  --geist-weight-bold:    700;
+
+  --geist-tracking-tight: -0.01em;
+  --geist-tracking-tighter: -0.02em;
+
+  --geist-leading-tight:  1.25;
+  --geist-leading-normal: 1.5;
+  --geist-leading-relaxed:1.65;
+
+  /* ---------- Spacing (Geist 4-px scale) ---------- */
+  --geist-space-1:  4px;
+  --geist-space-2:  8px;
+  --geist-space-3:  12px;
+  --geist-space-4:  16px;
+  --geist-space-5:  20px;
+  --geist-space-6:  24px;
+  --geist-space-7:  32px;
+  --geist-space-8:  40px;
+  --geist-space-9:  48px;
+  --geist-space-10: 64px;
+
+  /* ---------- Radius ---------- */
+  --geist-radius-sm: 4px;
+  --geist-radius:    6px;     /* default button / input */
+  --geist-radius-md: 8px;     /* card */
+  --geist-radius-lg: 12px;    /* drawer / dialog */
+  --geist-radius-full: 999px;
+
+  /* ---------- Shadows (use sparingly) ---------- */
+  --geist-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --geist-shadow:    0 2px 6px rgba(0, 0, 0, 0.06);
+  --geist-shadow-md: 0 6px 18px rgba(0, 0, 0, 0.08);
+  --geist-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+
+  /* ---------- Motion ---------- */
+  --geist-easing:    cubic-bezier(0.4, 0, 0.2, 1);
+  --geist-duration-fast:   120ms;
+  --geist-duration:        180ms;
+  --geist-duration-slow:   260ms;
+
+  /* ---------- Component heights ---------- */
+  --geist-control-sm: 28px;
+  --geist-control:    36px;   /* default button / input height */
+  --geist-control-lg: 44px;
+
+  /* ---------- Layout ---------- */
+  --geist-sidebar-w:           248px;
+  --geist-sidebar-collapsed-w: 64px;
+  --geist-header-h:            56px;
+  --geist-max-content:         1320px;
+
+  /* ---------- Backwards-compat shims ----------
+     Older components in the tree still reference the original
+     fire-orange / slate variables. Re-point them at the Geist
+     scale so nothing visually goes stale during the migration.
+     New code should use the --geist-* names directly.
+  ----------------------------------------------- */
+  --color-fire-50:  var(--geist-accent-soft);
+  --color-fire-100: var(--geist-accent-soft);
+  --color-fire-400: var(--geist-accent);
+  --color-fire-500: var(--geist-accent);
+  --color-fire-600: var(--geist-accent-hover);
+  --color-fire-700: var(--geist-accent-hover);
+
+  --color-slate-50:  var(--geist-bg-1);
+  --color-slate-100: var(--geist-bg-2);
+  --color-slate-200: var(--geist-border);
+  --color-slate-300: var(--geist-border-strong);
+  --color-slate-400: var(--geist-fg-5);
+  --color-slate-500: var(--geist-fg-4);
+  --color-slate-600: var(--geist-fg-3);
+  --color-slate-700: var(--geist-fg-2);
+  --color-slate-800: var(--geist-fg-1);
+  --color-slate-900: var(--geist-fg);
+
+  --color-success-50:  var(--geist-success-soft);
+  --color-success-500: var(--geist-success);
+  --color-success-600: var(--geist-success);
+  --color-success-700: var(--geist-success);
+
+  --color-warning-50:  var(--geist-warning-soft);
+  --color-warning-200: var(--geist-warning-soft);
+  --color-warning-500: var(--geist-warning);
+
+  --color-info-50:  var(--geist-info-soft);
+  --color-info-200: var(--geist-info-soft);
+  --color-info-400: var(--geist-info);
+  --color-info-500: var(--geist-info);
+  --color-info-600: var(--geist-info);
+
+  --color-danger-400: var(--geist-error);
+  --color-danger-500: var(--geist-error);
+  --color-danger-600: var(--geist-error);
+
+  --color-bg-card:        var(--geist-bg);
+  --color-bg-secondary:   var(--geist-bg-1);
+  --color-border:         var(--geist-border);
+  --color-text-tertiary:  var(--geist-fg-3);
+  --color-text-secondary: var(--geist-fg-2);
+
+  --bg-primary:    var(--geist-bg);
+  --bg-secondary:  var(--geist-bg-1);
+  --bg-tertiary:   var(--geist-bg-2);
+  --bg-sidebar:    #0a0a0a;       /* sidebar deliberately near-black on light theme */
+  --bg-sidebar-hover:  #1a1a1a;
+  --bg-sidebar-active: #262626;
+  --text-primary:    var(--geist-fg);
+  --text-secondary:  var(--geist-fg-2);
+  --text-tertiary:   var(--geist-fg-3);
+  --text-sidebar:        #a3a3a3;
+  --text-sidebar-active: #ffffff;
+  --border-color:    var(--geist-border);
+  --surface:         var(--geist-bg);
+
+  --radius-sm:   var(--geist-radius-sm);
+  --radius-md:   var(--geist-radius);
+  --radius-lg:   var(--geist-radius-md);
+  --radius-xl:   var(--geist-radius-lg);
+  --radius-full: var(--geist-radius-full);
+
+  --transition-fast: var(--geist-duration-fast) var(--geist-easing);
+  --transition:      var(--geist-duration)      var(--geist-easing);
+  --transition-slow: var(--geist-duration-slow) var(--geist-easing);
+
+  --sidebar-width:           var(--geist-sidebar-w);
+  --sidebar-collapsed-width: var(--geist-sidebar-collapsed-w);
+  --header-height:           var(--geist-header-h);
+}
+
+/* Honour reduced-motion. Geist's own site does this. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --geist-duration-fast: 0ms;
+    --geist-duration:      0ms;
+    --geist-duration-slow: 0ms;
+  }
+  * { animation-duration: 0ms !important; transition-duration: 0ms !important; }
+}
+
+html, body {
+  background: var(--geist-bg);
+  color: var(--geist-fg);
+  font-family: var(--geist-font-sans);
+  font-size: var(--geist-text-md);
+  line-height: var(--geist-leading-normal);
+  letter-spacing: var(--geist-tracking-tight);
+}
+
+/* Headings get tighter tracking and bolder weight, Geist-style */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: var(--geist-tracking-tighter);
+  font-weight: var(--geist-weight-semibold);
+  color: var(--geist-fg);
+  line-height: var(--geist-leading-tight);
+}
+
+/* Focus ring — visible, single colour, never invisible. */
+*:focus-visible {
+  outline: 2px solid var(--geist-accent);
+  outline-offset: 2px;
+  border-radius: var(--geist-radius-sm);
+}
+
+/* Scrollbar — thin and unobtrusive on light backgrounds. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--geist-border-strong) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--geist-border-strong);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--geist-fg-5); background-clip: padding-box; }

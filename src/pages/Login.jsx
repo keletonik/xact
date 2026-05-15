@@ -53,9 +53,7 @@ export default function Login() {
           }}>
             Precision Estimating,{' '}
             <span style={{
-              background: 'linear-gradient(135deg, #F97316, #FBBF24)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: 'var(--geist-accent)',
             }}>
               Simplified
             </span>

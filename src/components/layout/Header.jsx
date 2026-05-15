@@ -65,14 +65,15 @@ export default function Header({ onMobileMenuToggle }) {
         right: 0,
         left: 0,
         height: 'var(--header-height)',
-        backgroundColor: 'var(--bg-primary)',
-        borderBottom: '1px solid var(--border-primary)',
+        backgroundColor: 'rgba(255,255,255,0.85)',
+        backdropFilter: 'saturate(180%) blur(10px)',
+        WebkitBackdropFilter: 'saturate(180%) blur(10px)',
+        borderBottom: '1px solid var(--geist-border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 24px',
         zIndex: 90,
-        backdropFilter: 'blur(8px)',
       }}
     >
       {/* Left: Mobile menu + Breadcrumb */}
@@ -217,11 +218,11 @@ export default function Header({ onMobileMenuToggle }) {
               width: 32,
               height: 32,
               borderRadius: 'var(--radius-full)',
-              background: 'linear-gradient(135deg, #ea580c, #f97316)',
+              background: 'var(--geist-fg)',
+              color: 'var(--geist-bg)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fff',
               fontSize: '0.75rem',
               fontWeight: 700,
             }}>

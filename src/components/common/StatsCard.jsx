@@ -1,85 +1,103 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-export default function StatsCard({ title, value, subtitle, icon: Icon, trend, trendValue, color = 'fire', delay = 0 }) {
-  const colorMap = {
-    fire: { bg: 'var(--color-fire-50)', icon: 'var(--color-fire-500)', gradient: 'linear-gradient(135deg, #ea580c, #f97316)' },
-    success: { bg: 'var(--color-success-50)', icon: 'var(--color-success-500)', gradient: 'linear-gradient(135deg, #16a34a, #22c55e)' },
-    warning: { bg: 'var(--color-warning-50)', icon: 'var(--color-warning-500)', gradient: 'linear-gradient(135deg, #d97706, #f59e0b)' },
-    danger: { bg: 'var(--color-danger-50)', icon: 'var(--color-danger-500)', gradient: 'linear-gradient(135deg, #dc2626, #ef4444)' },
-    info: { bg: 'var(--color-info-50)', icon: 'var(--color-info-500)', gradient: 'linear-gradient(135deg, #2563eb, #3b82f6)' },
-  };
-
-  const c = colorMap[color] || colorMap.fire;
+/**
+ * Stat tile in the Geist register: monochrome surface, single accent for the
+ * icon chip, mono-typeface numerals.
+ */
+export default function StatsCard({ title, value, subtitle, icon: Icon, trend, trendValue, color = 'fg', delay = 0 }) {
+  // Map legacy colour keys onto the new flat palette. All chips are the same
+  // light grey at rest — the *icon stroke* is the only differentiator.
+  const iconColor = {
+    fire:    'var(--geist-fg)',
+    fg:      'var(--geist-fg)',
+    success: 'var(--geist-success)',
+    warning: 'var(--geist-warning)',
+    danger:  'var(--geist-error)',
+    info:    'var(--geist-accent)',
+  }[color] || 'var(--geist-fg)';
 
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
-  const trendColor = trend === 'up' ? 'var(--color-success-600)' : trend === 'down' ? 'var(--color-danger-600)' : 'var(--text-tertiary)';
+  const trendColor = trend === 'up'
+    ? 'var(--geist-success)'
+    : trend === 'down'
+    ? 'var(--geist-error)'
+    : 'var(--geist-fg-3)';
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: delay * 0.1, duration: 0.3 }}
+      transition={{ delay: delay * 0.08, duration: 0.24 }}
       style={{
-        backgroundColor: 'var(--bg-card)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-primary)',
-        padding: '20px 24px',
-        boxShadow: 'var(--shadow-sm)',
+        backgroundColor: 'var(--geist-bg)',
+        borderRadius: 'var(--geist-radius-md)',
+        border: '1px solid var(--geist-border)',
+        padding: 'var(--geist-space-5)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
+        gap: 'var(--geist-space-3)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+        <span style={{
+          fontSize: 'var(--geist-text-sm)',
+          fontWeight: 'var(--geist-weight-medium)',
+          color: 'var(--geist-fg-3)',
+          letterSpacing: 0,
+          textTransform: 'none',
+        }}>
           {title}
         </span>
         {Icon && (
           <div style={{
-            width: 40,
-            height: 40,
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: c.bg,
+            width: 28, height: 28,
+            borderRadius: 'var(--geist-radius)',
+            border: '1px solid var(--geist-border)',
+            background: 'var(--geist-bg-1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            color: iconColor,
           }}>
-            <Icon size={20} style={{ color: c.icon }} />
+            <Icon size={16} strokeWidth={2.25} />
           </div>
         )}
       </div>
 
       <div>
         <div style={{
-          fontSize: '1.75rem',
-          fontWeight: 700,
-          color: 'var(--text-primary)',
-          lineHeight: 1.2,
+          fontFamily: 'var(--geist-font-mono)',
+          fontSize: 'var(--geist-text-3xl)',
+          fontWeight: 'var(--geist-weight-semibold)',
+          color: 'var(--geist-fg)',
+          letterSpacing: 'var(--geist-tracking-tighter)',
+          lineHeight: 1.1,
         }}>
           {value}
         </div>
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
-          marginTop: 6,
+          gap: 'var(--geist-space-2)',
+          marginTop: 'var(--geist-space-2)',
         }}>
           {trend && (
             <span style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 2,
-              fontSize: '0.75rem',
-              fontWeight: 600,
+              fontSize: 'var(--geist-text-xs)',
+              fontWeight: 'var(--geist-weight-semibold)',
               color: trendColor,
+              fontFamily: 'var(--geist-font-mono)',
             }}>
-              <TrendIcon size={14} />
+              <TrendIcon size={12} strokeWidth={2.5} />
               {trendValue}
             </span>
           )}
           {subtitle && (
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+            <span style={{ fontSize: 'var(--geist-text-xs)', color: 'var(--geist-fg-4)' }}>
               {subtitle}
             </span>
           )}
