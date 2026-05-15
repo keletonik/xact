@@ -9,7 +9,7 @@ import {
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import useProjectStore from '../stores/useProjectStore';
+import useProjectStore, { computePipelineStats } from '../stores/useProjectStore';
 import useEstimateStore from '../stores/useEstimateStore';
 import usePriceBookStore from '../stores/usePriceBookStore';
 import useAuditStore from '../stores/useAuditStore';
@@ -19,7 +19,11 @@ const CHART_COLORS = ['#f97316', '#3b82f6', '#22c55e', '#8b5cf6', '#ef4444', '#e
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const pipelineStats = useProjectStore((s) => s.getPipelineStats());
+  // Select the stable array reference, then derive stats once per change.
+  // Calling `s.getPipelineStats()` from inside the selector returned a fresh
+  // object every render and tripped React 19's getSnapshot caching loop.
+  const projects = useProjectStore((s) => s.projects);
+  const pipelineStats = useMemo(() => computePipelineStats(projects), [projects]);
   const estimates = useEstimateStore((s) => s.estimates);
   const items = usePriceBookStore((s) => s.items);
   const pendingUpdates = usePriceBookStore((s) => s.pendingUpdates);
