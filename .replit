@@ -1,0 +1,30 @@
+modules = ["nodejs-20"]
+
+hidden = [".config", "package-lock.json", "node_modules", "dist", "server/evalax.db"]
+
+run = "npm run dev"
+
+[nix]
+channel = "stable-24_05"
+
+# Workspace web preview — Replit pipes the localPort through its HTTPS proxy.
+# The dev server listens on whatever PORT Replit injects; if absent it falls
+# back to 5173 (Vite default).
+[[ports]]
+localPort = 5173
+externalPort = 80
+exposeLocalhost = true
+
+# Production deployment — built static assets served by `vite preview`.
+# `dist/` must exist before deploy; the build command produces it.
+[deployment]
+deploymentTarget = "autoscale"
+build = ["sh", "-c", "npm ci && npm run build"]
+run = ["sh", "-c", "npm run start"]
+
+[env]
+NODE_ENV = "development"
+
+# Suppress the better-sqlite3 native-build noise on first install in dev.
+# The frontend itself doesn't need sqlite — only the optional server/ workspace does.
+npm_config_build_from_source = "false"
