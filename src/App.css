@@ -1,8 +1,12 @@
-/* App Layout */
+/* ============================================================
+   App shell layout — sidebar + header + content
+   ============================================================ */
+
 .app-layout {
   display: flex;
   min-height: 100vh;
-  background: var(--bg-secondary);
+  background: var(--geist-bg);
+  color: var(--geist-fg);
 }
 
 .app-main {
@@ -12,6 +16,7 @@
   display: flex;
   flex-direction: column;
   transition: margin-left var(--transition-slow);
+  background: var(--geist-bg);
 }
 
 .app-layout.sidebar-collapsed .app-main {
@@ -20,36 +25,29 @@
 
 .app-content {
   flex: 1;
-  padding: 24px;
-  margin-top: var(--header-height);
-  animation: fadeIn 0.3s ease;
+  padding: var(--geist-space-6) var(--geist-space-7);
+  margin-top: var(--geist-header-h);
+  max-width: var(--geist-max-content);
+  width: 100%;
+  margin-inline: auto;
+  animation: fadeIn var(--geist-duration-slow) var(--geist-easing);
 }
 
-/* Page transitions */
-.page-enter {
-  opacity: 0;
-  transform: translateY(8px);
-}
-
-.page-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-/* Responsive */
 @media (max-width: 1024px) {
-  .app-main {
-    margin-left: 0;
-  }
-
-  .app-content {
-    padding: 16px;
-  }
+  .app-main { margin-left: 0; }
+  .app-content { padding: var(--geist-space-5); }
 }
 
 @media (max-width: 640px) {
-  .app-content {
-    padding: 12px;
-  }
+  .app-content { padding: var(--geist-space-4); }
+}
+
+.page-enter {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--transition), transform var(--transition);
 }
