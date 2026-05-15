@@ -9,6 +9,7 @@ import useProjectStore from '../stores/useProjectStore';
 import useToolbarPrefs from '../hooks/useToolbarPrefs';
 import { buildLegend, downloadString, legendToCSV } from '../markup/exporters';
 import { getPdfDocument } from '../components/markup/pdfPageRender';
+import { sniffFileKind } from '../utils/fileSniff';
 
 export default function MarkupPage() {
   const projects = useProjectStore((s) => s.projects);
@@ -98,9 +99,11 @@ export default function MarkupPage() {
       window.alert('Pick a project first.');
       return;
     }
-    const accepted = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
-    if (!accepted.includes(file.type)) {
-      window.alert('Supported file types: PDF, PNG, JPG, WEBP.');
+    // Sniff magic bytes — File.type comes from the OS and is spoofable.
+    const sniffed = await sniffFileKind(file);
+    const acceptedKinds = ['pdf', 'png', 'jpeg', 'webp'];
+    if (!sniffed || !acceptedKinds.includes(sniffed)) {
+      window.alert(`Supported file types: PDF, PNG, JPG, WEBP. (Detected: ${sniffed || 'unknown'})`);
       return;
     }
     const { drawing: created } = await uploadDrawing({ projectId, file, pageCount: 1 });

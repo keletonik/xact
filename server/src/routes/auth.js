@@ -23,10 +23,23 @@ async function verify(password, stored) {
   return timingSafeEqual(Buffer.from(derivedHex, 'hex'), derived);
 }
 
+// Password policy: at least 10 characters. We don't enforce complexity classes
+// (digit/symbol) — modern guidance (NIST 800-63-3) prefers length over
+// composition rules. Min length is a hard wall against trivial guessing.
+const MIN_PASSWORD_LENGTH = 10;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 authRouter.post('/register', async (c) => {
-  const body = await c.req.json();
-  const { email, password, name, orgName } = body;
+  let body;
+  try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body' }, 400); }
+  const { email, password, name, orgName } = body || {};
   if (!email || !password || !name) return c.json({ error: 'Missing fields' }, 400);
+  if (typeof email !== 'string' || !EMAIL_RE.test(email)) return c.json({ error: 'Invalid email' }, 400);
+  if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
+    return c.json({ error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` }, 400);
+  }
+  if (typeof name !== 'string' || name.trim().length === 0) return c.json({ error: 'Name required' }, 400);
+
   const existing = await db.select().from(schema.users).where(eq(schema.users.email, email));
   if (existing.length > 0) return c.json({ error: 'Email already registered' }, 409);
 
@@ -41,7 +54,10 @@ authRouter.post('/register', async (c) => {
 });
 
 authRouter.post('/login', async (c) => {
-  const { email, password } = await c.req.json();
+  let body;
+  try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body' }, 400); }
+  const { email, password } = body || {};
+  if (!email || !password) return c.json({ error: 'Missing fields' }, 400);
   const [user] = await db.select().from(schema.users).where(eq(schema.users.email, email));
   if (!user) return c.json({ error: 'Invalid credentials' }, 401);
   const ok = await verify(password, user.passwordHash);

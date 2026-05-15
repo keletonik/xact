@@ -58,7 +58,17 @@ productsRouter.post('/', async (c) => {
 productsRouter.put('/:id', async (c) => {
   const { orgId, userId } = c.get('user');
   const id = c.req.param('id');
-  const patch = await c.req.json();
+  let patch;
+  try { patch = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body' }, 400); }
+  // Pre-flight: confirm the row exists in this org. Without this check we'd
+  // return 200 for any caller (including cross-org), leaking nothing but
+  // claiming success and polluting the audit log with no-ops.
+  const [existing] = await db.select().from(schema.products)
+    .where(and(eq(schema.products.orgId, orgId), eq(schema.products.id, id)));
+  if (!existing) return c.json({ error: 'Not found' }, 404);
+  // Never let the caller flip orgId — strip it before writing.
+  delete patch.orgId;
+  delete patch.id;
   patch.updatedAt = new Date().toISOString();
   await db.update(schema.products).set(patch)
     .where(and(eq(schema.products.orgId, orgId), eq(schema.products.id, id)));
@@ -69,6 +79,9 @@ productsRouter.put('/:id', async (c) => {
 productsRouter.delete('/:id', async (c) => {
   const { orgId, userId } = c.get('user');
   const id = c.req.param('id');
+  const [existing] = await db.select().from(schema.products)
+    .where(and(eq(schema.products.orgId, orgId), eq(schema.products.id, id)));
+  if (!existing) return c.json({ error: 'Not found' }, 404);
   await db.delete(schema.products)
     .where(and(eq(schema.products.orgId, orgId), eq(schema.products.id, id)));
   await audit(orgId, userId, 'product_deleted', 'product', id);
