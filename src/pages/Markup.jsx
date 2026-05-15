@@ -3,9 +3,10 @@ import { Upload, Download, FileText, Trash2, ChevronLeft, ChevronRight } from 'l
 import MarkupCanvas from '../components/markup/MarkupCanvas';
 import MarkupToolbar from '../components/markup/MarkupToolbar';
 import LayerPanel from '../components/markup/LayerPanel';
-import SymbolPicker from '../components/markup/SymbolPicker';
+import CustomisableSymbolPalette from '../components/markup/CustomisableSymbolPalette';
 import useMarkupStore from '../stores/useMarkupStore';
 import useProjectStore from '../stores/useProjectStore';
+import useToolbarPrefs from '../hooks/useToolbarPrefs';
 import { buildLegend, downloadString, legendToCSV } from '../markup/exporters';
 import { getPdfDocument } from '../components/markup/pdfPageRender';
 
@@ -26,6 +27,12 @@ export default function MarkupPage() {
   const setMarkupPageCount = useMarkupStore((s) => s.setMarkupPageCount);
   const getDrawingBlob = useMarkupStore((s) => s.getDrawingBlob);
   const deleteDrawing = useMarkupStore((s) => s.deleteDrawing);
+  const undoFn = useMarkupStore((s) => s.undo);
+  const redoFn = useMarkupStore((s) => s.redo);
+  const history = useMarkupStore((s) => s.history);
+  const { prefs, togglePin, recordUse, resetDefaults } = useToolbarPrefs();
+
+  const [selectedObjectId, setSelectedObjectId] = useState(null);
 
   const [selectedDrawingId, setSelectedDrawingId] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -104,14 +111,44 @@ export default function MarkupPage() {
   const handleCommit = useCallback((obj) => {
     if (!markupDoc || !page) return;
     addObject(markupDoc.id, page.pageNumber, obj);
-  }, [addObject, markupDoc, page]);
+    if (obj?.metadata?.symbolId) recordUse(obj.metadata.symbolId);
+  }, [addObject, markupDoc, page, recordUse]);
 
   const handleObjectSelected = useCallback((obj) => {
-    if (!obj || !markupDoc || !page) return;
-    if (obj.__delete) {
+    if (!markupDoc || !page) return;
+    if (obj?.__delete) {
       removeObject(markupDoc.id, page.pageNumber, obj.__delete);
+      setSelectedObjectId(null);
+      return;
     }
+    setSelectedObjectId(obj?.id || null);
   }, [markupDoc, page, removeObject]);
+
+  const handleDeleteSelected = useCallback(() => {
+    if (!markupDoc || !page || !selectedObjectId) return;
+    removeObject(markupDoc.id, page.pageNumber, selectedObjectId);
+    setSelectedObjectId(null);
+  }, [markupDoc, page, removeObject, selectedObjectId]);
+
+  const canUndo = markupDoc ? (history[markupDoc.id]?.past?.length || 0) > 0 : false;
+  const canRedo = markupDoc ? (history[markupDoc.id]?.future?.length || 0) > 0 : false;
+  const handleUndo = useCallback(() => { if (markupDoc) undoFn(markupDoc.id); }, [markupDoc, undoFn]);
+  const handleRedo = useCallback(() => { if (markupDoc) redoFn(markupDoc.id); }, [markupDoc, redoFn]);
+
+  // Keyboard shortcuts: Ctrl/Cmd-Z undo, Ctrl/Cmd-Shift-Z (or Ctrl-Y) redo.
+  // Delete shortcut is wired inside MarkupCanvas so it doesn't fire while typing
+  // into a form field elsewhere on the page.
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = (e.target?.tagName || '').toUpperCase();
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return;
+      const meta = e.metaKey || e.ctrlKey;
+      if (meta && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); handleUndo(); }
+      else if (meta && (e.shiftKey && e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) { e.preventDefault(); handleRedo(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleUndo, handleRedo]);
 
   const handleCalibrated = useCallback(({ pointA, pointB, knownMm }) => {
     if (!markupDoc || !page) return;
@@ -194,6 +231,12 @@ export default function MarkupPage() {
               onSnapGridChange={setSnapGridPx}
               orthoLocked={orthoLocked}
               onToggleOrtho={() => setOrthoLocked((v) => !v)}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              onDeleteSelected={handleDeleteSelected}
+              hasSelection={!!selectedObjectId}
             />
             <LayerPanel
               page={page}
@@ -203,9 +246,13 @@ export default function MarkupPage() {
               onUpdateLayer={(layerId, patch) => updateLayerFn(markupDoc.id, page.pageNumber, layerId, patch)}
               onRemoveLayer={(layerId) => removeLayerFn(markupDoc.id, page.pageNumber, layerId)}
             />
-            {activeTool === 'count' && (
-              <SymbolPicker selectedSymbolId={placementSymbolId} onSelect={setPlacementSymbolId} />
-            )}
+            <CustomisableSymbolPalette
+              selectedSymbolId={placementSymbolId}
+              onSelect={(id) => { setPlacementSymbolId(id); setActiveTool('count'); }}
+              prefs={prefs}
+              togglePin={togglePin}
+              resetDefaults={resetDefaults}
+            />
             <div style={infoBox}>
               <strong>Scale</strong>
               <div style={{ fontSize: 12, color: '#475569', marginTop: 4 }}>

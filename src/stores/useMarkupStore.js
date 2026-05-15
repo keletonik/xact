@@ -10,10 +10,17 @@ import { addLayer, removeLayer, updateLayer } from '../markup/layers';
  * A `Drawing` is the raw uploaded file (PDF, image). Its bytes live in the
  * `blobs` table content-addressed by SHA-256. A `MarkupDocument` is the
  * mutable per-drawing markup state; one MarkupDocument per Drawing.
+ *
+ * Undo/redo is in-memory (not persisted) and per-document. The stack stores
+ * shallow snapshots of `pages` taken before each mutating action. Capped at
+ * MAX_HISTORY entries — older snapshots are dropped to bound memory.
  */
+const MAX_HISTORY = 50;
+
 const useMarkupStore = create((set, get) => ({
   drawings: [],
   markupDocs: [],
+  history: {},          // { [docId]: { past: [pagesSnapshot, …], future: [pagesSnapshot, …] } }
   ready: false,
 
   async hydrate() {
@@ -75,16 +82,28 @@ const useMarkupStore = create((set, get) => ({
     set((s) => ({ markupDocs: s.markupDocs.map((d) => (d.id === markupDocId ? updated : d)) }));
   },
 
-  async updatePage(markupDocId, pageNumber, mutator) {
+  /**
+   * Internal mutator. Captures the previous `pages` into the per-doc history
+   * stack before applying the change. Pass `{ skipHistory: true }` when the
+   * caller is itself an undo/redo (so we don't record undo as a new edit).
+   */
+  async _updateDoc(markupDocId, mutator, { skipHistory } = {}) {
     const doc = get().markupDocs.find((d) => d.id === markupDocId);
     if (!doc) return;
-    const updated = {
-      ...doc,
-      pages: doc.pages.map((p) => (p.pageNumber === pageNumber ? mutator(p) : p)),
-      updatedAt: new Date().toISOString(),
-    };
+    if (!skipHistory) {
+      const past = (get().history[markupDocId]?.past || []).concat([JSON.stringify(doc.pages)]);
+      const trimmed = past.length > MAX_HISTORY ? past.slice(past.length - MAX_HISTORY) : past;
+      set((s) => ({ history: { ...s.history, [markupDocId]: { past: trimmed, future: [] } } }));
+    }
+    const updated = { ...doc, ...mutator(doc), updatedAt: new Date().toISOString() };
     await db.markupDocs.put(updated);
     set((s) => ({ markupDocs: s.markupDocs.map((d) => (d.id === markupDocId ? updated : d)) }));
+  },
+
+  async updatePage(markupDocId, pageNumber, mutator) {
+    return get()._updateDoc(markupDocId, (doc) => ({
+      pages: doc.pages.map((p) => (p.pageNumber === pageNumber ? mutator(p) : p)),
+    }));
   },
 
   async addObject(markupDocId, pageNumber, obj) {
@@ -105,8 +124,25 @@ const useMarkupStore = create((set, get) => ({
     }));
   },
 
+  async removeObjects(markupDocId, pageNumber, objIds) {
+    if (!objIds || objIds.length === 0) return;
+    const idSet = new Set(objIds);
+    return get().updatePage(markupDocId, pageNumber, (p) => ({
+      ...p,
+      objects: p.objects.filter((o) => !idSet.has(o.id)),
+    }));
+  },
+
+  async clearPage(markupDocId, pageNumber) {
+    return get().updatePage(markupDocId, pageNumber, (p) => ({ ...p, objects: [] }));
+  },
+
   async calibrate(markupDocId, pageNumber, pointA, pointB, knownMm) {
     return get().updatePage(markupDocId, pageNumber, (p) => calibratePage(p, pointA, pointB, knownMm));
+  },
+
+  async setDisplayUnit(markupDocId, pageNumber, displayUnit) {
+    return get().updatePage(markupDocId, pageNumber, (p) => ({ ...p, displayUnit }));
   },
 
   async addLayer(markupDocId, pageNumber, attrs) {
@@ -121,6 +157,40 @@ const useMarkupStore = create((set, get) => ({
     return get().updatePage(markupDocId, pageNumber, (p) => removeLayer(p, layerId));
   },
 
+  async undo(markupDocId) {
+    const hist = get().history[markupDocId];
+    if (!hist || hist.past.length === 0) return false;
+    const doc = get().markupDocs.find((d) => d.id === markupDocId);
+    if (!doc) return false;
+    const previous = JSON.parse(hist.past[hist.past.length - 1]);
+    const newPast = hist.past.slice(0, -1);
+    const newFuture = [JSON.stringify(doc.pages), ...hist.future].slice(0, MAX_HISTORY);
+    set((s) => ({ history: { ...s.history, [markupDocId]: { past: newPast, future: newFuture } } }));
+    await get()._updateDoc(markupDocId, () => ({ pages: previous }), { skipHistory: true });
+    return true;
+  },
+
+  async redo(markupDocId) {
+    const hist = get().history[markupDocId];
+    if (!hist || hist.future.length === 0) return false;
+    const doc = get().markupDocs.find((d) => d.id === markupDocId);
+    if (!doc) return false;
+    const next = JSON.parse(hist.future[0]);
+    const newFuture = hist.future.slice(1);
+    const newPast = hist.past.concat([JSON.stringify(doc.pages)]).slice(-MAX_HISTORY);
+    set((s) => ({ history: { ...s.history, [markupDocId]: { past: newPast, future: newFuture } } }));
+    await get()._updateDoc(markupDocId, () => ({ pages: next }), { skipHistory: true });
+    return true;
+  },
+
+  canUndo(markupDocId) {
+    return (get().history[markupDocId]?.past?.length || 0) > 0;
+  },
+
+  canRedo(markupDocId) {
+    return (get().history[markupDocId]?.future?.length || 0) > 0;
+  },
+
   async deleteDrawing(drawingId) {
     const drawing = get().drawings.find((d) => d.id === drawingId);
     const doc = get().markupDocs.find((d) => d.drawingId === drawingId);
@@ -128,10 +198,15 @@ const useMarkupStore = create((set, get) => ({
       await db.drawings.delete(drawingId);
       if (doc) await db.markupDocs.delete(doc.id);
     });
-    set((s) => ({
-      drawings: s.drawings.filter((d) => d.id !== drawingId),
-      markupDocs: s.markupDocs.filter((d) => d.drawingId !== drawingId),
-    }));
+    set((s) => {
+      const nextHistory = { ...s.history };
+      if (doc) delete nextHistory[doc.id];
+      return {
+        drawings: s.drawings.filter((d) => d.id !== drawingId),
+        markupDocs: s.markupDocs.filter((d) => d.drawingId !== drawingId),
+        history: nextHistory,
+      };
+    });
     return drawing;
   },
 }));
