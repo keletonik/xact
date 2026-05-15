@@ -1,8 +1,21 @@
 import Papa from 'papaparse';
 
 /**
- * Thin wrapper around PapaParse that returns a promise and normalises headers.
+ * Unified spreadsheet parser. Accepts CSV (text/csv, .csv) and Excel
+ * (.xlsx, .xls) via SheetJS. Returns the same shape regardless of source:
+ *   { rows: Array<Record<string,string>>, headers: string[], warnings: string[] }
+ *
+ * For CSV we use PapaParse (streamable, fastest path).
+ * For Excel we lazy-load `xlsx` so the dep doesn't land in the initial bundle.
  */
+export async function parseSpreadsheet(file, { previewRows } = {}) {
+  const name = file.name?.toLowerCase() ?? '';
+  if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.ods')) {
+    return parseExcel(file, { previewRows });
+  }
+  return parseCSV(file, { previewRows });
+}
+
 export function parseCSV(file, { previewRows } = {}) {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
@@ -28,6 +41,29 @@ export function parseCSV(file, { previewRows } = {}) {
       error: (err) => reject(err),
     });
   });
+}
+
+async function parseExcel(file, { previewRows } = {}) {
+  const XLSX = await import('xlsx');
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+  // Heuristic: pick the first non-empty sheet.
+  const sheetName = wb.SheetNames.find((n) => {
+    const s = wb.Sheets[n];
+    return s['!ref'] && s['!ref'] !== 'A1';
+  }) || wb.SheetNames[0];
+  if (!sheetName) {
+    return { rows: [], headers: [], warnings: ['Workbook contains no sheets'] };
+  }
+  const sheet = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+  const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+  const trimmed = previewRows && previewRows > 0 ? rows.slice(0, previewRows) : rows;
+  const sheetsOther = wb.SheetNames.filter((n) => n !== sheetName);
+  const warnings = sheetsOther.length > 0
+    ? [`Imported sheet "${sheetName}". Other sheets ignored: ${sheetsOther.join(', ')}.`]
+    : [];
+  return { rows: trimmed, headers, warnings };
 }
 
 /** Slugify a header for matching against mapping presets. */

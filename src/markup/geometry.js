@@ -97,6 +97,24 @@ export function pointInPolygon(point, polygon) {
   return inside;
 }
 
+/** Angle in degrees between BA and BC, with B as the vertex. */
+export function angleDeg(a, b, c) {
+  const v1x = a.x - b.x, v1y = a.y - b.y;
+  const v2x = c.x - b.x, v2y = c.y - b.y;
+  const dot = v1x * v2x + v1y * v2y;
+  const m1 = Math.sqrt(v1x * v1x + v1y * v1y);
+  const m2 = Math.sqrt(v2x * v2x + v2y * v2y);
+  if (m1 === 0 || m2 === 0) return 0;
+  const cos = Math.max(-1, Math.min(1, dot / (m1 * m2)));
+  return (Math.acos(cos) * 180) / Math.PI;
+}
+
+/** Format an angle for the HUD readout. */
+export function formatAngle(deg) {
+  if (deg == null || !Number.isFinite(deg)) return '—';
+  return `${deg.toFixed(1)}°`;
+}
+
 /** Smoothly format a length value with appropriate units. */
 export function formatLength(mm, displayUnit = 'm') {
   if (mm == null || !Number.isFinite(mm)) return '—';
