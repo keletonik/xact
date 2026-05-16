@@ -41,7 +41,7 @@ const fallback = (
 
 export default function App() {
   const location = useLocation();
-  const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage('evalux-sidebar-collapsed', false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage('xact-sidebar-collapsed', false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAuthPage = authRoutes.includes(location.pathname);

@@ -13,9 +13,9 @@ import { formatDateTime } from '../utils/formatters';
 const currentUser = {
   id: 'USR-001',
   name: 'Project Estimator',
-  email: 'estimator@evalux.com',
+  email: 'estimator@xact.com',
   phone: '02 9000 1234',
-  company: 'Evalux Fire Estimating',
+  company: 'Xact Fire Estimating',
   role: 'Senior Estimator',
   certifications: ['AIQS', 'CostPro', 'AS 2118'],
   lastLogin: new Date().toISOString(),

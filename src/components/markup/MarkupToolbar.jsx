@@ -1,16 +1,25 @@
-import { MousePointer2, Hand, Ruler, Square, Hexagon, Type, Cloud, Slash, ArrowRight, MapPin, Crosshair } from 'lucide-react';
+import {
+  MousePointer2, Hand, Ruler, Square, Hexagon, Type, Cloud, Slash, ArrowRight,
+  MapPin, Crosshair, Circle, Triangle, Spline, Undo2, Redo2, Trash2,
+  MessageSquare, Link as LinkIcon,
+} from 'lucide-react';
 
 const TOOLS = [
-  { id: null,        label: 'Select',     icon: MousePointer2 },
-  { id: 'pan',       label: 'Pan',        icon: Hand },
-  { id: 'count',     label: 'Count',      icon: MapPin },
-  { id: 'length',    label: 'Length',     icon: Ruler },
-  { id: 'area',      label: 'Area',       icon: Hexagon },
-  { id: 'rectangle', label: 'Rectangle',  icon: Square },
-  { id: 'cloud',     label: 'Cloud',      icon: Cloud },
-  { id: 'line',      label: 'Line',       icon: Slash },
-  { id: 'arrow',     label: 'Arrow',      icon: ArrowRight },
-  { id: 'text',      label: 'Text',       icon: Type },
+  { id: null,         label: 'Select',     icon: MousePointer2 },
+  { id: 'pan',        label: 'Pan',        icon: Hand },
+  { id: 'count',      label: 'Count',      icon: MapPin },
+  { id: 'length',     label: 'Length',     icon: Ruler },
+  { id: 'perimeter',  label: 'Perimeter',  icon: Spline },
+  { id: 'area',       label: 'Area',       icon: Hexagon },
+  { id: 'diameter',   label: 'Diameter',   icon: Circle },
+  { id: 'angle',      label: 'Angle',      icon: Triangle },
+  { id: 'rectangle',  label: 'Rectangle',  icon: Square },
+  { id: 'cloud',      label: 'Revision cloud', icon: Cloud },
+  { id: 'callout',    label: 'Callout',    icon: MessageSquare },
+  { id: 'hyperlink',  label: 'Hyperlink',  icon: LinkIcon },
+  { id: 'line',       label: 'Line',       icon: Slash },
+  { id: 'arrow',      label: 'Arrow',      icon: ArrowRight },
+  { id: 'text',       label: 'Text',       icon: Type },
 ];
 
 export default function MarkupToolbar({
@@ -18,9 +27,23 @@ export default function MarkupToolbar({
   calibrationMode, onToggleCalibration,
   snapGridPx, onSnapGridChange,
   orthoLocked, onToggleOrtho,
+  canUndo, canRedo, onUndo, onRedo,
+  onDeleteSelected, hasSelection,
 }) {
   return (
     <div style={wrap}>
+      <div style={group}>
+        <button type="button" onClick={onUndo} disabled={!canUndo} title="Undo (Ctrl/Cmd Z)" aria-label="Undo" style={{ ...btn, opacity: canUndo ? 1 : 0.4 }}>
+          <Undo2 size={18} strokeWidth={2.25} />
+        </button>
+        <button type="button" onClick={onRedo} disabled={!canRedo} title="Redo (Ctrl/Cmd Shift Z)" aria-label="Redo" style={{ ...btn, opacity: canRedo ? 1 : 0.4 }}>
+          <Redo2 size={18} strokeWidth={2.25} />
+        </button>
+        <button type="button" onClick={onDeleteSelected} disabled={!hasSelection} title="Delete selected (Del)" aria-label="Delete selected" style={{ ...btn, opacity: hasSelection ? 1 : 0.4, color: hasSelection ? '#b91c1c' : undefined }}>
+          <Trash2 size={18} strokeWidth={2.25} />
+        </button>
+      </div>
+      <div style={divider} />
       <div style={group}>
         {TOOLS.map((t) => {
           const Icon = t.icon;
@@ -35,7 +58,7 @@ export default function MarkupToolbar({
               aria-pressed={isActive}
               style={{ ...btn, ...(isActive ? btnActive : null) }}
             >
-              <Icon size={16} />
+              <Icon size={18} strokeWidth={2.25} />
             </button>
           );
         })}
@@ -46,9 +69,9 @@ export default function MarkupToolbar({
         onClick={onToggleCalibration}
         aria-pressed={calibrationMode}
         title="Calibrate (2-point)"
-        style={{ ...btn, ...(calibrationMode ? btnActive : null), display: 'flex', alignItems: 'center', gap: 4 }}
+        style={{ ...btn, ...(calibrationMode ? btnActive : null), display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px' }}
       >
-        <Crosshair size={16} /> Calibrate
+        <Crosshair size={18} strokeWidth={2.25} /> Calibrate
       </button>
       <div style={divider} />
       <label style={lbl}>
@@ -69,15 +92,22 @@ export default function MarkupToolbar({
 
 const wrap = {
   display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center',
-  padding: '8px 12px', background: 'var(--surface, white)',
+  padding: '10px 12px', background: 'var(--surface, white)',
   borderBottom: '1px solid var(--border, #e5e7eb)', position: 'sticky', top: 0, zIndex: 5,
 };
 const group = { display: 'flex', gap: 4 };
 const btn = {
-  border: '1px solid var(--border, #e5e7eb)', background: 'white', borderRadius: 6,
-  padding: '6px 8px', cursor: 'pointer',
+  border: '1px solid var(--border, #d1d5db)',
+  background: 'white',
+  color: '#0f172a',                      // darker default for better contrast
+  borderRadius: 6,
+  padding: '8px 10px',                   // slightly larger hit target
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 };
 const btnActive = { background: '#0f172a', color: 'white', borderColor: '#0f172a' };
-const divider = { width: 1, height: 24, background: 'var(--border, #e5e7eb)', margin: '0 4px' };
-const lbl = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 };
-const select = { padding: '2px 6px', fontSize: 12, borderRadius: 4, border: '1px solid var(--border, #e5e7eb)' };
+const divider = { width: 1, height: 28, background: 'var(--border, #d1d5db)', margin: '0 4px' };
+const lbl = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#0f172a' };
+const select = { padding: '4px 8px', fontSize: 12, borderRadius: 4, border: '1px solid var(--border, #d1d5db)', color: '#0f172a' };

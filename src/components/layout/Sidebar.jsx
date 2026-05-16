@@ -19,7 +19,7 @@ import {
   Package,
   Wrench,
 } from 'lucide-react';
-import EvaluxLogo from '../common/EvaluxLogo';
+import XactLogo from '../common/XactLogo';
 
 const mainNav = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -54,8 +54,9 @@ export default function Sidebar({ collapsed, onToggle }) {
         left: 0,
         bottom: 0,
         width: collapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)',
-        backgroundColor: 'var(--bg-sidebar)',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        backgroundColor: '#0a0a0a',
+        borderRight: '1px solid #1a1a1a',
+        color: 'var(--text-sidebar)',
         display: 'flex',
         flexDirection: 'column',
         transition: 'width var(--transition-slow)',
@@ -72,7 +73,7 @@ export default function Sidebar({ collapsed, onToggle }) {
         borderBottom: '1px solid rgba(255,255,255,0.06)',
         flexShrink: 0,
       }}>
-        <EvaluxLogo size="md" collapsed={collapsed} />
+        <XactLogo size="md" collapsed={collapsed} />
       </div>
 
       {/* Main Navigation */}
@@ -200,10 +201,10 @@ function SidebarLink({ item, collapsed, isActive }) {
             left: 0,
             top: '50%',
             transform: 'translateY(-50%)',
-            width: 3,
-            height: 20,
-            borderRadius: '0 4px 4px 0',
-            background: 'linear-gradient(180deg, #f97316, #ea580c)',
+            width: 2,
+            height: 18,
+            borderRadius: '0 2px 2px 0',
+            background: 'var(--geist-accent)',
           }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         />

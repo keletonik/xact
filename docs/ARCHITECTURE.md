@@ -1,4 +1,4 @@
-# Evalax — Architecture
+# Xact — Architecture
 
 > Companion to `MASTER_PROMPT.md`. Where the master prompt is the *what*, this is the *how*.
 
@@ -7,7 +7,7 @@
 ## 1. Repository layout
 
 ```
-evalax/
+xact/
 ├── docs/                      # Master prompt, architecture, audit log
 ├── public/symbols/            # Drawing-symbol SVG library (fire, building)
 ├── src/

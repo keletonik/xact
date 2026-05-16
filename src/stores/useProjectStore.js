@@ -3,6 +3,27 @@ import { v4 as uuid } from 'uuid';
 import { PROJECT_STATUSES } from '../utils/constants';
 import useAuditStore from './useAuditStore';
 
+/**
+ * Pure derivation. Exported so callers can memoise it locally via useMemo
+ * (rather than calling a store getter from inside a Zustand selector, which
+ * returns a fresh object every read and causes React 19 to log
+ * "The result of getSnapshot should be cached" and re-render in a loop).
+ */
+export function computePipelineStats(projects) {
+  return {
+    leads: projects.filter((p) => p.status === PROJECT_STATUSES.LEAD).length,
+    opportunities: projects.filter((p) => p.status === PROJECT_STATUSES.OPPORTUNITY).length,
+    quoting: projects.filter((p) => p.status === PROJECT_STATUSES.QUOTING).length,
+    quoted: projects.filter((p) => p.status === PROJECT_STATUSES.QUOTED).length,
+    won: projects.filter((p) => p.status === PROJECT_STATUSES.WON).length,
+    lost: projects.filter((p) => p.status === PROJECT_STATUSES.LOST).length,
+    totalValue: projects.reduce((sum, p) => sum + (p.estimatedValue || 0), 0),
+    pipelineValue: projects
+      .filter((p) => [PROJECT_STATUSES.QUOTING, PROJECT_STATUSES.QUOTED].includes(p.status))
+      .reduce((sum, p) => sum + (p.estimatedValue || 0), 0),
+  };
+}
+
 const useProjectStore = create((set, get) => ({
   projects: [],
   contacts: [],
@@ -93,20 +114,15 @@ const useProjectStore = create((set, get) => ({
     return contact;
   },
 
+  /**
+   * Imperative escape hatch for non-React callers. React components MUST NOT
+   * call this from inside a `useStore((s) => s.getPipelineStats())` selector —
+   * the fresh object on every render triggers React 19's getSnapshot loop.
+   * Components should `select projects` and call `computePipelineStats(projects)`
+   * inside a `useMemo`.
+   */
   getPipelineStats() {
-    const projects = get().projects;
-    return {
-      leads: projects.filter((p) => p.status === PROJECT_STATUSES.LEAD).length,
-      opportunities: projects.filter((p) => p.status === PROJECT_STATUSES.OPPORTUNITY).length,
-      quoting: projects.filter((p) => p.status === PROJECT_STATUSES.QUOTING).length,
-      quoted: projects.filter((p) => p.status === PROJECT_STATUSES.QUOTED).length,
-      won: projects.filter((p) => p.status === PROJECT_STATUSES.WON).length,
-      lost: projects.filter((p) => p.status === PROJECT_STATUSES.LOST).length,
-      totalValue: projects.reduce((sum, p) => sum + (p.estimatedValue || 0), 0),
-      pipelineValue: projects
-        .filter((p) => [PROJECT_STATUSES.QUOTING, PROJECT_STATUSES.QUOTED].includes(p.status))
-        .reduce((sum, p) => sum + (p.estimatedValue || 0), 0),
-    };
+    return computePipelineStats(get().projects);
   },
 }));
 

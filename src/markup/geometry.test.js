@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   distancePx, polylineLengthPx, polygonAreaPx, polygonPerimeterPx,
   polygonAreaWithHolesPx, snapToGrid, orthoLock, pointInPolygon,
-  formatLength, formatArea, pxToMm,
+  formatLength, formatArea, pxToMm, angleDeg, formatAngle,
 } from './geometry';
 
 describe('geometry', () => {
@@ -53,5 +53,17 @@ describe('geometry', () => {
     expect(formatLength(1234, 'mm')).toBe('1234 mm');
     expect(formatLength(1234, 'm')).toBe('1.23 m');
     expect(formatArea(2e6, 'm')).toBe('2.00 m²');
+  });
+  it('angle between BA and BC: right angle', () => {
+    expect(angleDeg({ x: 10, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 10 })).toBeCloseTo(90, 1);
+  });
+  it('angle of a straight line is 180°', () => {
+    expect(angleDeg({ x: 0, y: 0 }, { x: 5, y: 0 }, { x: 10, y: 0 })).toBeCloseTo(180, 1);
+  });
+  it('angle: coincident points return 0 (defensive)', () => {
+    expect(angleDeg({ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 5, y: 5 })).toBe(0);
+  });
+  it('formatAngle prints degrees', () => {
+    expect(formatAngle(45.123)).toBe('45.1°');
   });
 });

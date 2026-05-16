@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Building2, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import EvaluxLogo from '../components/common/EvaluxLogo';
+import XactLogo from '../components/common/XactLogo';
 import Button from '../components/common/Button';
 
 export default function Register() {
@@ -42,13 +42,13 @@ export default function Register() {
       >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <EvaluxLogo size="lg" />
+            <XactLogo size="lg" />
           </div>
           <h2 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
             Create your account
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-            Start estimating smarter with Evalux
+            Start estimating smarter with Xact
           </p>
         </div>
 
