@@ -19,7 +19,7 @@ export default function Card({
 
   return (
     <Component
-      className={`evalux-card ${className}`}
+      className={`xact-card ${className}`}
       onClick={onClick}
       style={{
         backgroundColor: 'var(--geist-bg)',

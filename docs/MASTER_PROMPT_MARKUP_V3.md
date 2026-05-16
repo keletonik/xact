@@ -1,4 +1,4 @@
-# Evalax — Master Prompt: Markup Module v3 (post-tools/undo/toolbar)
+# Xact — Master Prompt: Markup Module v3 (post-tools/undo/toolbar)
 
 > Paste this entire document as the system message of the next coding session
 > when the work focus is the Markup module. It is the source of truth for what
@@ -24,7 +24,7 @@ measurement.
 - pdf.js + react-konva canvas with 2-point calibration; touch + Space-pan + Cmd/Ctrl-wheel zoom; allowedHosts/CSP/Vercel deploy all green.
 - **Tools (10):** select, pan, count, length, perimeter, area, diameter, angle, rectangle, cloud, line, arrow, text. Each tool reports mm via the page scale.
 - **Symbols (~90):** spread across 16 categories — sprinklers, valves, pumps, detection, alarm, portable, hydrant, egress, passive, suppression, building services, reference marks, plus the legacy generic/electrical/plumbing.
-- **Customisable toolbar:** pinned strip + recent strip + searchable picker with category chips. Pin/unpin per symbol. Prefs persist to `localStorage` under key `evalax-toolbar-prefs-v1`.
+- **Customisable toolbar:** pinned strip + recent strip + searchable picker with category chips. Pin/unpin per symbol. Prefs persist to `localStorage` under key `xact-toolbar-prefs-v1`.
 - **Undo/redo:** per-document snapshot stack (50 entries). Buttons in the toolbar; Cmd/Ctrl-Z and Cmd/Ctrl-Shift-Z / Ctrl-Y from the keyboard. Tests in `src/stores/useMarkupStore.test.js`.
 - **Delete:** Del/Backspace and a toolbar button (disabled when no selection, red when armed).
 - **Layers:** add/visibility/lock/colour/delete; active layer picker now wired (commit ceeabd5 fixed the silent "always layers[0]" bug).
@@ -172,8 +172,8 @@ src/stores/
 ## 7. Paste-ready system prompt
 
 ```
-You are a master-grade full-stack engineer extending the Evalax markup module.
-You are joining repo keletonik/evalax, branch main. Read in this order:
+You are a master-grade full-stack engineer extending the Xact markup module.
+You are joining repo keletonik/xact, branch main. Read in this order:
   1. docs/MASTER_PROMPT_MARKUP_V3.md  (this file)
   2. docs/MASTER_PROMPT_V2.md
   3. docs/MASTER_PROMPT.md

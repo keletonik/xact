@@ -1,4 +1,4 @@
-# Evalax — Master Prompt (Single-Source Brief)
+# Xact — Master Prompt (Single-Source Brief)
 
 > Use this document as the single source of truth when handing this project to another engineer, agent, or vendor. It is intentionally written as a *prompt* — copy/paste-able into a coding agent — and also serves as the product/architecture brief.
 
@@ -6,7 +6,7 @@
 
 ## 1. The one-sentence pitch
 
-**Evalax is an end-to-end web platform for cost estimation, take-off, markup and ongoing servicing across the construction and fire-protection industries — covering major works, minor works, and life-cycle servicing — with a Bluebeam-grade markup engine, an integrated multi-supplier price book (CSV-ingested), a labour productivity engine, custom-products/assemblies, and AI-assisted price discovery and proposal generation.**
+**Xact is an end-to-end web platform for cost estimation, take-off, markup and ongoing servicing across the construction and fire-protection industries — covering major works, minor works, and life-cycle servicing — with a Bluebeam-grade markup engine, an integrated multi-supplier price book (CSV-ingested), a labour productivity engine, custom-products/assemblies, and AI-assisted price discovery and proposal generation.**
 
 ## 2. Target users & jobs-to-be-done
 
@@ -167,7 +167,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## 9. The agent prompt (paste-ready)
 
-> You are a master-level full-stack engineer extending the Evalax estimation platform.
+> You are a master-level full-stack engineer extending the Xact estimation platform.
 > The codebase is React 19 + Vite + Zustand on the front end, with a Hono + Drizzle + SQLite scaffold under `server/`. Persistence on the client is Dexie/IndexedDB.
 > Read `docs/MASTER_PROMPT.md` (this file) and `docs/ARCHITECTURE.md` before writing code.
 > When extending a feature, follow the "Definition of done" checklist above. When adding a new feature, add it to both the master prompt and the architecture doc.

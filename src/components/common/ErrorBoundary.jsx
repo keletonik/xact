@@ -17,7 +17,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('Evalax root error boundary:', error, info?.componentStack);
+    console.error('Xact root error boundary:', error, info?.componentStack);
   }
 
   handleReset = () => {

@@ -3,7 +3,7 @@
  * `File.type` are advisory only — a user can drop `evil.exe` renamed to
  * `evil.pdf` and it'll arrive with whatever MIME type the OS guessed.
  *
- * For Evalax's narrow needs we check the first 12 bytes against a small set
+ * For Xact's narrow needs we check the first 12 bytes against a small set
  * of known signatures. This is not bullet-proof anti-malware — it's the
  * minimum sanity check to reject obviously-wrong inputs at the door.
  */

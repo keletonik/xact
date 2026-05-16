@@ -24,7 +24,7 @@ const faqCategories = [
     icon: Ruler,
     items: [
       { q: 'How do I upload plans for takeoff?', a: 'Go to the Takeoff page and create a new package. Upload your plan set (PDF or image files), set the scale calibration, then use the measurement tools (Count, Linear, Area) to measure quantities directly on the plans.' },
-      { q: 'What measurement types are available?', a: 'Evalux supports Count (for individual items like sprinkler heads, detectors), Linear (for pipe runs, cable routes), Area (for coverage zones, ceiling areas), and Volume measurements. Use keyboard shortcuts V (Select), C (Count), L (Linear), A (Area), H (Pan) for fast switching.' },
+      { q: 'What measurement types are available?', a: 'Xact supports Count (for individual items like sprinkler heads, detectors), Linear (for pipe runs, cable routes), Area (for coverage zones, ceiling areas), and Volume measurements. Use keyboard shortcuts V (Select), C (Count), L (Linear), A (Area), H (Pan) for fast switching.' },
       { q: 'How do layers work in takeoff?', a: 'Layers let you organise measurements by system or category (e.g., Sprinkler, Alarm, Passive Fire). Each layer can be toggled on/off for visibility. Objects on hidden layers are still included in calculations unless explicitly excluded.' },
     ],
   },
@@ -116,7 +116,7 @@ export default function Help() {
           { icon: BookOpen, label: 'Documentation', desc: 'Guides & tutorials' },
           { icon: Video, label: 'Video Tutorials', desc: 'Step-by-step videos' },
           { icon: MessageCircle, label: 'Live Chat', desc: 'Chat with support' },
-          { icon: Mail, label: 'Email Support', desc: 'support@evalux.com' },
+          { icon: Mail, label: 'Email Support', desc: 'support@xact.com' },
         ].map((item, i) => (
           <motion.div
             key={item.label}

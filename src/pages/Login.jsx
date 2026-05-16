@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import EvaluxLogo from '../components/common/EvaluxLogo';
+import XactLogo from '../components/common/XactLogo';
 import Button from '../components/common/Button';
 
 export default function Login() {
@@ -42,7 +42,7 @@ export default function Login() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <EvaluxLogo size="xl" />
+          <XactLogo size="xl" />
           <h1 style={{
             fontSize: '2.5rem',
             fontWeight: 800,
@@ -118,7 +118,7 @@ export default function Login() {
             Welcome back
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: 32 }}>
-            Sign in to your Evalux account
+            Sign in to your Xact account
           </p>
 
           <form onSubmit={handleSubmit}>

@@ -1,11 +1,11 @@
-# Deploying Evalax to Replit
+# Deploying Xact to Replit
 
 Last verified: 2026-05-14. The frontend is fully offline-capable (IndexedDB), so the simplest deploy is **static frontend only** — the optional Hono backend is independent.
 
 ## 1. Import the repo
 
 In Replit:
-- **+ Create Repl** → **Import from GitHub** → paste `https://github.com/keletonik/evalax`.
+- **+ Create Repl** → **Import from GitHub** → paste `https://github.com/keletonik/xact`.
 - Pick **Node.js** as the language. Replit will detect `.replit` automatically.
 
 ## 2. First run (workspace dev)
@@ -51,7 +51,7 @@ The Hono backend under `server/` is NOT auto-started by the Replit run script �
 ```bash
 cd server
 npm install
-npx drizzle-kit push     # creates server/evalax.db
+npx drizzle-kit push     # creates server/xact.db
 PORT=8787 npm run dev
 ```
 
@@ -86,11 +86,11 @@ For Vercel-style "frontend talks to API" once you wire it, set `VITE_API_BASE` i
 | `REPL_ID` | injected by Replit | `vite.config.js` (HMR detection) | unset |
 | `VITE_API_BASE` | Secrets | `src/backend/apiClient.js` | empty (offline-only) |
 | `JWT_SECRET` | Secrets | `server/src/middleware/auth.js` | dev fallback |
-| `DATABASE_URL` | Secrets | `server/src/db/client.js` | `./evalax.db` |
+| `DATABASE_URL` | Secrets | `server/src/db/client.js` | `./xact.db` |
 | `ALLOWED_ORIGIN` | Secrets | `server/src/index.js` (CORS) | `*` (dev) |
 
 ## 9. Persistence between sessions
 
 Replit workspaces are persistent volumes, so:
 - The frontend's IndexedDB lives **in the user's browser**, not the workspace. Clear-cache wipes it.
-- The backend's `server/evalax.db` lives **in the workspace** — survives restarts; counts toward your storage quota.
+- The backend's `server/xact.db` lives **in the workspace** — survives restarts; counts toward your storage quota.

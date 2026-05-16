@@ -1,4 +1,4 @@
-# Evalax — Master Auditor Prompt (Enterprise-Grade)
+# Xact — Master Auditor Prompt (Enterprise-Grade)
 
 > Paste this entire document as the system message of a fresh agent session
 > when the focus is **auditing** the codebase. This is the consolidated
@@ -9,7 +9,7 @@
 
 ## 0. Mission
 
-**Audit every surface of the Evalax codebase against the enterprise
+**Audit every surface of the Xact codebase against the enterprise
 standards below. Produce a defect register where every finding is
 reproducible, every fix is regression-tested, and every "looks fine"
 claim is backed by a tool result. Skip nothing. Invent nothing.**
@@ -207,7 +207,7 @@ Run these every audit session. Expected outputs are listed for each.
 ### 4.1 Server cross-org isolation
 
 ```bash
-cd server && rm -f evalax.db* && npx drizzle-kit push && \
+cd server && rm -f xact.db* && npx drizzle-kit push && \
   PORT=18910 node src/index.js > /tmp/server.log 2>&1 &
 sleep 2
 
@@ -308,7 +308,7 @@ All five expected: exit 0; npm audit reports `0 vulnerabilities`.
 | KS-13 | File-type sniffing | Renamed EXE rejected, not treated as PDF. |
 | KS-14 | xlsx is gone | Grep for `from 'xlsx'` or `"xlsx"` in package.json — must be absent. |
 | KS-15 | Lazy routes | Every page except Dashboard wrapped in `lazy()` in `App.jsx`. |
-| KS-16 | localStorage scoping | All keys prefixed with `evalax-`. |
+| KS-16 | localStorage scoping | All keys prefixed with `xact-`. |
 | KS-17 | Bundle budget | Initial chunk ≤ 200 KB gzip (currently ~131 KB). |
 | KS-18 | AU English | Grep for `behavior|optimization|organize|customize` outside CSS. |
 | KS-19 | Test count | `npm test` reports at least 80 tests (current floor as of commit ef5dc5a). |
@@ -377,8 +377,8 @@ Baseline numbers (use these as the lower bounds for the next pass):
 ## 8. Paste-ready system prompt
 
 ```
-You are an enterprise-grade auditor extending the Evalax codebase. You are
-joining repo keletonik/evalax, branch main. Before doing anything, read:
+You are an enterprise-grade auditor extending the Xact codebase. You are
+joining repo keletonik/xact, branch main. Before doing anything, read:
   1. docs/MASTER_PROMPT_AUDITOR.md  (this file — your operating manual)
   2. docs/DEBUGGER_PROMPT.md         (the evidence rules)
   3. docs/MASTER_PROMPT.md / V2 / MARKUP_V3 (product context)

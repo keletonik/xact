@@ -472,7 +472,7 @@ function DataImportPanel() {
       <Card>
         <h2 style={{ marginTop: 0, marginBottom: 4, fontSize: 18 }}>Data import</h2>
         <p style={{ marginTop: 0, color: 'var(--color-text-tertiary, #64748b)', marginBottom: 16 }}>
-          Bring product catalogues and supplier price lists into Evalax. Supports CSV, XLSX, XLS, ODS.
+          Bring product catalogues and supplier price lists into Xact. Supports CSV, XLSX, XLS, ODS.
         </p>
 
         {error && (

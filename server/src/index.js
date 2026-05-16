@@ -6,7 +6,7 @@ import { authRouter } from './routes/auth.js';
 import { productsRouter } from './routes/products.js';
 
 /**
- * Evalax API server (Hono + Drizzle + SQLite).
+ * Xact API server (Hono + Drizzle + SQLite).
  *
  * For dev:
  *   cd server && npm install && npm run dev
@@ -45,7 +45,7 @@ app.use('*', cors({
   allowHeaders: ['Content-Type', 'Authorization'],
 }));
 
-app.get('/', (c) => c.json({ service: 'evalax-api', status: 'ok', time: new Date().toISOString() }));
+app.get('/', (c) => c.json({ service: 'xact-api', status: 'ok', time: new Date().toISOString() }));
 app.get('/healthz', (c) => c.json({ ok: true }));
 
 app.route('/auth', authRouter);
@@ -55,7 +55,7 @@ const port = Number(process.env.PORT || 8787);
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   serve({ fetch: app.fetch, port }, ({ port }) => {
-    console.log(`evalax-api listening on http://localhost:${port}`);
+    console.log(`xact-api listening on http://localhost:${port}`);
   });
 }
 

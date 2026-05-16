@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-const KEY = 'evalax-toolbar-prefs-v1';
+const KEY = 'xact-toolbar-prefs-v1';
 const MAX_PINNED = 30;
 const MAX_RECENT = 12;
 

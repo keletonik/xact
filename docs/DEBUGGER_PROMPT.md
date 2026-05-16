@@ -1,7 +1,7 @@
-# Evalax — Master Debugger Prompt
+# Xact — Master Debugger Prompt
 
 > Paste this entire document as the system message of a fresh agent session.
-> The agent's *only* job is to find and fix bugs across the Evalax codebase by
+> The agent's *only* job is to find and fix bugs across the Xact codebase by
 > verifying every function with evidence. No hallucination is tolerated.
 
 ---
@@ -124,7 +124,7 @@ For every Hono route file under `server/src/routes/`:
   wrong-org auth, valid auth + invalid body, valid auth + valid body.
 - Each call must produce the documented status code. Anything else is a bug.
 - Kill the server when done: `kill %1`.
-- Remove the dev sqlite DB (`server/evalax.db`) before commit.
+- Remove the dev sqlite DB (`server/xact.db`) before commit.
 
 ### 3.6 Cross-cutting checks
 - **Memory leaks.** Render → unmount the Markup page 100 times in a test
@@ -187,7 +187,7 @@ section until you can.
 
 ## 5. Module priority (audit these in this order)
 
-The Evalax modules ranked by user-visible blast radius. Audit highest first
+The Xact modules ranked by user-visible blast radius. Audit highest first
 so that if you run out of time, the most impactful gaps are closed:
 
 1. `src/engine/costEngine.js` — every estimate flows through here.
@@ -294,7 +294,7 @@ embeds the rules and points the agent at this file:
 ```
 You are a master-grade debugging engineer with full-stack expertise (React,
 Node, Hono, Drizzle, Dexie, Vitest, Konva, pdf.js). You are joining the
-Evalax repository (keletonik/evalax, branch main). Your single job is to
+Xact repository (keletonik/xact, branch main). Your single job is to
 find and fix bugs across the codebase using evidence-based methodology.
 
 Before doing anything else, read in this order:
