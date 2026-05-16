@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
  * Monochrome wordmark + minimalist shield. Matches the Geist visual register
  * (near-black ink, no gradient, single accent dot).
  */
-export default function EvaluxLogo({ size = 'md', showText = true, collapsed = false }) {
+export default function XactLogo({ size = 'md', showText = true, collapsed = false }) {
   const sizes = {
     sm: { icon: 22, text: 15 },
     md: { icon: 26, text: 17 },
@@ -14,7 +14,7 @@ export default function EvaluxLogo({ size = 'md', showText = true, collapsed = f
   const s = sizes[size] || sizes.md;
 
   return (
-    <div className="evalux-logo" style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 10 }}>
+    <div className="xact-logo" style={{ display: 'flex', alignItems: 'center', gap: collapsed ? 0 : 10 }}>
       <motion.svg
         width={s.icon}
         height={s.icon}
@@ -43,7 +43,7 @@ export default function EvaluxLogo({ size = 'md', showText = true, collapsed = f
             color: '#ffffff',
             fontFamily: 'var(--geist-font-sans)',
           }}>
-            Evalax
+            Xact
           </span>
           {size !== 'sm' && (
             <span style={{

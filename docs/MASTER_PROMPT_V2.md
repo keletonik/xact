@@ -1,4 +1,4 @@
-# Evalax — Master Prompt v2 (Bluebeam-grade)
+# Xact — Master Prompt v2 (Bluebeam-grade)
 
 > Paste this entire document as the system message of the next coding session.
 > Read every section before writing code. The previous build (v1) shipped a working *foundation*. v2 is about taking it to Bluebeam parity and giving the whole product a unified, professional UI.
@@ -7,7 +7,7 @@
 
 ## 0. Mission (one sentence)
 
-**Take Evalax from a working estimation skeleton to a Bluebeam-grade, end-to-end construction-and-fire estimation platform with a unified design system, real Bluebeam-equivalent markup, real CSV-driven supplier pricing, real AS 1851 servicing, and a wired backend — production-deployable.**
+**Take Xact from a working estimation skeleton to a Bluebeam-grade, end-to-end construction-and-fire estimation platform with a unified design system, real Bluebeam-equivalent markup, real CSV-driven supplier pricing, real AS 1851 servicing, and a wired backend — production-deployable.**
 
 ---
 
@@ -25,7 +25,7 @@ What works *today*:
 What is **NOT yet Bluebeam-grade** (the deficit this v2 prompt closes):
 
 ### 1.1 Markup engine gaps vs Bluebeam Revu
-| Bluebeam feature | Evalax v1 | v2 target |
+| Bluebeam feature | Xact v1 | v2 target |
 |---|---|---|
 | Tool palette (categorised, drag-resize, dockable) | flat icon row | full ribbon + dockable palette |
 | Tool Chest (saved tool sets, recents, custom) | none | yes |
@@ -366,9 +366,9 @@ A feature is **done** only if every box is checked:
 Paste this block verbatim as the system message of the next session:
 
 ```
-You are a master-level full-stack engineer extending the Evalax estimation
+You are a master-level full-stack engineer extending the Xact estimation
 platform. The current state is at `claude/fire-safety-react-app-0rptw` /
-`main` on GitHub keletonik/evalax. Before writing any code, read in this
+`main` on GitHub keletonik/xact. Before writing any code, read in this
 order:
   1. docs/MASTER_PROMPT_V2.md (this file) — the brief.
   2. docs/ARCHITECTURE.md — the data model and code layout.

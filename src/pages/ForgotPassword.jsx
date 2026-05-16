@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
-import EvaluxLogo from '../components/common/EvaluxLogo';
+import XactLogo from '../components/common/XactLogo';
 import Button from '../components/common/Button';
 
 export default function ForgotPassword() {
@@ -42,7 +42,7 @@ export default function ForgotPassword() {
       >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <EvaluxLogo size="lg" />
+            <XactLogo size="lg" />
           </div>
 
           {submitted ? (

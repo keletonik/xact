@@ -19,7 +19,7 @@ import {
   Package,
   Wrench,
 } from 'lucide-react';
-import EvaluxLogo from '../common/EvaluxLogo';
+import XactLogo from '../common/XactLogo';
 
 const mainNav = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -73,7 +73,7 @@ export default function Sidebar({ collapsed, onToggle }) {
         borderBottom: '1px solid rgba(255,255,255,0.06)',
         flexShrink: 0,
       }}>
-        <EvaluxLogo size="md" collapsed={collapsed} />
+        <XactLogo size="md" collapsed={collapsed} />
       </div>
 
       {/* Main Navigation */}

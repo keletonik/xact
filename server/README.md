@@ -1,4 +1,4 @@
-# Evalax — API server (scaffold)
+# Xact — API server (scaffold)
 
 Hono + Drizzle + SQLite. Production deployment intent: swap SQLite for Postgres (Neon) and run behind a reverse proxy that terminates TLS.
 

@@ -1,4 +1,4 @@
-# Evalax — 10-Pass Audit (v2, post-debug)
+# Xact — 10-Pass Audit (v2, post-debug)
 
 **Branch:** `claude/estimation-platform-build-IEc1J`
 **Date:** 2026-05-14
@@ -81,7 +81,7 @@ Actually ran it:
 ```
 cd server && npm install            -> ok
 npx drizzle-kit push                -> ok, sqlite tables created
-PORT=18787 node src/index.js        -> "evalax-api listening on :18787"
+PORT=18787 node src/index.js        -> "xact-api listening on :18787"
 curl :18787/healthz                 -> {"ok":true}
 curl -X POST :18787/auth/register   -> token + user + org
 curl :18787/products  (auth)        -> []
@@ -89,7 +89,7 @@ curl -X POST :18787/products (auth) -> 201, persisted row with basePriceCents:12
 curl :18787/products  (auth)        -> [row]
 ```
 
-Cleaned the dev `evalax.db` and added `server/.gitignore` so it's not committed.
+Cleaned the dev `xact.db` and added `server/.gitignore` so it's not committed.
 
 ## Pass 7 — Performance engineer
 
