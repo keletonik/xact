@@ -3,6 +3,7 @@ import {
   distancePx, polylineLengthPx, polygonAreaPx, polygonPerimeterPx,
   polygonAreaWithHolesPx, snapToGrid, orthoLock, pointInPolygon,
   formatLength, formatArea, pxToMm, angleDeg, formatAngle,
+  revisionCloudPath,
 } from './geometry';
 
 describe('geometry', () => {
@@ -32,6 +33,12 @@ describe('geometry', () => {
     const outer = [{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 4 }, { x: 0, y: 4 }];
     const hole  = [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 1, y: 2 }];
     expect(polygonAreaWithHolesPx(outer, [hole])).toBe(15);
+  });
+  it('polygon area with holes throws when hole area exceeds outer', () => {
+    const outer = [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 2 }, { x: 0, y: 2 }];
+    // Hole of 9 sq units against outer of 4 sq units. Cannot be a valid hole.
+    const hole = [{ x: 0, y: 0 }, { x: 3, y: 0 }, { x: 3, y: 3 }, { x: 0, y: 3 }];
+    expect(() => polygonAreaWithHolesPx(outer, [hole])).toThrow(/hole area/);
   });
   it('snap to grid rounds to nearest', () => {
     expect(snapToGrid({ x: 12, y: 18 }, 10)).toEqual({ x: 10, y: 20 });
@@ -65,5 +72,62 @@ describe('geometry', () => {
   });
   it('formatAngle prints degrees', () => {
     expect(formatAngle(45.123)).toBe('45.1°');
+  });
+});
+
+describe('revisionCloudPath, bump arc generation', () => {
+  // Regression: the previous implementation generated arc endpoints that
+  // differed by ~0.001 px, collapsing the scallops into invisible dots.
+  // These tests pin the new generator's externally-observable shape.
+
+  const square = [
+    { x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }, { x: 0, y: 100 },
+  ];
+
+  it('returns empty for too-few points', () => {
+    expect(revisionCloudPath([])).toBe('');
+    expect(revisionCloudPath([{ x: 0, y: 0 }, { x: 1, y: 1 }])).toBe('');
+  });
+
+  it('produces a closed path starting with M and ending with Z', () => {
+    const d = revisionCloudPath(square, { bumpSize: 6, density: 0.05 });
+    expect(d.startsWith('M ')).toBe(true);
+    expect(d.endsWith(' Z')).toBe(true);
+  });
+
+  it('emits one or more arc commands for a non-degenerate polygon', () => {
+    const d = revisionCloudPath(square, { bumpSize: 6, density: 0.05 });
+    const arcCount = (d.match(/ A /g) || []).length;
+    expect(arcCount).toBeGreaterThan(0);
+  });
+
+  it('arc endpoints are not collapsed onto the same point', () => {
+    // The bug was that consecutive arc endpoints differed by 0.001 px,
+    // producing visually invisible scallops. Verify endpoints are
+    // separated by a meaningful distance.
+    const d = revisionCloudPath(square, { bumpSize: 6, density: 0.05 });
+    const arcPattern = / A [\d.]+ [\d.]+ 0 0 [01] ([\d.]+) ([\d.]+)/g;
+    const endpoints = [];
+    let m;
+    while ((m = arcPattern.exec(d)) !== null) {
+      endpoints.push({ x: parseFloat(m[1]), y: parseFloat(m[2]) });
+    }
+    expect(endpoints.length).toBeGreaterThan(2);
+    // Consecutive endpoints should be at least 1 px apart for a 100-unit
+    // square at density 0.05 (which gives ~5 bumps per side).
+    for (let i = 1; i < endpoints.length; i++) {
+      const dx = endpoints[i].x - endpoints[i - 1].x;
+      const dy = endpoints[i].y - endpoints[i - 1].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      expect(dist).toBeGreaterThan(1);
+    }
+  });
+
+  it('density controls bump count', () => {
+    const sparse = revisionCloudPath(square, { bumpSize: 6, density: 0.02 });
+    const dense  = revisionCloudPath(square, { bumpSize: 6, density: 0.1 });
+    const sparseArcs = (sparse.match(/ A /g) || []).length;
+    const denseArcs  = (dense.match(/ A /g) || []).length;
+    expect(denseArcs).toBeGreaterThan(sparseArcs);
   });
 });

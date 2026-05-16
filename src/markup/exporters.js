@@ -2,14 +2,19 @@ import { formatArea, formatLength } from './geometry';
 import { getSymbol } from './symbolLibrary';
 
 /**
- * Build a take-off legend grouped by (symbolId | type | page).
- * Returns one row per group with quantity/length/area totals.
+ * Build a take-off legend grouped by (page | symbolId-or-type | productId | assemblyId).
+ * Two objects that share a symbol but map to different product or assembly
+ * codes form separate legend rows; collapsing them would silently drop the
+ * second mapping.
  */
 export function buildLegend(markupDoc) {
   const groups = new Map();
   for (const page of markupDoc.pages) {
     for (const obj of page.objects) {
-      const key = `${page.pageNumber}::${obj.metadata?.symbolId || obj.type}`;
+      const productId = obj.metadata?.productId ?? '';
+      const assemblyId = obj.metadata?.assemblyId ?? '';
+      const symbolKey = obj.metadata?.symbolId || obj.type;
+      const key = `${page.pageNumber}::${symbolKey}::${productId}::${assemblyId}`;
       const existing = groups.get(key) || {
         page: page.pageNumber,
         type: obj.type,
@@ -62,7 +67,11 @@ function csvCell(value) {
   return s;
 }
 
-/** Trigger a browser file download from a string. */
+/**
+ * Trigger a browser file download from a string. Revoke is deferred to the
+ * next tick so Safari and older Firefox have time to read the blob URL
+ * before it is released.
+ */
 export function downloadString(filename, text, mime = 'text/csv') {
   const blob = new Blob([text], { type: mime });
   const url = URL.createObjectURL(blob);
@@ -72,5 +81,5 @@ export function downloadString(filename, text, mime = 'text/csv') {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }

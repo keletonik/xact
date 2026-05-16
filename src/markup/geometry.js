@@ -38,10 +38,18 @@ export function polygonAreaPx(points) {
   return Math.abs(area) / 2;
 }
 
-/** Area of a polygon with optional cutouts (holes). All in page-pixel space. */
+/**
+ * Area of a polygon with optional cutouts (holes). All in page-pixel space.
+ * Throws if the combined hole area exceeds the outer area, since that
+ * indicates a misconfigured hole (e.g. drawn outside its outer ring or
+ * with the wrong outer assigned).
+ */
 export function polygonAreaWithHolesPx(outer, holes = []) {
   const outerArea = polygonAreaPx(outer);
   const holeArea = holes.reduce((sum, h) => sum + polygonAreaPx(h), 0);
+  if (holeArea > outerArea + 1e-9) {
+    throw new Error('hole area exceeds outer area; check hole geometry');
+  }
   return Math.max(0, outerArea - holeArea);
 }
 
@@ -162,44 +170,43 @@ export function polygonCentroid(points) {
 }
 
 /**
- * Generate a revision-cloud SVG-path-style sequence of points by replacing
- * straight polygon edges with a series of small outward arcs. Returns a Konva
- * Path 'data' string. Bumps face *outward* from the polygon centroid.
+ * Build an SVG Path 'd' string for a revision cloud: walk each edge of the
+ * polygon, place arc-bumps along it, each bump bulging away from the polygon
+ * centroid.
  *
- * `bumpSize` is the arc radius in pixels; `bumpsPerSide` is the approximate
- * count of bumps along the longest edge — others are scaled to keep bump
- * spacing roughly even.
+ * `bumpSize` is the minimum bump radius in pixels. `density` controls how
+ * many bumps appear per pixel of edge length; the actual bump count per edge
+ * is `max(1, round(edgeLen * density))`.
  */
 export function revisionCloudPath(points, { bumpSize = 8, density = 0.04 } = {}) {
   if (points.length < 3) return '';
-  const cx = polygonCentroid(points).x;
-  const cy = polygonCentroid(points).y;
-  const seg = [];
+  const centroid = polygonCentroid(points);
+  let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
   for (let i = 0; i < points.length; i++) {
     const a = points[i];
     const b = points[(i + 1) % points.length];
-    const len = distancePx(a, b);
-    const count = Math.max(1, Math.round(len * density));
-    seg.push({ a, b, len, count });
-  }
-  let d = `M ${points[0].x} ${points[0].y}`;
-  for (const { a, b, count } of seg) {
-    for (let i = 1; i <= count; i++) {
-      const t = i / count;
-      const px = a.x + (b.x - a.x) * t;
-      const py = a.y + (b.y - a.y) * t;
-      // outward normal at this midpoint along (a,b)
-      const nx = (b.y - a.y);
-      const ny = -(b.x - a.x);
-      const nLen = Math.sqrt(nx * nx + ny * ny) || 1;
-      const ux = nx / nLen, uy = ny / nLen;
-      // ensure outward (away from centroid)
-      const sign = ((px - cx) * ux + (py - cy) * uy) >= 0 ? 1 : -1;
-      const sx = ux * bumpSize * sign;
-      const sy = uy * bumpSize * sign;
-      // sweep flag 1 = clockwise arc bulging outward
-      d += ` A ${bumpSize} ${bumpSize} 0 0 1 ${px + sx * 0.001} ${py + sy * 0.001}`;
-      d += ` A ${bumpSize} ${bumpSize} 0 0 1 ${px} ${py}`;
+    const edgeLen = distancePx(a, b);
+    if (edgeLen === 0) continue;
+    const bumpCount = Math.max(1, Math.round(edgeLen * density));
+    // Pick the sweep flag so each arc bulges away from the centroid. In SVG
+    // user space (y-down), sweep=1 traces the arc in the positive-angle
+    // direction, which visually bulges to the left of the direction of
+    // travel. Compare the edge's left-normal against the offset from edge
+    // midpoint to centroid; if the centroid sits on the left, bulge right.
+    const ex = (b.x - a.x) / edgeLen;
+    const ey = (b.y - a.y) / edgeLen;
+    const midX = (a.x + b.x) / 2;
+    const midY = (a.y + b.y) / 2;
+    const offX = centroid.x - midX;
+    const offY = centroid.y - midY;
+    const leftDotCentroid = -ey * offX + ex * offY;
+    const sweep = leftDotCentroid > 0 ? 0 : 1;
+    const r = Math.max(bumpSize, edgeLen / (bumpCount * 2));
+    for (let j = 1; j <= bumpCount; j++) {
+      const t = j / bumpCount;
+      const x = a.x + (b.x - a.x) * t;
+      const y = a.y + (b.y - a.y) * t;
+      d += ` A ${r.toFixed(2)} ${r.toFixed(2)} 0 0 ${sweep} ${x.toFixed(2)} ${y.toFixed(2)}`;
     }
   }
   d += ' Z';

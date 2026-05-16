@@ -23,3 +23,32 @@ describe('scale', () => {
     expect(() => calibratePage(makePage(1), { x: 0, y: 0 }, { x: 0, y: 0 }, 1000)).toThrow();
   });
 });
+
+describe('scale, regression: isCalibrated detection', () => {
+  // Previously `Boolean(options.mmPerPx)` treated a literal mmPerPx of 1
+  // as falsy because of the implicit nominal-scale collision. The fixed
+  // implementation uses `!= null` so an explicitly-passed 1 reads as
+  // calibrated, while an absent option reads as nominal.
+  it('explicit mmPerPx of 1 is treated as calibrated', () => {
+    const p = makePage(1, { mmPerPx: 1 });
+    expect(p.scale.isCalibrated).toBe(true);
+    expect(p.scale.mmPerPx).toBe(1);
+  });
+
+  it('explicit mmPerPx of 0.5 is treated as calibrated', () => {
+    const p = makePage(1, { mmPerPx: 0.5 });
+    expect(p.scale.isCalibrated).toBe(true);
+    expect(p.scale.mmPerPx).toBe(0.5);
+  });
+
+  it('absent mmPerPx is treated as uncalibrated and falls back to nominal', () => {
+    const p = makePage(1, {});
+    expect(p.scale.isCalibrated).toBe(false);
+    expect(p.scale.mmPerPx).toBe(1);
+  });
+
+  it('mmPerPx of null is treated as uncalibrated', () => {
+    const p = makePage(1, { mmPerPx: null });
+    expect(p.scale.isCalibrated).toBe(false);
+  });
+});
