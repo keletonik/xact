@@ -1,7 +1,7 @@
 import { distancePx } from './geometry';
 
 /**
- * Page-scale model. A page's scale is `mmPerPixel` — multiply any pixel
+ * Page-scale model. A page's scale is `mmPerPixel`. Multiply any pixel
  * measurement by this number to get millimetres.
  *
  * Calibration is the only way to set a true scale. Without it, a "nominal"
@@ -10,11 +10,15 @@ import { distancePx } from './geometry';
 export const DEFAULT_NOMINAL_MM_PER_PX = 1;
 
 export function makePage(pageNumber, options = {}) {
+  // Treat presence of an explicit mmPerPx as the calibration signal rather
+  // than truthiness of the value, since `mmPerPx: 1` is a legitimate
+  // calibrated value (e.g. a 1:1 PDF render at 25.4 DPI).
+  const hasScale = options.mmPerPx != null;
   return {
     pageNumber,
     scale: {
-      mmPerPx: options.mmPerPx ?? DEFAULT_NOMINAL_MM_PER_PX,
-      isCalibrated: Boolean(options.mmPerPx),
+      mmPerPx: hasScale ? options.mmPerPx : DEFAULT_NOMINAL_MM_PER_PX,
+      isCalibrated: hasScale,
       calibrationPoints: null,
       calibrationKnownMm: null,
     },

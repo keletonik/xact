@@ -36,7 +36,6 @@ describe('markup tools', () => {
     t.onPointerDown({ x: 0, y: 0 }, ctx);
     t.onPointerDown({ x: 100, y: 0 }, ctx);
     const out = t.commit();
-    // 100 px * 10 mm/px = 1000 mm
     expect(out.metadata.measuredValueMm).toBe(1000);
   });
 
@@ -54,7 +53,6 @@ describe('markup tools', () => {
     t.onPointerDown({ x: 10, y: 10 }, ctx);
     t.onPointerDown({ x: 0, y: 10 }, ctx);
     const out = t.commit();
-    // 100 px² * (10 mm/px)² = 10,000 mm²
     expect(out.metadata.measuredValueMm).toBe(10000);
   });
 
@@ -79,7 +77,6 @@ describe('markup tools', () => {
     t.onPointerDown({ x: 10, y: 10 }, ctx);
     t.onPointerDown({ x: 0, y: 10 }, ctx);
     const out = t.commit();
-    // 4 sides × 10 px × 10 mm/px = 400 mm
     expect(out.metadata.measuredValueMm).toBe(400);
     expect(out.type).toBe('perimeter');
   });
@@ -88,7 +85,6 @@ describe('markup tools', () => {
     const t = instantiateTool('diameter');
     t.onPointerDown({ x: 0, y: 0 }, ctx);
     const out = t.onPointerUp({ x: 30, y: 40 }, ctx);
-    // distance 50 px × 10 mm/px = 500 mm
     expect(out.metadata.measuredValueMm).toBe(500);
     expect(out.geometry.radius).toBe(25);
   });
@@ -140,5 +136,125 @@ describe('markup tools', () => {
     const out = t.onPointerDown({ x: 0, y: 10 }, ctx);
     expect(out.type).toBe('angle');
     expect(out.metadata.angleDeg).toBeCloseTo(90, 1);
+  });
+});
+
+describe('markup tools, regression: zero-size guards', () => {
+  // Pin the no-op behaviour for click-without-drag gestures.
+  it('rectangle: click-without-drag returns null', () => {
+    const t = instantiateTool('rectangle');
+    t.onPointerDown({ x: 5, y: 5 }, ctx);
+    const out = t.onPointerUp({ x: 5, y: 5 }, ctx);
+    expect(out).toBeNull();
+  });
+
+  it('rectangle: sub-pixel drag returns null', () => {
+    const t = instantiateTool('rectangle');
+    t.onPointerDown({ x: 5, y: 5 }, ctx);
+    const out = t.onPointerUp({ x: 5.5, y: 5.5 }, ctx);
+    expect(out).toBeNull();
+  });
+
+  it('line: click-without-drag returns null', () => {
+    const t = instantiateTool('line');
+    t.onPointerDown({ x: 10, y: 10 }, ctx);
+    const out = t.onPointerUp({ x: 10, y: 10 }, ctx);
+    expect(out).toBeNull();
+  });
+
+  it('arrow: click-without-drag returns null', () => {
+    const t = instantiateTool('arrow');
+    t.onPointerDown({ x: 0, y: 0 }, ctx);
+    const out = t.onPointerUp({ x: 0, y: 0 }, ctx);
+    expect(out).toBeNull();
+  });
+
+  it('diameter: click-without-drag returns null', () => {
+    const t = instantiateTool('diameter');
+    t.onPointerDown({ x: 0, y: 0 }, ctx);
+    const out = t.onPointerUp({ x: 0, y: 0 }, ctx);
+    expect(out).toBeNull();
+  });
+
+  it('hyperlink: click-without-drag returns null', () => {
+    const t = instantiateTool('hyperlink');
+    t.onPointerDown({ x: 0, y: 0 }, ctx);
+    const out = t.onPointerUp({ x: 0, y: 0 }, ctx);
+    expect(out).toBeNull();
+  });
+});
+
+describe('markup tools, regression: preview cursor seeding', () => {
+  // After pointer-down but before any pointer-move, the tool should render
+  // a zero-area placeholder so the user sees immediate feedback.
+  it('rectangle: getPreview returns a shape after pointer-down only', () => {
+    const t = instantiateTool('rectangle');
+    t.onPointerDown({ x: 5, y: 5 }, ctx);
+    const preview = t.getPreview();
+    expect(preview).not.toBeNull();
+    expect(preview.type).toBe('rectangle');
+    expect(preview.geometry.width).toBe(0);
+    expect(preview.geometry.height).toBe(0);
+  });
+
+  it('line: getPreview returns a shape after pointer-down only', () => {
+    const t = instantiateTool('line');
+    t.onPointerDown({ x: 5, y: 5 }, ctx);
+    const preview = t.getPreview();
+    expect(preview).not.toBeNull();
+    expect(preview.geometry.from).toEqual({ x: 5, y: 5 });
+    expect(preview.geometry.to).toEqual({ x: 5, y: 5 });
+  });
+
+  it('diameter: getPreview returns a shape after pointer-down only', () => {
+    const t = instantiateTool('diameter');
+    t.onPointerDown({ x: 0, y: 0 }, ctx);
+    const preview = t.getPreview();
+    expect(preview).not.toBeNull();
+    expect(preview.geometry.radius).toBe(0);
+  });
+
+  it('callout: getPreview returns a shape after first click', () => {
+    const t = instantiateTool('callout');
+    t.onPointerDown({ x: 20, y: 20 }, ctx);
+    const preview = t.getPreview();
+    expect(preview).not.toBeNull();
+    expect(preview.geometry.anchor).toEqual({ x: 20, y: 20 });
+  });
+});
+
+describe('markup tools, regression: hyperlink preview type', () => {
+  it('preview type is hyperlink, not rectangle', () => {
+    const t = instantiateTool('hyperlink');
+    t.onPointerDown({ x: 0, y: 0 }, ctx);
+    t.onPointerMove({ x: 20, y: 20 }, ctx);
+    const preview = t.getPreview();
+    expect(preview.type).toBe('hyperlink');
+  });
+});
+
+describe('markup tools, regression: point isolation', () => {
+  // Geometry stored on a tool must not alias the caller's point object.
+  it('mutating the caller point after onPointerDown does not affect stored geometry', () => {
+    const t = instantiateTool('count');
+    const point = { x: 50, y: 50 };
+    t.onPointerDown(point, ctx);
+    point.x = 999;
+    point.y = 999;
+    const out = t.commit();
+    expect(out.geometry.center.x).toBe(50);
+    expect(out.geometry.center.y).toBe(50);
+  });
+
+  it('mutating the caller point after pushing onto a polyline tool does not affect stored geometry', () => {
+    const t = instantiateTool('length');
+    const a = { x: 0, y: 0 };
+    const b = { x: 100, y: 0 };
+    t.onPointerDown(a, ctx);
+    t.onPointerDown(b, ctx);
+    a.x = 999; b.x = 999;
+    const out = t.commit();
+    expect(out.geometry.points[0]).toEqual({ x: 0, y: 0 });
+    expect(out.geometry.points[1]).toEqual({ x: 100, y: 0 });
   });
 });

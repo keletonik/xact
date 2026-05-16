@@ -20,11 +20,18 @@ const COMMON = {
   defaultStyle: () => ({ stroke: '#ef4444', strokeWidth: 2, fill: 'rgba(239,68,68,0.15)', opacity: 1, dash: null }),
 };
 
+// Click-drag commit threshold in page pixels. Below this, a click-without-drag
+// gesture is treated as no-op rather than producing a zero-size shape that
+// pollutes the legend.
+const MIN_DRAG_PX = 2;
+
 function applyConstraints(point, ctx, origin = null) {
   let p = point;
   if (ctx.snapGridPx) p = snapToGrid(p, ctx.snapGridPx);
   if (ctx.orthoLocked && origin) p = orthoLock(origin, p);
-  return p;
+  // Always clone at the boundary so a later mutation of the caller's point
+  // object cannot propagate into a tool's stored geometry.
+  return { x: p.x, y: p.y };
 }
 
 // ---------- Count (place a symbol marker) ----------
@@ -203,6 +210,10 @@ export function makeRectangleTool() {
     onPointerDown(point, ctx) {
       ctxRef = ctx;
       origin = applyConstraints(point, ctx);
+      // Seed cursor so the very first getPreview() after pointer-down can
+      // render a zero-area placeholder, giving the user immediate visual
+      // feedback before any mouse-move event arrives.
+      cursor = origin;
     },
     onPointerMove(point, ctx) {
       ctxRef = ctx;
@@ -212,6 +223,10 @@ export function makeRectangleTool() {
       ctxRef = ctx;
       if (origin) {
         const finalPoint = applyConstraints(point, ctx, origin);
+        if (distancePx(origin, finalPoint) < MIN_DRAG_PX) {
+          origin = null; cursor = null;
+          return null;
+        }
         return this._buildAndReset(finalPoint);
       }
       return null;
@@ -289,7 +304,7 @@ export function makeTextTool() {
 }
 
 // ---------- Cloud (revision cloud with bumpy edges, drawn as a polygon) ----------
-// Authoring UX matches the area tool — click points around the region you
+// Authoring UX matches the area tool. Click points around the region you
 // want clouded, double-click / Enter to commit. The rendering layer applies
 // the bumpy revision-cloud path computed by `revisionCloudPath`.
 export function makeCloudTool() {
@@ -361,6 +376,9 @@ export function makeCalloutTool() {
       const p = applyConstraints(point, ctx);
       if (!anchor) {
         anchor = p;
+        // Seed cursor at the anchor so the leader preview shows immediately
+        // rather than waiting for the first mouse-move event.
+        cursor = p;
         return null;
       }
       const out = {
@@ -412,6 +430,13 @@ export function makeHyperlinkTool() {
   return {
     ...inner,
     type: 'hyperlink',
+    // Relabel the in-flight preview so the renderer can show the link-icon
+    // overlay during draw rather than swapping appearance at commit.
+    getPreview() {
+      const preview = inner.getPreview.call(inner);
+      if (!preview) return null;
+      return { ...preview, type: 'hyperlink' };
+    },
     onPointerUp(point, ctx) {
       const out = inner.onPointerUp.call(inner, point, ctx);
       if (out) {
@@ -433,6 +458,7 @@ export function makeLineTool({ arrow = false } = {}) {
     onPointerDown(point, ctx) {
       ctxRef = ctx;
       origin = applyConstraints(point, ctx);
+      cursor = origin;
     },
     onPointerMove(point, ctx) {
       ctxRef = ctx;
@@ -442,6 +468,10 @@ export function makeLineTool({ arrow = false } = {}) {
       ctxRef = ctx;
       if (origin) {
         const finalPoint = applyConstraints(point, ctx, origin);
+        if (distancePx(origin, finalPoint) < MIN_DRAG_PX) {
+          origin = null; cursor = null;
+          return null;
+        }
         const geom = { from: origin, to: finalPoint };
         const out = {
           id: uuid(),
@@ -486,6 +516,7 @@ export function makeDiameterTool() {
     onPointerDown(point, ctx) {
       ctxRef = ctx;
       origin = applyConstraints(point, ctx);
+      cursor = origin;
     },
     onPointerMove(point, ctx) {
       ctxRef = ctx;
@@ -496,6 +527,10 @@ export function makeDiameterTool() {
       if (!origin) return null;
       const finalPoint = applyConstraints(point, ctx, origin);
       const diameterPx = distancePx(origin, finalPoint);
+      if (diameterPx < MIN_DRAG_PX) {
+        origin = null; cursor = null;
+        return null;
+      }
       const cx = (origin.x + finalPoint.x) / 2;
       const cy = (origin.y + finalPoint.y) / 2;
       const radius = diameterPx / 2;

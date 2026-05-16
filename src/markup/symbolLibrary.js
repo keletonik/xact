@@ -199,7 +199,7 @@ export const SYMBOLS = [
   { id: 'pas_smoke_door', name: 'Smoke door',           category: SYMBOL_CATEGORIES.PASSIVE,
     svg: `<rect x="4" y="3" width="3" height="18" fill="currentColor"/><path d="M7 12l13-6v12L7 12z" fill="none" stroke="currentColor" ${SW}/><text x="14" y="14" text-anchor="middle" font-size="6" font-weight="700" fill="currentColor">S</text>` },
   { id: 'pas_pen',     name: 'Penetration seal',         category: SYMBOL_CATEGORIES.PASSIVE, standard: 'AS 1530.4',
-    svg: `<rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" ${SW}" stroke-dasharray="3 2"/><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" ${SW}/>` },
+    svg: `<rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" ${SW} stroke-dasharray="3 2"/><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" ${SW}/>` },
   { id: 'pas_collar',  name: 'Intumescent collar',       category: SYMBOL_CATEGORIES.PASSIVE,
     svg: `<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" ${SW}/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" ${SW}/>` },
   { id: 'pas_wall_frl', name: 'FRL wall (60/60/60)',     category: SYMBOL_CATEGORIES.PASSIVE,
@@ -213,7 +213,7 @@ export const SYMBOLS = [
   { id: 'pas_fire_curtain', name: 'Fire curtain', category: SYMBOL_CATEGORIES.PASSIVE,
     svg: `<path d="M3 5h18M6 5v15M10 5v15M14 5v15M18 5v15" stroke="currentColor" ${SW}/>` },
   { id: 'pas_smoke_curtain', name: 'Smoke curtain', category: SYMBOL_CATEGORIES.PASSIVE,
-    svg: `<path d="M3 5h18M6 5v15M10 5v15M14 5v15M18 5v15" stroke="currentColor" ${SW}" stroke-dasharray="2 2"/>` },
+    svg: `<path d="M3 5h18M6 5v15M10 5v15M14 5v15M18 5v15" stroke="currentColor" ${SW} stroke-dasharray="2 2"/>` },
 
   // ---------- Special suppression ----------
   { id: 'sup_gas_nozzle', name: 'Gas suppression nozzle', category: SYMBOL_CATEGORIES.SUPPRESSION,
@@ -255,7 +255,7 @@ export const SYMBOLS = [
   { id: 'ref_section_bubble', name: 'Section reference', category: SYMBOL_CATEGORIES.REFERENCE,
     svg: `<circle cx="12" cy="10" r="5" fill="none" stroke="currentColor" ${SW}/><path d="M12 15v6M9 18h6" stroke="currentColor" ${SW}/><text x="12" y="12" text-anchor="middle" font-size="6" font-weight="700" fill="currentColor">A</text>` },
   { id: 'ref_zone_boundary', name: 'Zone boundary', category: SYMBOL_CATEGORIES.REFERENCE,
-    svg: `<rect x="3" y="3" width="18" height="18" fill="none" stroke="currentColor" ${SW}" stroke-dasharray="4 3"/>` },
+    svg: `<rect x="3" y="3" width="18" height="18" fill="none" stroke="currentColor" ${SW} stroke-dasharray="4 3"/>` },
 
   // ---------- Generic construction ----------
   { id: 'door',       name: 'Door',                     category: SYMBOL_CATEGORIES.GENERIC,
@@ -280,10 +280,11 @@ export function getSymbolsByCategory(category) {
  * Render a symbol to an inline SVG string. Used for toolbar buttons via
  * dangerouslySetInnerHTML.
  *
- * Inputs are validated even though every current caller passes a literal —
- * this defends a future caller that wires `color` to user input.
+ * Inputs are validated even though every current caller passes a literal,
+ * defending a future caller that wires `color` to user input. Hex shorthand
+ * `#1234` and `#12345` are rejected; CSS hex accepts only 3, 4, 6, or 8 digits.
  */
-const COLOR_RE = /^#[0-9a-fA-F]{3,8}$|^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/;
+const COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$|^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/;
 export function renderSymbolToSVG(symbolId, color = '#0f172a', size = 28) {
   const sym = getSymbol(symbolId);
   if (!sym) return '';
