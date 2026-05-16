@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ArrowRight, CheckCircle2, Upload, XCircle } from 'lucide-react';
-import { parseCSV } from '../../csv/parser';
+import { parseSpreadsheet } from '../../csv/parser';
 import { TARGET_FIELDS, autoMapHeaders } from '../../csv/mappingPresets';
 import {
   applyProductImport, applySupplierPriceImport,
@@ -27,7 +27,7 @@ export default function CSVImportWizard({ kind = 'PRODUCT', onDone, onCancel }) 
   const handleFile = useCallback(async (csvFile) => {
     setBusy(true); setError(null);
     try {
-      const result = await parseCSV(csvFile);
+      const result = await parseSpreadsheet(csvFile);
       setParsed(result);
       setMapping(autoMapHeaders(result.headers, kind));
       setStep(2);
@@ -143,9 +143,9 @@ function DropZone({ busy, onFile }) {
       onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
     >
       <Upload size={28} />
-      <p>Drop a CSV file here, or click to choose.</p>
-      <p style={{ fontSize: 12, color: '#64748b' }}>{busy ? 'Parsing…' : 'Up to ~50k rows in-browser.'}</p>
-      <input type="file" accept=".csv,text/csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} style={{ display: 'none' }} />
+      <p>Drop a CSV or Excel file here, or click to choose.</p>
+      <p style={{ fontSize: 12, color: '#64748b' }}>{busy ? 'Parsing…' : 'Supports .csv, .xlsx, .xls, .ods — up to ~50k rows in-browser.'}</p>
+      <input type="file" accept=".csv,.xlsx,.xls,.ods,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} style={{ display: 'none' }} />
     </label>
   );
 }

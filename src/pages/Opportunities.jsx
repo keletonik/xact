@@ -10,7 +10,7 @@ import Modal from '../components/common/Modal';
 import SearchInput from '../components/common/SearchInput';
 import StatusBadge from '../components/common/StatusBadge';
 import EmptyState from '../components/common/EmptyState';
-import useProjectStore from '../stores/useProjectStore';
+import useProjectStore, { computePipelineStats } from '../stores/useProjectStore';
 import { PROJECT_STATUSES, PROJECT_STATUS_LABELS, FIRE_SCOPES, FIRE_SCOPE_LABELS } from '../utils/constants';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
@@ -24,13 +24,19 @@ const PIPELINE_STAGES = [
 ];
 
 export default function Opportunities() {
-  const { projects, createProject } = useProjectStore();
+  // Select primitives separately — destructuring the whole store causes a
+  // re-render on every store mutation. Calling `getPipelineStats()` from a
+  // selector returned a fresh object each render and tripped React 19's
+  // getSnapshot caching loop. Both fixed by selecting `projects` once and
+  // deriving stats via useMemo.
+  const projects = useProjectStore((s) => s.projects);
+  const createProject = useProjectStore((s) => s.createProject);
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [view, setView] = useState('pipeline');
   const [form, setForm] = useState({ name: '', client: '', clientContact: '', estimatedValue: '', dueDate: '', scopes: [], status: PROJECT_STATUSES.LEAD, notes: '' });
 
-  const stats = useProjectStore((s) => s.getPipelineStats());
+  const stats = useMemo(() => computePipelineStats(projects), [projects]);
 
   const filtered = useMemo(() => {
     if (!search) return projects;

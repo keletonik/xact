@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { distancePx, orthoLock, polygonAreaPx, polygonPerimeterPx, polylineLengthPx, snapToGrid } from './geometry';
+import { angleDeg, distancePx, orthoLock, polygonAreaPx, polygonPerimeterPx, polylineLengthPx, snapToGrid } from './geometry';
 
 /**
  * Markup tool registry.
@@ -288,17 +288,137 @@ export function makeTextTool() {
   };
 }
 
-// ---------- Cloud (revision cloud) ----------
+// ---------- Cloud (revision cloud with bumpy edges, drawn as a polygon) ----------
+// Authoring UX matches the area tool — click points around the region you
+// want clouded, double-click / Enter to commit. The rendering layer applies
+// the bumpy revision-cloud path computed by `revisionCloudPath`.
 export function makeCloudTool() {
-  // Same authoring UX as Rectangle, different render hint.
+  let points = [];
+  let cursor = null;
+  let ctxRef = null;
+  return {
+    type: 'cloud',
+    onPointerDown(point, ctx) {
+      ctxRef = ctx;
+      const origin = points[points.length - 1] || null;
+      const p = applyConstraints(point, ctx, origin);
+      points.push(p);
+    },
+    onPointerMove(point, ctx) {
+      ctxRef = ctx;
+      const origin = points[points.length - 1] || null;
+      cursor = applyConstraints(point, ctx, origin);
+    },
+    onPointerUp() { return null; },
+    onDblClick() { return this.commit(); },
+    onKey(e) {
+      if (e.key === 'Enter' || e.key === 'Escape') return this.commit();
+      if (e.key === 'Backspace' && points.length > 0) points.pop();
+      return null;
+    },
+    getPreview() {
+      if (points.length === 0) return null;
+      const preview = cursor ? [...points, cursor] : points;
+      return {
+        id: 'preview',
+        type: 'cloud',
+        layerId: ctxRef?.activeLayerId,
+        geometry: { points: preview, closed: true },
+        style: ctxRef?.style ?? COMMON.defaultStyle(),
+      };
+    },
+    commit() {
+      if (points.length < 3) { points = []; cursor = null; return null; }
+      const ctx = ctxRef;
+      const out = {
+        id: uuid(),
+        type: 'cloud',
+        pageNumber: ctx.pageNumber,
+        layerId: ctx.activeLayerId,
+        geometry: { points: [...points], closed: true },
+        style: ctx.style ?? COMMON.defaultStyle(),
+        metadata: { quantity: 1, measuredValueMm: 0, note: '' },
+      };
+      points = []; cursor = null;
+      return out;
+    },
+  };
+}
+
+// ---------- Callout (anchor + leader + text-box) ----------
+// Two-click placement: first click sets the *anchor* (where the leader
+// points to), second click sets the text-box origin. The box auto-sizes
+// to the placeholder text until the user edits it via the Properties
+// panel.
+export function makeCalloutTool() {
+  let anchor = null;
+  let cursor = null;
+  let ctxRef = null;
+  return {
+    type: 'callout',
+    onPointerDown(point, ctx) {
+      ctxRef = ctx;
+      const p = applyConstraints(point, ctx);
+      if (!anchor) {
+        anchor = p;
+        return null;
+      }
+      const out = {
+        id: uuid(),
+        type: 'callout',
+        pageNumber: ctx.pageNumber,
+        layerId: ctx.activeLayerId,
+        geometry: {
+          anchor: { ...anchor },
+          box: { x: p.x, y: p.y, width: 140, height: 36 },
+        },
+        style: ctx.style ?? COMMON.defaultStyle(),
+        metadata: { quantity: 0, measuredValueMm: 0, note: 'New note' },
+      };
+      anchor = null; cursor = null;
+      return out;
+    },
+    onPointerMove(point, ctx) {
+      ctxRef = ctx;
+      if (anchor) cursor = applyConstraints(point, ctx, anchor);
+    },
+    onPointerUp() { return null; },
+    onKey(e) {
+      if (e.key === 'Escape') { anchor = null; cursor = null; }
+      return null;
+    },
+    getPreview() {
+      if (!anchor || !cursor) return null;
+      return {
+        id: 'preview',
+        type: 'callout',
+        layerId: ctxRef?.activeLayerId,
+        geometry: {
+          anchor: { ...anchor },
+          box: { x: cursor.x, y: cursor.y, width: 140, height: 36 },
+        },
+        style: ctxRef?.style ?? COMMON.defaultStyle(),
+      };
+    },
+    commit() { return null; },
+  };
+}
+
+// ---------- Hyperlink (invisible hit region; metadata.url) ----------
+// Authoring UX = rectangle. Stored with metadata.url so the renderer can
+// draw a faint link-icon overlay; clicking in "select" mode opens the URL.
+export function makeHyperlinkTool() {
   const inner = makeRectangleTool();
   return {
     ...inner,
-    type: 'cloud',
-    _buildAndReset(point) {
-      const obj = inner._buildAndReset(point);
-      if (obj) obj.type = 'cloud';
-      return obj;
+    type: 'hyperlink',
+    onPointerUp(point, ctx) {
+      const out = inner.onPointerUp.call(inner, point, ctx);
+      if (out) {
+        out.type = 'hyperlink';
+        out.metadata = { ...out.metadata, url: '', quantity: 0, measuredValueMm: 0, note: '' };
+      }
+      return out;
     },
   };
 }
@@ -356,12 +476,194 @@ export function makeLineTool({ arrow = false } = {}) {
   };
 }
 
+// ---------- Diameter (2-point across a circle) ----------
+export function makeDiameterTool() {
+  let origin = null;
+  let cursor = null;
+  let ctxRef = null;
+  return {
+    type: 'diameter',
+    onPointerDown(point, ctx) {
+      ctxRef = ctx;
+      origin = applyConstraints(point, ctx);
+    },
+    onPointerMove(point, ctx) {
+      ctxRef = ctx;
+      if (origin) cursor = applyConstraints(point, ctx, origin);
+    },
+    onPointerUp(point, ctx) {
+      ctxRef = ctx;
+      if (!origin) return null;
+      const finalPoint = applyConstraints(point, ctx, origin);
+      const diameterPx = distancePx(origin, finalPoint);
+      const cx = (origin.x + finalPoint.x) / 2;
+      const cy = (origin.y + finalPoint.y) / 2;
+      const radius = diameterPx / 2;
+      const out = {
+        id: uuid(),
+        type: 'diameter',
+        pageNumber: ctx.pageNumber,
+        layerId: ctx.activeLayerId,
+        geometry: { center: { x: cx, y: cy }, radius, p1: origin, p2: finalPoint },
+        style: ctx.style ?? COMMON.defaultStyle(),
+        metadata: {
+          quantity: 1,
+          measuredValueMm: diameterPx * ctx.pageScale.mmPerPx,
+          note: '',
+        },
+      };
+      origin = null; cursor = null;
+      return out;
+    },
+    onKey() { return null; },
+    getPreview() {
+      if (!origin || !cursor) return null;
+      const cx = (origin.x + cursor.x) / 2;
+      const cy = (origin.y + cursor.y) / 2;
+      const radius = distancePx(origin, cursor) / 2;
+      return {
+        id: 'preview',
+        type: 'diameter',
+        layerId: ctxRef?.activeLayerId,
+        geometry: { center: { x: cx, y: cy }, radius, p1: origin, p2: cursor },
+        style: ctxRef?.style ?? COMMON.defaultStyle(),
+      };
+    },
+    commit() { return null; },
+  };
+}
+
+// ---------- Angle (3 points: vertex + two rays) ----------
+export function makeAngleTool() {
+  let points = [];
+  let cursor = null;
+  let ctxRef = null;
+  return {
+    type: 'angle',
+    onPointerDown(point, ctx) {
+      ctxRef = ctx;
+      const origin = points[points.length - 1] || null;
+      const p = applyConstraints(point, ctx, origin);
+      points.push(p);
+      if (points.length === 3) return this.commit();
+      return null;
+    },
+    onPointerMove(point, ctx) {
+      ctxRef = ctx;
+      const origin = points[points.length - 1] || null;
+      cursor = applyConstraints(point, ctx, origin);
+    },
+    onPointerUp() { return null; },
+    onKey(e) {
+      if (e.key === 'Escape') { points = []; cursor = null; return null; }
+      return null;
+    },
+    getPreview() {
+      if (points.length === 0) return null;
+      const preview = cursor ? [...points, cursor] : points;
+      return {
+        id: 'preview',
+        type: 'angle',
+        layerId: ctxRef?.activeLayerId,
+        geometry: { points: preview },
+        style: ctxRef?.style ?? COMMON.defaultStyle(),
+      };
+    },
+    commit() {
+      if (points.length < 3) return null;
+      const ctx = ctxRef;
+      const [a, b, c] = points;
+      const deg = angleDeg(a, b, c);
+      const out = {
+        id: uuid(),
+        type: 'angle',
+        pageNumber: ctx.pageNumber,
+        layerId: ctx.activeLayerId,
+        geometry: { points: [a, b, c] },
+        style: ctx.style ?? COMMON.defaultStyle(),
+        metadata: {
+          quantity: 1,
+          measuredValueMm: 0,
+          angleDeg: deg,
+          note: '',
+        },
+      };
+      points = []; cursor = null;
+      return out;
+    },
+  };
+}
+
+// ---------- Perimeter (closed polyline → perimeter only) ----------
+export function makePerimeterTool() {
+  let points = [];
+  let cursor = null;
+  let ctxRef = null;
+  return {
+    type: 'perimeter',
+    onPointerDown(point, ctx) {
+      ctxRef = ctx;
+      const origin = points[points.length - 1] || null;
+      const p = applyConstraints(point, ctx, origin);
+      points.push(p);
+    },
+    onPointerMove(point, ctx) {
+      ctxRef = ctx;
+      const origin = points[points.length - 1] || null;
+      cursor = applyConstraints(point, ctx, origin);
+    },
+    onPointerUp() { return null; },
+    onDblClick() { return this.commit(); },
+    onKey(e) {
+      if (e.key === 'Enter' || e.key === 'Escape') return this.commit();
+      if (e.key === 'Backspace' && points.length > 0) points.pop();
+      return null;
+    },
+    getPreview() {
+      if (points.length === 0) return null;
+      const preview = cursor ? [...points, cursor] : points;
+      return {
+        id: 'preview',
+        type: 'perimeter',
+        layerId: ctxRef?.activeLayerId,
+        geometry: { points: preview, closed: true },
+        style: ctxRef?.style ?? COMMON.defaultStyle(),
+      };
+    },
+    commit() {
+      if (points.length < 3) { points = []; cursor = null; return null; }
+      const ctx = ctxRef;
+      const perimeterPx = polygonPerimeterPx(points);
+      const out = {
+        id: uuid(),
+        type: 'perimeter',
+        pageNumber: ctx.pageNumber,
+        layerId: ctx.activeLayerId,
+        geometry: { points: [...points], closed: true },
+        style: ctx.style ?? COMMON.defaultStyle(),
+        metadata: {
+          quantity: 1,
+          measuredValueMm: perimeterPx * ctx.pageScale.mmPerPx,
+          note: '',
+        },
+      };
+      points = []; cursor = null;
+      return out;
+    },
+  };
+}
+
 export const TOOL_FACTORIES = {
   count: makeCountTool,
   length: makeLengthTool,
   area: makeAreaTool,
+  perimeter: makePerimeterTool,
+  diameter: makeDiameterTool,
+  angle: makeAngleTool,
   rectangle: makeRectangleTool,
   cloud: makeCloudTool,
+  callout: makeCalloutTool,
+  hyperlink: makeHyperlinkTool,
   text: makeTextTool,
   line: () => makeLineTool({ arrow: false }),
   arrow: () => makeLineTool({ arrow: true }),

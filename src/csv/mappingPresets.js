@@ -36,32 +36,35 @@ export const TARGET_FIELDS = {
 /**
  * Header alias map. Each entry is target-field-key → array of acceptable headers
  * (already normalised). When multiple preset hits compete, the first match wins.
+ *
+ * The Flamesafe simPRO export is supported out of the box via the `default_price`,
+ * `cost_price`, `code`, `sku`, `name`, `category`, `unit_description` aliases.
  */
 const ALIASES = {
   PRODUCT: {
     sku: ['sku', 'part_no', 'part_number', 'partnumber', 'code', 'item_code', 'product_code', 'stock_code'],
     name: ['name', 'description', 'product_name', 'item_name', 'product_description', 'desc'],
-    category: ['category', 'group', 'class', 'product_class'],
-    unit: ['unit', 'uom', 'unit_of_measure'],
-    brand: ['brand', 'make'],
+    category: ['category', 'group', 'class', 'product_class', 'subcategory'],
+    unit: ['unit', 'uom', 'unit_of_measure', 'unit_description'],
+    brand: ['brand', 'make', 'manufacturer'],
     model: ['model'],
-    manufacturer: ['manufacturer', 'mfr', 'maker'],
-    basePrice: ['price', 'list_price', 'rrp', 'unit_price', 'base_price', 'cost'],
+    manufacturer: ['manufacturer', 'mfr', 'maker', 'supplier'],
+    basePrice: ['default_price', 'sell_price', 'price', 'list_price', 'rrp', 'unit_price', 'base_price'],
     currency: ['currency', 'ccy'],
     gtin: ['gtin', 'barcode', 'ean', 'upc'],
     datasheetUrl: ['datasheet', 'datasheet_url', 'specsheet', 'url'],
   },
   SUPPLIER_PRICE: {
-    sku: ['sku', 'product_sku', 'part_no', 'part_number', 'our_sku'],
+    sku: ['sku', 'product_sku', 'part_no', 'part_number', 'our_sku', 'code', 'item_code', 'product_code'],
     supplierName: ['supplier', 'supplier_name', 'vendor', 'vendor_name'],
-    supplierSku: ['supplier_sku', 'vendor_sku', 'supplier_part'],
-    unitPrice: ['unit_price', 'price', 'cost', 'net_price', 'list_price'],
+    supplierSku: ['supplier_sku', 'vendor_sku', 'supplier_part', 'supplier_code'],
+    unitPrice: ['unit_price', 'cost_price', 'cost', 'net_price', 'price', 'list_price'],
     currency: ['currency', 'ccy'],
     moq: ['moq', 'min_order_qty', 'minimum_order'],
     packSize: ['pack_size', 'pack', 'qty_per_pack', 'units_per_pack'],
     freight: ['freight', 'shipping', 'delivery'],
     leadTimeDays: ['lead_time', 'lead_time_days', 'leadtime'],
-    effectiveFrom: ['effective_from', 'effective_date', 'date'],
+    effectiveFrom: ['effective_from', 'effective_date', 'date', 'updated'],
     sourceUrl: ['source', 'source_url', 'url'],
   },
 };

@@ -1,7 +1,7 @@
 import Dexie from 'dexie';
 
 /**
- * Evalax client-side persistence (IndexedDB via Dexie).
+ * Xact client-side persistence (IndexedDB via Dexie).
  *
  * Every aggregate root in the domain model lives in its own table.
  * Migrations: bump the version number and add a new .stores() block.
@@ -10,9 +10,9 @@ import Dexie from 'dexie';
  * measurements are stored in SI base units (mm, mm^2, mm^3).
  */
 
-class EvalaxDB extends Dexie {
+class XactDB extends Dexie {
   constructor() {
-    super('evalax');
+    super('xact');
 
     // v1 — initial schema
     this.version(1).stores({
@@ -48,7 +48,7 @@ class EvalaxDB extends Dexie {
   }
 }
 
-const db = new EvalaxDB();
+const db = new XactDB();
 
 /**
  * Reset the DB. Used by tests; safe but destructive.

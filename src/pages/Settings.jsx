@@ -11,14 +11,24 @@ import {
   Save,
   Sun,
   Moon,
+  Database,
+  Upload,
+  Download,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import FormField, { TextInput, SelectInput } from '../components/common/FormField';
 import { useTheme } from '../hooks/useTheme';
+import CSVImportWizard from '../components/csv/CSVImportWizard';
+import { planFlamesafeSeed, applyFlamesafeSeed, planSupplierPriceSeed } from '../catalog/seedFlamesafe';
+import { applySupplierPriceImport, planSupplierPriceImport } from '../csv/importPipeline';
+import useCatalogStore from '../stores/useCatalogStore';
 
 const tabs = [
   { id: 'general', label: 'General', icon: SettingsIcon },
+  { id: 'data', label: 'Data import', icon: Database },
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'appearance', label: 'Appearance', icon: Palette },
@@ -127,6 +137,8 @@ export default function Settings() {
             </Card>
           </motion.div>
         )}
+
+        {activeTab === 'data' && <DataImportPanel />}
 
         {activeTab === 'profile' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -384,3 +396,189 @@ function ToggleSwitch({ defaultChecked = false }) {
     </button>
   );
 }
+
+function DataImportPanel() {
+  const hydrate = useCatalogStore((s) => s.hydrate);
+  const products = useCatalogStore((s) => s.products);
+  const suppliers = useCatalogStore((s) => s.suppliers);
+  const supplierPrices = useCatalogStore((s) => s.supplierPrices);
+
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState(null);
+  const [error, setError] = useState(null);
+  const [showWizard, setShowWizard] = useState(null);
+  const [seedPlan, setSeedPlan] = useState(null);
+  const [supplierSeedPreview, setSupplierSeedPreview] = useState(null);
+
+  const previewFlamesafe = async () => {
+    setBusy(true); setError(null); setStatus(null);
+    try {
+      const { plan } = await planFlamesafeSeed();
+      setSeedPlan(plan);
+      setStatus(`Preview: ${plan.summary.creates} new, ${plan.summary.updates} updates, ${plan.summary.errors} errors.`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const applyFlamesafe = async () => {
+    if (!seedPlan) return;
+    setBusy(true); setError(null);
+    try {
+      const batchId = await applyFlamesafeSeed(seedPlan);
+      await hydrate();
+      setStatus(`Imported. Batch ${batchId.slice(0, 8)} — ${seedPlan.summary.creates} created, ${seedPlan.summary.updates} updated.`);
+      setSeedPlan(null);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const previewSupplierSeed = async () => {
+    setBusy(true); setError(null); setStatus(null);
+    try {
+      const { parsed, mapping } = await planSupplierPriceSeed();
+      const plan = await planSupplierPriceImport(parsed.rows, mapping);
+      setSupplierSeedPreview({ plan, mapping, headers: parsed.headers });
+      setStatus(`Preview: ${plan.summary.prices} prices for ${plan.summary.suppliers} suppliers, ${plan.summary.errors} errors.`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const applySupplierSeed = async () => {
+    if (!supplierSeedPreview) return;
+    setBusy(true); setError(null);
+    try {
+      const batchId = await applySupplierPriceImport(supplierSeedPreview.plan);
+      await hydrate();
+      setStatus(`Imported supplier prices. Batch ${batchId.slice(0, 8)}.`);
+      setSupplierSeedPreview(null);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+      <Card>
+        <h2 style={{ marginTop: 0, marginBottom: 4, fontSize: 18 }}>Data import</h2>
+        <p style={{ marginTop: 0, color: 'var(--color-text-tertiary, #64748b)', marginBottom: 16 }}>
+          Bring product catalogues and supplier price lists into Xact. Supports CSV, XLSX, XLS, ODS.
+        </p>
+
+        {error && (
+          <div style={banner('danger')}>
+            <AlertTriangle size={16} /> {error}
+          </div>
+        )}
+        {status && !error && (
+          <div style={banner('success')}>
+            <CheckCircle2 size={16} /> {status}
+          </div>
+        )}
+
+        <section style={section}>
+          <h3 style={h3}>Quick-start: Flamesafe master catalogue</h3>
+          <p style={{ marginTop: 4, color: 'var(--color-text-tertiary, #64748b)', fontSize: 13 }}>
+            One-click import of <code>public/seed/flamesafe-products.csv</code> (the simPRO export shipped with the repo).
+            Bumps catalogue prices to the values in that file. Existing products are matched by SKU and updated; new ones are added.
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Button icon={Database} onClick={previewFlamesafe} disabled={busy}>
+              {busy && !seedPlan ? 'Reading file…' : 'Preview Flamesafe master'}
+            </Button>
+            {seedPlan && (
+              <Button icon={Upload} onClick={applyFlamesafe} disabled={busy}>
+                Apply ({seedPlan.summary.creates}+{seedPlan.summary.updates})
+              </Button>
+            )}
+          </div>
+        </section>
+
+        <section style={section}>
+          <h3 style={h3}>Quick-start: Supplier master price list</h3>
+          <p style={{ marginTop: 4, color: 'var(--color-text-tertiary, #64748b)', fontSize: 13 }}>
+            One-click import of <code>public/seed/supplier-price-list-master.xlsx</code>. Imports supplier prices keyed by SKU.
+            Products must already exist in the catalogue (load Flamesafe master first if you haven&apos;t).
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Button icon={Database} onClick={previewSupplierSeed} disabled={busy}>
+              {busy && !supplierSeedPreview ? 'Reading workbook…' : 'Preview supplier master'}
+            </Button>
+            {supplierSeedPreview && (
+              <Button icon={Upload} onClick={applySupplierSeed} disabled={busy}>
+                Apply ({supplierSeedPreview.plan.summary.prices})
+              </Button>
+            )}
+          </div>
+          {supplierSeedPreview && supplierSeedPreview.headers && (
+            <details style={{ marginTop: 8 }}>
+              <summary style={{ fontSize: 12, color: 'var(--color-text-tertiary, #64748b)', cursor: 'pointer' }}>
+                Detected columns ({supplierSeedPreview.headers.length})
+              </summary>
+              <code style={{ display: 'block', fontSize: 11, marginTop: 4, color: 'var(--color-text-secondary, #475569)' }}>
+                {supplierSeedPreview.headers.join(', ')}
+              </code>
+            </details>
+          )}
+        </section>
+
+        <section style={section}>
+          <h3 style={h3}>Custom import (CSV / Excel)</h3>
+          <p style={{ marginTop: 4, color: 'var(--color-text-tertiary, #64748b)', fontSize: 13 }}>
+            Upload any spreadsheet and map the columns yourself. Validation runs as a dry-run before writing.
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Button icon={Upload} variant="secondary" onClick={() => setShowWizard('PRODUCT')}>
+              Import products
+            </Button>
+            <Button icon={Upload} variant="secondary" onClick={() => setShowWizard('SUPPLIER_PRICE')}>
+              Import supplier prices
+            </Button>
+          </div>
+        </section>
+
+        <section style={section}>
+          <h3 style={h3}>Catalogue snapshot</h3>
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 13 }}>
+            <span><strong>{products.length}</strong> products</span>
+            <span><strong>{suppliers.length}</strong> suppliers</span>
+            <span><strong>{supplierPrices.length}</strong> supplier prices</span>
+          </div>
+        </section>
+      </Card>
+
+      {showWizard && (
+        <div style={modalBg}>
+          <CSVImportWizard kind={showWizard} onCancel={() => setShowWizard(null)} onDone={() => { setShowWizard(null); hydrate(); }} />
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+const section = { marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--color-border, #e5e7eb)' };
+const h3 = { margin: '0 0 8px', fontSize: 14, fontWeight: 600 };
+const banner = (tone) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '6px 10px',
+  borderRadius: 6,
+  fontSize: 13,
+  marginBottom: 12,
+  background: tone === 'danger' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.12)',
+  color: tone === 'danger' ? '#b91c1c' : '#166534',
+});
+const modalBg = { position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 };
+// keep the unused-import linter happy: Download/Key are still imported for future use elsewhere on this page
+void Download; void Key;
