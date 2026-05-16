@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Upload, Download, FileText, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Upload, Download, FileText, Trash2 } from 'lucide-react';
 import MarkupCanvas from '../components/markup/MarkupCanvas';
 import MarkupToolbar from '../components/markup/MarkupToolbar';
 import LayerPanel from '../components/markup/LayerPanel';
 import CustomisableSymbolPalette from '../components/markup/CustomisableSymbolPalette';
+import DrawingScalePicker from '../components/markup/DrawingScalePicker';
+import PropertiesPanel from '../components/markup/PropertiesPanel';
+import MarkupsListPanel from '../components/markup/MarkupsListPanel';
+import StatusBar from '../components/markup/StatusBar';
 import useMarkupStore from '../stores/useMarkupStore';
 import useProjectStore from '../stores/useProjectStore';
 import useToolbarPrefs from '../hooks/useToolbarPrefs';
@@ -14,37 +18,55 @@ import { sniffFileKind } from '../utils/fileSniff';
 export default function MarkupPage() {
   const projects = useProjectStore((s) => s.projects);
   const [projectId, setProjectId] = useState(projects[0]?.id ?? null);
-  const drawings = useMarkupStore((s) => s.drawings);
-  const markupDocs = useMarkupStore((s) => s.markupDocs);
-  const hydrate = useMarkupStore((s) => s.hydrate);
-  const uploadDrawing = useMarkupStore((s) => s.uploadDrawing);
-  const addObject = useMarkupStore((s) => s.addObject);
-  const updateObject = useMarkupStore((s) => s.updateObject);
-  const removeObject = useMarkupStore((s) => s.removeObject);
-  const calibrate = useMarkupStore((s) => s.calibrate);
-  const addLayerFn = useMarkupStore((s) => s.addLayer);
-  const updateLayerFn = useMarkupStore((s) => s.updateLayer);
-  const removeLayerFn = useMarkupStore((s) => s.removeLayer);
+
+  // store selectors
+  const drawings           = useMarkupStore((s) => s.drawings);
+  const markupDocs         = useMarkupStore((s) => s.markupDocs);
+  const hydrate            = useMarkupStore((s) => s.hydrate);
+  const uploadDrawing      = useMarkupStore((s) => s.uploadDrawing);
+  const addObject          = useMarkupStore((s) => s.addObject);
+  const updateObject       = useMarkupStore((s) => s.updateObject);
+  const removeObjects      = useMarkupStore((s) => s.removeObjects);
+  const calibrate          = useMarkupStore((s) => s.calibrate);
+  const setDisplayUnit     = useMarkupStore((s) => s.setDisplayUnit);
+  const addLayerFn         = useMarkupStore((s) => s.addLayer);
+  const updateLayerFn      = useMarkupStore((s) => s.updateLayer);
+  const removeLayerFn      = useMarkupStore((s) => s.removeLayer);
   const setMarkupPageCount = useMarkupStore((s) => s.setMarkupPageCount);
-  const getDrawingBlob = useMarkupStore((s) => s.getDrawingBlob);
-  const deleteDrawing = useMarkupStore((s) => s.deleteDrawing);
-  const undoFn = useMarkupStore((s) => s.undo);
-  const redoFn = useMarkupStore((s) => s.redo);
-  const history = useMarkupStore((s) => s.history);
+  const getDrawingBlob     = useMarkupStore((s) => s.getDrawingBlob);
+  const deleteDrawing      = useMarkupStore((s) => s.deleteDrawing);
+  const undoFn             = useMarkupStore((s) => s.undo);
+  const redoFn             = useMarkupStore((s) => s.redo);
+  const history            = useMarkupStore((s) => s.history);
+  const copyToClipboard    = useMarkupStore((s) => s.copyToClipboard);
+  const pasteClipboard     = useMarkupStore((s) => s.pasteClipboard);
+  const duplicateObjects   = useMarkupStore((s) => s.duplicateObjects);
+  const groupObjects       = useMarkupStore((s) => s.groupObjects);
+  const ungroupObjects     = useMarkupStore((s) => s.ungroupObjects);
+  const transformObjects   = useMarkupStore((s) => s.transformObjects);
+
   const { prefs, togglePin, recordUse, resetDefaults } = useToolbarPrefs();
 
-  const [selectedObjectId, setSelectedObjectId] = useState(null);
-
+  // local UI state
   const [selectedDrawingId, setSelectedDrawingId] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [activeTool, setActiveTool] = useState(null);
-  const [calibrationMode, setCalibrationMode] = useState(false);
-  const [snapGridPx, setSnapGridPx] = useState(0);
-  const [orthoLocked, setOrthoLocked] = useState(false);
+  const [pageNumber, setPageNumber]               = useState(1);
+  const [activeTool, setActiveTool]               = useState(null);
+  const [calibrationMode, setCalibrationMode]     = useState(false);
+  const [snapGridPx, setSnapGridPx]               = useState(0);
+  const [orthoLocked, setOrthoLocked]             = useState(false);
   const [placementSymbolId, setPlacementSymbolId] = useState(null);
-  const [drawingBlob, setDrawingBlob] = useState(null);
-  const [contentType, setContentType] = useState(null);
+  const [drawingBlob, setDrawingBlob]             = useState(null);
+  const [contentType, setContentType]             = useState(null);
   const [activeLayerOverride, setActiveLayerOverride] = useState(null);
+  const [selectedIds, setSelectedIds]             = useState(() => new Set());
+  // Track the drawing+page combo we last had selection for. When the user
+  // navigates, derive a cleared selection during render instead of in an
+  // effect (which React 19's lint correctly flags as a re-render cascade).
+  const [lastDocPage, setLastDocPage] = useState({ id: null, pn: 1 });
+  const [cursorMm, setCursorMm]                   = useState(null);
+  const [zoom, setZoom]                           = useState(1);
+  const [showLabels, setShowLabels]               = useState(true);
+  const [rightPanel, setRightPanel]               = useState('properties'); // 'properties' | 'list'
 
   useEffect(() => { hydrate(); }, [hydrate]);
 
@@ -72,7 +94,7 @@ export default function MarkupPage() {
     return () => { cancelled = true; };
   }, [drawing, getDrawingBlob]);
 
-  // If a PDF, ask pdf.js for the real page count and persist it.
+  // Set PDF page count
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -91,18 +113,22 @@ export default function MarkupPage() {
     return () => { cancelled = true; };
   }, [drawing, drawingBlob, markupDoc, setMarkupPageCount]);
 
+  // Reset selection when changing pages or docs (React 19-friendly: derive
+  // during render rather than mutating in an effect).
+  const currentKey = { id: drawing?.id ?? null, pn: pageNumber };
+  if (currentKey.id !== lastDocPage.id || currentKey.pn !== lastDocPage.pn) {
+    setLastDocPage(currentKey);
+    if (selectedIds.size > 0) setSelectedIds(new Set());
+  }
+
   const handleUpload = useCallback(async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!projectId) {
-      window.alert('Pick a project first.');
-      return;
-    }
-    // Sniff magic bytes — File.type comes from the OS and is spoofable.
+    if (!projectId) { window.alert('Pick a project first.'); return; }
     const sniffed = await sniffFileKind(file);
-    const acceptedKinds = ['pdf', 'png', 'jpeg', 'webp'];
-    if (!sniffed || !acceptedKinds.includes(sniffed)) {
+    const accepted = ['pdf', 'png', 'jpeg', 'webp'];
+    if (!sniffed || !accepted.includes(sniffed)) {
       window.alert(`Supported file types: PDF, PNG, JPG, WEBP. (Detected: ${sniffed || 'unknown'})`);
       return;
     }
@@ -117,41 +143,16 @@ export default function MarkupPage() {
     if (obj?.metadata?.symbolId) recordUse(obj.metadata.symbolId);
   }, [addObject, markupDoc, page, recordUse]);
 
-  const handleObjectSelected = useCallback((obj) => {
-    if (!markupDoc || !page) return;
-    if (obj?.__delete) {
-      removeObject(markupDoc.id, page.pageNumber, obj.__delete);
-      setSelectedObjectId(null);
-      return;
-    }
-    setSelectedObjectId(obj?.id || null);
-  }, [markupDoc, page, removeObject]);
-
   const handleDeleteSelected = useCallback(() => {
-    if (!markupDoc || !page || !selectedObjectId) return;
-    removeObject(markupDoc.id, page.pageNumber, selectedObjectId);
-    setSelectedObjectId(null);
-  }, [markupDoc, page, removeObject, selectedObjectId]);
+    if (!markupDoc || !page || selectedIds.size === 0) return;
+    removeObjects(markupDoc.id, page.pageNumber, Array.from(selectedIds));
+    setSelectedIds(new Set());
+  }, [markupDoc, page, removeObjects, selectedIds]);
 
   const canUndo = markupDoc ? (history[markupDoc.id]?.past?.length || 0) > 0 : false;
   const canRedo = markupDoc ? (history[markupDoc.id]?.future?.length || 0) > 0 : false;
   const handleUndo = useCallback(() => { if (markupDoc) undoFn(markupDoc.id); }, [markupDoc, undoFn]);
   const handleRedo = useCallback(() => { if (markupDoc) redoFn(markupDoc.id); }, [markupDoc, redoFn]);
-
-  // Keyboard shortcuts: Ctrl/Cmd-Z undo, Ctrl/Cmd-Shift-Z (or Ctrl-Y) redo.
-  // Delete shortcut is wired inside MarkupCanvas so it doesn't fire while typing
-  // into a form field elsewhere on the page.
-  useEffect(() => {
-    const onKey = (e) => {
-      const tag = (e.target?.tagName || '').toUpperCase();
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return;
-      const meta = e.metaKey || e.ctrlKey;
-      if (meta && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); handleUndo(); }
-      else if (meta && (e.shiftKey && e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) { e.preventDefault(); handleRedo(); }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [handleUndo, handleRedo]);
 
   const handleCalibrated = useCallback(({ pointA, pointB, knownMm }) => {
     if (!markupDoc || !page) return;
@@ -159,11 +160,100 @@ export default function MarkupPage() {
     setCalibrationMode(false);
   }, [calibrate, markupDoc, page]);
 
+  const handleApplyScale = useCallback((mmPerPx) => {
+    if (!markupDoc || !page) return;
+    // synthesise two anchors so the store's calibrate() signature is respected
+    const A = { x: 0, y: 0 };
+    const B = { x: 1, y: 0 };
+    calibrate(markupDoc.id, page.pageNumber, A, B, mmPerPx);
+  }, [calibrate, markupDoc, page]);
+
+  // Properties-panel updates wrap updateObject so the selection acts as one.
+  const handleUpdateObject = useCallback((id, patch) => {
+    if (!markupDoc || !page) return;
+    updateObject(markupDoc.id, page.pageNumber, id, patch);
+  }, [markupDoc, page, updateObject]);
+
   const handleExportLegend = useCallback(() => {
     if (!markupDoc) return;
     const legend = buildLegend(markupDoc);
     downloadString(`${markupDoc.name || 'markup'}-legend.csv`, legendToCSV(legend));
   }, [markupDoc]);
+
+  // ----- Keyboard shortcuts: undo/redo + copy/paste/duplicate + group + delete -----
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = (e.target?.tagName || '').toUpperCase();
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return;
+      const meta = e.metaKey || e.ctrlKey;
+      const k = e.key.toLowerCase();
+      if (meta && !e.shiftKey && k === 'z') { e.preventDefault(); handleUndo(); return; }
+      if (meta && ((e.shiftKey && k === 'z') || k === 'y')) { e.preventDefault(); handleRedo(); return; }
+      if (!markupDoc || !page) return;
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.size > 0) {
+        e.preventDefault(); handleDeleteSelected(); return;
+      }
+      if (meta && k === 'c' && selectedIds.size > 0) {
+        e.preventDefault();
+        copyToClipboard(markupDoc.id, page.pageNumber, Array.from(selectedIds));
+        return;
+      }
+      if (meta && k === 'v') {
+        e.preventDefault();
+        pasteClipboard(markupDoc.id, page.pageNumber).then((fresh) => {
+          setSelectedIds(new Set(fresh.map((o) => o.id)));
+        });
+        return;
+      }
+      if (meta && k === 'd' && selectedIds.size > 0) {
+        e.preventDefault();
+        duplicateObjects(markupDoc.id, page.pageNumber, Array.from(selectedIds)).then((fresh) => {
+          setSelectedIds(new Set(fresh.map((o) => o.id)));
+        });
+        return;
+      }
+      if (meta && !e.shiftKey && k === 'g' && selectedIds.size > 1) {
+        e.preventDefault();
+        groupObjects(markupDoc.id, page.pageNumber, Array.from(selectedIds));
+        return;
+      }
+      if (meta && e.shiftKey && k === 'g' && selectedIds.size > 0) {
+        e.preventDefault();
+        // ungroup the group of the first selected object
+        const obj = page.objects.find((o) => selectedIds.has(o.id));
+        if (obj?.metadata?.groupId) ungroupObjects(markupDoc.id, page.pageNumber, obj.metadata.groupId);
+        return;
+      }
+      if (meta && k === 'a') {
+        e.preventDefault();
+        setSelectedIds(new Set(page.objects.map((o) => o.id)));
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [copyToClipboard, duplicateObjects, groupObjects, handleDeleteSelected, handleRedo, handleUndo, markupDoc, page, pasteClipboard, selectedIds, ungroupObjects]);
+
+  // expand selection to include all members of the group when one is clicked
+  const selectionWithGroups = useMemo(() => {
+    if (!page) return selectedIds;
+    const out = new Set(selectedIds);
+    const groupIds = new Set(
+      Array.from(out).map((id) => page.objects.find((o) => o.id === id)?.metadata?.groupId).filter(Boolean),
+    );
+    if (groupIds.size === 0) return out;
+    for (const o of page.objects) if (o.metadata?.groupId && groupIds.has(o.metadata.groupId)) out.add(o.id);
+    return out;
+  }, [page, selectedIds]);
+
+  const selectedObjects = useMemo(() => {
+    if (!page) return [];
+    return page.objects.filter((o) => selectionWithGroups.has(o.id));
+  }, [page, selectionWithGroups]);
+
+  const handleTransform = useCallback((ids, fn) => {
+    if (!markupDoc || !page) return;
+    transformObjects(markupDoc.id, page.pageNumber, ids, fn);
+  }, [markupDoc, page, transformObjects]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--header-height))' }}>
@@ -171,9 +261,7 @@ export default function MarkupPage() {
       <div style={topRow}>
         <select value={projectId ?? ''} onChange={(e) => setProjectId(e.target.value || null)} style={select} aria-label="Project">
           <option value="">— Select project —</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-          ))}
+          {projects.map((p) => (<option key={p.id} value={p.id}>{p.code} · {p.name}</option>))}
         </select>
 
         <select
@@ -184,46 +272,43 @@ export default function MarkupPage() {
           aria-label="Drawing"
         >
           <option value="">— Select drawing —</option>
-          {projectDrawings.map((d) => (
-            <option key={d.id} value={d.id}>{d.name}</option>
-          ))}
+          {projectDrawings.map((d) => (<option key={d.id} value={d.id}>{d.name}</option>))}
         </select>
 
         <label style={uploadBtn}>
-          <Upload size={14} /> Upload
+          <Upload size={14} strokeWidth={2.25} /> Upload
           <input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" onChange={handleUpload} style={{ display: 'none' }} />
         </label>
 
         {drawing && (
-          <button type="button" onClick={() => deleteDrawing(drawing.id).then(() => { setSelectedDrawingId(null); })} style={dangerBtn} title="Delete drawing" aria-label="Delete drawing">
-            <Trash2 size={14} />
+          <button type="button" onClick={() => deleteDrawing(drawing.id).then(() => setSelectedDrawingId(null))} style={dangerBtn} title="Delete drawing" aria-label="Delete drawing">
+            <Trash2 size={14} strokeWidth={2.25} />
           </button>
         )}
 
         <div style={{ flex: 1 }} />
 
-        {markupDoc && markupDoc.pages.length > 1 && (
-          <div style={pageNav}>
-            <button type="button" onClick={() => setPageNumber((n) => Math.max(1, n - 1))} aria-label="Previous page" style={navBtn}><ChevronLeft size={14} /></button>
-            <span style={{ fontSize: 13 }}>Page {pageNumber} / {markupDoc.pages.length}</span>
-            <button type="button" onClick={() => setPageNumber((n) => Math.min(markupDoc.pages.length, n + 1))} aria-label="Next page" style={navBtn}><ChevronRight size={14} /></button>
-          </div>
-        )}
+        <label style={toggleLbl}>
+          <input type="checkbox" checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
+          Labels
+        </label>
 
         <button type="button" onClick={handleExportLegend} style={iconBtn} title="Export legend CSV" aria-label="Export legend">
-          <Download size={14} /> Legend
+          <Download size={14} strokeWidth={2.25} /> Legend
         </button>
       </div>
 
-      {/* Body: left rail (toolbar+symbols+layers) + canvas */}
       {!drawing || !markupDoc || !page ? (
         <div style={emptyState}>
-          <FileText size={32} />
-          <p>Upload a PDF or image to begin take-off.</p>
-          <p style={{ fontSize: 12, color: '#64748b' }}>Hold ⌘/Ctrl + scroll to zoom; middle-click drag to pan; Esc to cancel a drawing tool.</p>
+          <FileText size={32} strokeWidth={2.25} />
+          <p style={{ margin: 0 }}>Upload a PDF or image to begin take-off.</p>
+          <p style={{ fontSize: 12, color: 'var(--geist-fg-4)' }}>
+            Ctrl/⌘+scroll to zoom · middle-click drag to pan · Space+drag to pan · Esc to clear selection · Cmd-C/V/D for copy/paste/duplicate.
+          </p>
         </div>
       ) : (
         <div style={body}>
+          {/* Left rail */}
           <aside style={leftRail}>
             <MarkupToolbar
               activeTool={activeTool}
@@ -239,7 +324,13 @@ export default function MarkupPage() {
               onUndo={handleUndo}
               onRedo={handleRedo}
               onDeleteSelected={handleDeleteSelected}
-              hasSelection={!!selectedObjectId}
+              hasSelection={selectedIds.size > 0}
+            />
+            <DrawingScalePicker
+              page={page}
+              onApplyScale={handleApplyScale}
+              onStartCalibration={() => setCalibrationMode((v) => !v)}
+              calibrationMode={calibrationMode}
             />
             <LayerPanel
               page={page}
@@ -256,17 +347,9 @@ export default function MarkupPage() {
               togglePin={togglePin}
               resetDefaults={resetDefaults}
             />
-            <div style={infoBox}>
-              <strong>Scale</strong>
-              <div style={{ fontSize: 12, color: '#475569', marginTop: 4 }}>
-                {page.scale.isCalibrated
-                  ? `${page.scale.mmPerPx.toFixed(4)} mm/px`
-                  : 'Not calibrated — use the Calibrate button.'}
-              </div>
-              <div style={{ fontSize: 12, color: '#475569' }}>Page {page.pageNumber} of {markupDoc.pages.length}</div>
-              <div style={{ fontSize: 12, color: '#475569' }}>Objects: {page.objects.length}</div>
-            </div>
           </aside>
+
+          {/* Canvas + status bar */}
           <div style={canvasHost}>
             <MarkupCanvas
               drawingBlob={drawingBlob}
@@ -278,32 +361,81 @@ export default function MarkupPage() {
               calibrationMode={calibrationMode}
               snapGridPx={snapGridPx}
               orthoLocked={orthoLocked}
-              style={{ stroke: '#ef4444', fill: 'rgba(239,68,68,0.15)', strokeWidth: 2 }}
+              style={{ stroke: 'var(--geist-fg)', fill: 'rgba(15,23,42,0.10)', strokeWidth: 2 }}
               placementSymbolId={placementSymbolId}
               onCommitObject={handleCommit}
               onCalibrated={handleCalibrated}
-              onObjectSelected={handleObjectSelected}
-              onObjectUpdated={(id, patch) => updateObject(markupDoc.id, page.pageNumber, id, patch)}
+              selectedIds={selectionWithGroups}
+              onSelectionChange={setSelectedIds}
+              onCursorMm={setCursorMm}
+              onZoomChange={setZoom}
+              stageScaleControl={zoom}
+              showLabels={showLabels}
+              onTransformObjects={handleTransform}
+            />
+            <StatusBar
+              page={page}
+              totalPages={markupDoc.pages.length}
+              pageNumber={pageNumber}
+              onSetPage={setPageNumber}
+              cursorMm={cursorMm}
+              zoom={zoom}
+              onZoomChange={setZoom}
+              displayUnit={page.displayUnit || 'm'}
+              onDisplayUnitChange={(u) => setDisplayUnit(markupDoc.id, page.pageNumber, u)}
+              activeTool={activeTool}
+              selectionCount={selectedObjects.length}
             />
           </div>
+
+          {/* Right rail: properties + markups list */}
+          <aside style={rightRail}>
+            <div style={tabsRow}>
+              {['properties', 'list'].map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setRightPanel(k)}
+                  aria-pressed={rightPanel === k}
+                  style={{ ...tabBtn, ...(rightPanel === k ? tabBtnActive : null) }}
+                >
+                  {k === 'properties' ? 'Properties' : `Markups (${page.objects.length})`}
+                </button>
+              ))}
+            </div>
+            {rightPanel === 'properties' && (
+              <PropertiesPanel
+                selectedObjects={selectedObjects}
+                page={page}
+                onUpdate={handleUpdateObject}
+              />
+            )}
+            {rightPanel === 'list' && (
+              <MarkupsListPanel
+                markupDoc={markupDoc}
+                selectedIds={selectionWithGroups}
+                onNavigate={(pn) => setPageNumber(pn)}
+                onSelect={(id) => setSelectedIds(new Set([id]))}
+              />
+            )}
+          </aside>
         </div>
       )}
     </div>
   );
 }
 
-const topRow = {
-  display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
-  background: 'white', borderBottom: '1px solid var(--border, #e5e7eb)',
-};
-const select = { padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border, #e5e7eb)', fontSize: 13, minWidth: 160 };
-const uploadBtn = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px', background: '#0f172a', color: 'white', borderRadius: 6, cursor: 'pointer', fontSize: 13 };
-const iconBtn = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px', background: 'white', color: '#0f172a', border: '1px solid var(--border, #e5e7eb)', borderRadius: 6, cursor: 'pointer', fontSize: 13 };
-const dangerBtn = { ...iconBtn, color: '#b91c1c', borderColor: '#fca5a5' };
-const pageNav = { display: 'inline-flex', alignItems: 'center', gap: 6 };
-const navBtn = { background: 'white', border: '1px solid var(--border, #e5e7eb)', borderRadius: 6, padding: 4, cursor: 'pointer' };
+const topRow = { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--geist-bg)', borderBottom: '1px solid var(--geist-border)' };
+const select = { padding: '6px 8px', borderRadius: 6, border: '1px solid var(--geist-border-strong)', fontSize: 13, minWidth: 180, color: 'var(--geist-fg)', background: 'var(--geist-bg)' };
+const uploadBtn = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: 'var(--geist-fg)', color: 'var(--geist-bg)', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500 };
+const iconBtn = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px', background: 'var(--geist-bg)', color: 'var(--geist-fg)', border: '1px solid var(--geist-border-strong)', borderRadius: 6, cursor: 'pointer', fontSize: 13 };
+const dangerBtn = { ...iconBtn, color: 'var(--geist-error)', borderColor: 'var(--geist-error)' };
+const toggleLbl = { display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--geist-fg-2)' };
 const body = { display: 'flex', flex: 1, minHeight: 0 };
-const leftRail = { width: 280, display: 'flex', flexDirection: 'column', gap: 10, padding: 10, overflow: 'auto', borderRight: '1px solid var(--border, #e5e7eb)', background: '#f8fafc' };
-const canvasHost = { flex: 1, position: 'relative', minHeight: 0 };
-const emptyState = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#475569', flex: 1, padding: 40, textAlign: 'center' };
-const infoBox = { padding: 8, background: 'white', border: '1px solid var(--border, #e5e7eb)', borderRadius: 6 };
+const leftRail  = { width: 280, display: 'flex', flexDirection: 'column', gap: 10, padding: 10, overflow: 'auto', borderRight: '1px solid var(--geist-border)', background: 'var(--geist-bg-1)' };
+const rightRail = { width: 340, display: 'flex', flexDirection: 'column', gap: 10, padding: 10, overflow: 'auto', borderLeft: '1px solid var(--geist-border)', background: 'var(--geist-bg-1)' };
+const tabsRow = { display: 'flex', gap: 4 };
+const tabBtn = { flex: 1, padding: '6px 8px', fontSize: 12, border: '1px solid var(--geist-border-strong)', background: 'var(--geist-bg)', color: 'var(--geist-fg-2)', cursor: 'pointer', borderRadius: 6 };
+const tabBtnActive = { background: 'var(--geist-fg)', color: 'var(--geist-bg)', borderColor: 'var(--geist-fg)' };
+const canvasHost = { flex: 1, position: 'relative', minHeight: 0, display: 'flex', flexDirection: 'column' };
+const emptyState = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--geist-fg-3)', flex: 1, padding: 40, textAlign: 'center' };

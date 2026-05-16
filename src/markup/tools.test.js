@@ -93,6 +93,46 @@ describe('markup tools', () => {
     expect(out.geometry.radius).toBe(25);
   });
 
+  it('cloud commits a polygon (not a rectangle) once 3+ points are placed', () => {
+    const t = instantiateTool('cloud');
+    t.onPointerDown({ x: 0, y: 0 }, ctx);
+    t.onPointerDown({ x: 10, y: 0 }, ctx);
+    t.onPointerDown({ x: 5, y: 10 }, ctx);
+    const out = t.commit();
+    expect(out).toBeTruthy();
+    expect(out.type).toBe('cloud');
+    expect(out.geometry.points).toHaveLength(3);
+    expect(out.geometry.closed).toBe(true);
+  });
+
+  it('cloud refuses to commit with fewer than 3 points', () => {
+    const t = instantiateTool('cloud');
+    t.onPointerDown({ x: 0, y: 0 }, ctx);
+    t.onPointerDown({ x: 10, y: 0 }, ctx);
+    expect(t.commit()).toBeNull();
+  });
+
+  it('callout commits on second click with anchor + box', () => {
+    const t = instantiateTool('callout');
+    expect(t.onPointerDown({ x: 50, y: 50 }, ctx)).toBeNull();
+    const out = t.onPointerDown({ x: 100, y: 100 }, ctx);
+    expect(out).toBeTruthy();
+    expect(out.type).toBe('callout');
+    expect(out.geometry.anchor).toEqual({ x: 50, y: 50 });
+    expect(out.geometry.box.x).toBe(100);
+    expect(out.geometry.box.y).toBe(100);
+  });
+
+  it('hyperlink commits with metadata.url initialised', () => {
+    const t = instantiateTool('hyperlink');
+    t.onPointerDown({ x: 0, y: 0 }, ctx);
+    const out = t.onPointerUp({ x: 30, y: 20 }, ctx);
+    expect(out.type).toBe('hyperlink');
+    expect(out.metadata.url).toBe('');
+    expect(out.geometry.width).toBe(30);
+    expect(out.geometry.height).toBe(20);
+  });
+
   it('angle commits on the third click and computes 90°', () => {
     const t = instantiateTool('angle');
     t.onPointerDown({ x: 10, y: 0 }, ctx);

@@ -1,22 +1,25 @@
 import {
   MousePointer2, Hand, Ruler, Square, Hexagon, Type, Cloud, Slash, ArrowRight,
   MapPin, Crosshair, Circle, Triangle, Spline, Undo2, Redo2, Trash2,
+  MessageSquare, Link as LinkIcon,
 } from 'lucide-react';
 
 const TOOLS = [
-  { id: null,         label: 'Select',     icon: MousePointer2,  group: 'nav' },
-  { id: 'pan',        label: 'Pan',        icon: Hand,           group: 'nav' },
-  { id: 'count',      label: 'Count',      icon: MapPin,         group: 'measure' },
-  { id: 'length',     label: 'Length',     icon: Ruler,          group: 'measure' },
-  { id: 'perimeter',  label: 'Perimeter',  icon: Spline,         group: 'measure' },
-  { id: 'area',       label: 'Area',       icon: Hexagon,        group: 'measure' },
-  { id: 'diameter',   label: 'Diameter',   icon: Circle,         group: 'measure' },
-  { id: 'angle',      label: 'Angle',      icon: Triangle,       group: 'measure' },
-  { id: 'rectangle',  label: 'Rectangle',  icon: Square,         group: 'shape' },
-  { id: 'cloud',      label: 'Cloud',      icon: Cloud,          group: 'shape' },
-  { id: 'line',       label: 'Line',       icon: Slash,          group: 'shape' },
-  { id: 'arrow',      label: 'Arrow',      icon: ArrowRight,     group: 'shape' },
-  { id: 'text',       label: 'Text',       icon: Type,           group: 'shape' },
+  { id: null,         label: 'Select',     icon: MousePointer2 },
+  { id: 'pan',        label: 'Pan',        icon: Hand },
+  { id: 'count',      label: 'Count',      icon: MapPin },
+  { id: 'length',     label: 'Length',     icon: Ruler },
+  { id: 'perimeter',  label: 'Perimeter',  icon: Spline },
+  { id: 'area',       label: 'Area',       icon: Hexagon },
+  { id: 'diameter',   label: 'Diameter',   icon: Circle },
+  { id: 'angle',      label: 'Angle',      icon: Triangle },
+  { id: 'rectangle',  label: 'Rectangle',  icon: Square },
+  { id: 'cloud',      label: 'Revision cloud', icon: Cloud },
+  { id: 'callout',    label: 'Callout',    icon: MessageSquare },
+  { id: 'hyperlink',  label: 'Hyperlink',  icon: LinkIcon },
+  { id: 'line',       label: 'Line',       icon: Slash },
+  { id: 'arrow',      label: 'Arrow',      icon: ArrowRight },
+  { id: 'text',       label: 'Text',       icon: Type },
 ];
 
 export default function MarkupToolbar({
