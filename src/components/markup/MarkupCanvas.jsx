@@ -389,8 +389,8 @@ export default function MarkupCanvas({
                 y={Math.min(lasso.start.y, lasso.end.y)}
                 width={Math.abs(lasso.end.x - lasso.start.x)}
                 height={Math.abs(lasso.end.y - lasso.start.y)}
-                fill="rgba(0,112,243,0.08)"
-                stroke="#0070f3"
+                fill="rgba(139,14,42,0.08)"
+                stroke="#8B0E2A"
                 strokeWidth={1}
                 dash={[4, 4]}
               />
@@ -404,9 +404,9 @@ export default function MarkupCanvas({
               rotateEnabled={false}
               flipEnabled={false}
               ignoreStroke
-              borderStroke="#0070f3"
+              borderStroke="#8B0E2A"
               borderStrokeWidth={1}
-              anchorStroke="#0070f3"
+              anchorStroke="#8B0E2A"
               anchorFill="#fff"
               anchorSize={7}
               onTransformEnd={handleTransformEnd}
@@ -423,7 +423,7 @@ export default function MarkupCanvas({
 
 /** Render any markup type. Adds an inline measurement label when showLabel is on. */
 function ObjectShape({ obj, color, opacity = 1, isPreview = false, isSelected = false, showLabel = false, displayUnit = 'm', mmPerPx = 1 }) {
-  const stroke = isSelected ? '#0070f3' : (obj.style?.stroke || color || 'var(--geist-fg)');
+  const stroke = isSelected ? '#8B0E2A' : (obj.style?.stroke || color || 'var(--geist-fg)');
   const fill = obj.style?.fill ?? `rgba(${hexToRgb(stroke)},0.12)`;
   const strokeWidth = (obj.style?.strokeWidth ?? 2) * (isSelected ? 1.5 : 1);
   const dash = isPreview ? [6, 4] : obj.style?.dash || null;

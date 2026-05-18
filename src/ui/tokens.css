@@ -1,53 +1,61 @@
 /* ============================================================
-   Xact design tokens — Geist-inspired light monochrome
+   XACT design tokens — Event Stream (direction 03), Audit Light
    ------------------------------------------------------------
    Loaded once at app boot via src/index.css. Every component
    that needs a colour / spacing / radius value reads from here
    so the look is unified and theming is a one-file change.
 
-   Palette intent: near-black ink on white background, thin
-   1-px borders in mid-grey, single bright accent (#0070f3,
-   the classic Vercel blue) reserved for primary action.
+   Brand intent (per MASTER_PROMPT.md):
+     - Off-white #F6F8FA canvas, true-white #FFFFFF surfaces
+     - Burgundy accent #8B0E2A reserved for primary action
+     - Squared corners (brutalist-leaning), no rounded radii
+     - Inter Tight body, JetBrains Mono numerics, Archivo display
    ============================================================ */
 
 :root {
   /* ---------- Greyscale (foreground & background) ---------- */
-  --geist-fg:           #000000;
-  --geist-fg-1:         #111111;
-  --geist-fg-2:         #333333;
-  --geist-fg-3:         #555555;
-  --geist-fg-4:         #888888;
-  --geist-fg-5:         #aaaaaa;
+  --geist-fg:           #0B0F14;
+  --geist-fg-1:         #14181F;
+  --geist-fg-2:         #3A4252;
+  --geist-fg-3:         #6B7484;
+  --geist-fg-4:         #8E97A5;
+  --geist-fg-5:         #A8B0BC;
 
-  --geist-bg:           #ffffff;
-  --geist-bg-1:         #fafafa;
-  --geist-bg-2:         #f5f5f5;
-  --geist-bg-3:         #ececec;
+  --geist-bg:           #FFFFFF;   /* surface */
+  --geist-bg-1:         #F6F8FA;   /* canvas */
+  --geist-bg-2:         #F2F5F8;   /* sunk */
+  --geist-bg-3:         #E6EBF1;   /* alt sunk */
 
-  --geist-border:       #e6e6e6;
-  --geist-border-strong:#d4d4d4;
-  --geist-border-soft:  #f0f0f0;
+  --geist-border:       rgba(11, 15, 20, 0.08);
+  --geist-border-strong:rgba(11, 15, 20, 0.16);
+  --geist-border-soft:  rgba(11, 15, 20, 0.04);
 
-  /* ---------- Accent (Vercel blue) ---------- */
-  --geist-accent:       #0070f3;
-  --geist-accent-fg:    #ffffff;
-  --geist-accent-soft:  rgba(0, 112, 243, 0.10);
-  --geist-accent-hover: #0061d5;
+  /* ---------- Accent (XACT burgundy) ---------- */
+  --geist-accent:       #8B0E2A;
+  --geist-accent-fg:    #FFFFFF;
+  --geist-accent-soft:  rgba(139, 14, 42, 0.10);
+  --geist-accent-hover: #6B0820;
+
+  /* Event-stream companions, used for status / heat / chart fills */
+  --xact-accent-2:      #6D8CFF;
+  --xact-accent-3:      #16A34A;
+  --xact-accent-4:      #F5A623;
 
   /* ---------- Semantic ---------- */
-  --geist-success:      #0f9d58;
-  --geist-success-soft: rgba(15, 157, 88, 0.10);
-  --geist-warning:      #f5a623;
+  --geist-success:      #16A34A;
+  --geist-success-soft: rgba(22, 163, 74, 0.10);
+  --geist-warning:      #F5A623;
   --geist-warning-soft: rgba(245, 166, 35, 0.12);
-  --geist-error:        #e00000;
-  --geist-error-soft:   rgba(224, 0, 0, 0.08);
-  --geist-info:         var(--geist-accent);
-  --geist-info-soft:    var(--geist-accent-soft);
+  --geist-error:        #C81E2A;
+  --geist-error-soft:   rgba(200, 30, 42, 0.08);
+  --geist-info:         var(--xact-accent-2);
+  --geist-info-soft:    rgba(109, 140, 255, 0.10);
 
   /* ---------- Typography ---------- */
-  --geist-font-sans:    "Inter", ui-sans-serif, system-ui, -apple-system,
-                        BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --geist-font-mono:    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  --geist-font-sans:    "Inter Tight", "Inter", ui-sans-serif, system-ui,
+                        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --geist-font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  --geist-font-display: "Archivo", "Inter Tight", ui-sans-serif, system-ui, sans-serif;
 
   --geist-text-xs:      0.6875rem;  /* 11 */
   --geist-text-sm:      0.8125rem;  /* 13 */
@@ -63,14 +71,15 @@
   --geist-weight-semibold:600;
   --geist-weight-bold:    700;
 
-  --geist-tracking-tight: -0.01em;
-  --geist-tracking-tighter: -0.02em;
+  --geist-tracking-tight:   -0.005em;
+  --geist-tracking-tighter: -0.015em;
+  --geist-tracking-mono:     0.12em;   /* mono caps, per brand */
 
-  --geist-leading-tight:  1.25;
+  --geist-leading-tight:  1.2;
   --geist-leading-normal: 1.5;
   --geist-leading-relaxed:1.65;
 
-  /* ---------- Spacing (Geist 4-px scale) ---------- */
+  /* ---------- Spacing (4-px scale) ---------- */
   --geist-space-1:  4px;
   --geist-space-2:  8px;
   --geist-space-3:  12px;
@@ -82,41 +91,44 @@
   --geist-space-9:  48px;
   --geist-space-10: 64px;
 
-  /* ---------- Radius ---------- */
-  --geist-radius-sm: 4px;
-  --geist-radius:    6px;     /* default button / input */
-  --geist-radius-md: 8px;     /* card */
-  --geist-radius-lg: 12px;    /* drawer / dialog */
-  --geist-radius-full: 999px;
+  /* ---------- Radius (squared per brand) ---------- */
+  --geist-radius-sm: 0px;
+  --geist-radius:    2px;     /* near-square; just enough to soften hairlines */
+  --geist-radius-md: 2px;
+  --geist-radius-lg: 3px;
+  --geist-radius-full: 999px; /* keep for pills / badges where needed */
 
-  /* ---------- Shadows (use sparingly) ---------- */
-  --geist-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --geist-shadow:    0 2px 6px rgba(0, 0, 0, 0.06);
-  --geist-shadow-md: 0 6px 18px rgba(0, 0, 0, 0.08);
-  --geist-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+  /* ---------- Shadows ---------- */
+  --geist-shadow-sm: 0 1px 0 rgba(11, 15, 20, 0.04);
+  --geist-shadow:    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+                     0 1px 0 rgba(11, 15, 20, 0.04),
+                     0 4px 12px rgba(11, 15, 20, 0.04);
+  --geist-shadow-md: 0 1px 0 rgba(255, 255, 255, 0.6) inset,
+                     0 8px 24px rgba(11, 15, 20, 0.06);
+  --geist-shadow-lg: 0 1px 0 rgba(255, 255, 255, 0.6) inset,
+                     0 16px 40px rgba(11, 15, 20, 0.10);
 
   /* ---------- Motion ---------- */
-  --geist-easing:    cubic-bezier(0.4, 0, 0.2, 1);
+  --geist-easing:    cubic-bezier(0.2, 0.7, 0.2, 1);
+  --geist-easing-out:cubic-bezier(0.4, 0, 0.6, 1);
   --geist-duration-fast:   120ms;
   --geist-duration:        180ms;
   --geist-duration-slow:   260ms;
 
   /* ---------- Component heights ---------- */
   --geist-control-sm: 28px;
-  --geist-control:    36px;   /* default button / input height */
+  --geist-control:    36px;
   --geist-control-lg: 44px;
 
   /* ---------- Layout ---------- */
-  --geist-sidebar-w:           248px;
+  --geist-sidebar-w:           240px;
   --geist-sidebar-collapsed-w: 64px;
   --geist-header-h:            56px;
   --geist-max-content:         1320px;
 
   /* ---------- Backwards-compat shims ----------
-     Older components in the tree still reference the original
-     fire-orange / slate variables. Re-point them at the Geist
-     scale so nothing visually goes stale during the migration.
-     New code should use the --geist-* names directly.
+     Older components reference these older names. Re-point to the
+     Event Stream palette so nothing visually goes stale.
   ----------------------------------------------- */
   --color-fire-50:  var(--geist-accent-soft);
   --color-fire-100: var(--geist-accent-soft);
@@ -164,14 +176,14 @@
   --bg-primary:    var(--geist-bg);
   --bg-secondary:  var(--geist-bg-1);
   --bg-tertiary:   var(--geist-bg-2);
-  --bg-sidebar:    #0a0a0a;       /* sidebar deliberately near-black on light theme */
-  --bg-sidebar-hover:  #1a1a1a;
-  --bg-sidebar-active: #262626;
+  --bg-sidebar:        #0B0F14;       /* near-black ink rail on light canvas */
+  --bg-sidebar-hover:  #14181F;
+  --bg-sidebar-active: #1F2531;
   --text-primary:    var(--geist-fg);
   --text-secondary:  var(--geist-fg-2);
   --text-tertiary:   var(--geist-fg-3);
-  --text-sidebar:        #a3a3a3;
-  --text-sidebar-active: #ffffff;
+  --text-sidebar:        #A8B0BC;
+  --text-sidebar-active: #FFFFFF;
   --border-color:    var(--geist-border);
   --surface:         var(--geist-bg);
 
@@ -190,7 +202,7 @@
   --header-height:           var(--geist-header-h);
 }
 
-/* Honour reduced-motion. Geist's own site does this. */
+/* Honour reduced-motion. */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --geist-duration-fast: 0ms;
@@ -201,20 +213,28 @@
 }
 
 html, body {
-  background: var(--geist-bg);
+  background: var(--geist-bg-1);
   color: var(--geist-fg);
   font-family: var(--geist-font-sans);
   font-size: var(--geist-text-md);
   line-height: var(--geist-leading-normal);
   letter-spacing: var(--geist-tracking-tight);
+  font-feature-settings: "ss01", "cv11", "cv02";
 }
 
-/* Headings get tighter tracking and bolder weight, Geist-style */
+/* Headings: brand wants display weight, tight tracking. */
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--geist-font-sans);
   letter-spacing: var(--geist-tracking-tighter);
   font-weight: var(--geist-weight-semibold);
   color: var(--geist-fg);
   line-height: var(--geist-leading-tight);
+}
+
+/* Numerics: tabular by default everywhere a mono is used. */
+code, pre, kbd, samp, .mono, .xc-mono {
+  font-family: var(--geist-font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Focus ring — visible, single colour, never invisible. */
@@ -237,4 +257,4 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 999px;
   background-clip: padding-box;
 }
-*::-webkit-scrollbar-thumb:hover { background: var(--geist-fg-5); background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--geist-fg-4); background-clip: padding-box; }
