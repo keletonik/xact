@@ -117,37 +117,21 @@ function Sidebar({ collapsed, onToggle, screen, setScreen, dense }) {
   );
 }
 
-// ─── Logo — Event Stream wordmark (XACT with C-cut + accent dot) ──────────
+// ─── Logo — XACT brand mark + wordmark ─────────────────────────────────────
 function Logo({ collapsed }) {
   if (collapsed) {
     return (
       <div className="xc-logo collapsed">
-        <svg width="36" height="36" viewBox="0 0 100 100" fill="none" aria-label="XACT">
-          <text x="50" y="80" textAnchor="middle"
-            fontFamily='"Archivo", system-ui, sans-serif'
-            fontSize="100" fontWeight="900"
-            style={{ letterSpacing: '-0.06em' }}
-            fill="currentColor">X</text>
-          <circle cx="86" cy="16" r="10" fill="#FF5E5B"/>
-        </svg>
+        <img src="assets/xact-mark-transparent.png" alt="XACT" className="xc-logo-mark"
+          width="32" height="32"/>
       </div>
     );
   }
   return (
     <div className="xc-logo">
-      <svg viewBox="0 0 520 130" height="42" fill="none" aria-label="XACT wordmark"
-        style={{ overflow: 'visible' }}>
-        <text x="15" y="94"
-          fontFamily='"Archivo", system-ui, sans-serif'
-          fontSize="108" fontWeight="900"
-          style={{ letterSpacing: '-0.055em' }}
-          fill="currentColor">XACT</text>
-        {/* vertical cut through the C — uses sidebar bg color */}
-        <rect x="190" y="46" width="18" height="60"
-          style={{ fill: 'var(--bg-2, #0E1118)' }}/>
-        {/* red signal dot, top-right */}
-        <circle cx="458" cy="28" r="10" fill="#FF5E5B"/>
-      </svg>
+      <img src="assets/xact-logo-transparent.png" alt="XACT"
+        className="xc-logo-wordmark"
+        height="28"/>
     </div>
   );
 }

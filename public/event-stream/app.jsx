@@ -22,7 +22,7 @@ function saveProposals(p) {
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "direction": "light",
-  "accent": "#FF5E5B",
+  "accent": "#8B0E2A",
   "density": "comfy",
   "sidebarCollapsed": false,
   "pattern": "grid",
@@ -72,10 +72,10 @@ const DIRECTIONS = {
       '--text-3': '#6B7484',
       '--muted': '#A8B0BC',
       '--grid': 'rgba(11, 15, 20, 0.05)',
-      '--accent': '#FF5E5B',
+      '--accent': '#8B0E2A',
       '--accent-2': '#6D8CFF',
       '--accent-3': '#16a34a',
-      '--accent-glow': 'rgba(255, 94, 91, 0.22)',
+      '--accent-glow': 'rgba(139, 14, 42, 0.22)',
       '--map-fill': 'rgba(11, 15, 20, 0.04)',
       '--map-stroke': 'rgba(11, 15, 20, 0.25)',
       '--heat-0': 'rgba(11, 15, 20, 0.05)',
@@ -126,8 +126,8 @@ const FONTS = {
   'public':        { label: 'Public Sans · Fragment Mono', body: '"Public Sans", -apple-system, sans-serif', mono: '"Fragment Mono", ui-monospace, monospace', display: '"Public Sans", sans-serif' },
 };
 
-// Event Stream signal red + brand-study companions
-const ACCENTS = ['#FF5E5B', '#FFB020', '#8BE36B', '#6D8CFF', '#00D1FF', '#FFFFFF'];
+// XACT brand burgundy + brand companions
+const ACCENTS = ['#8B0E2A', '#B11E3A', '#FF5E5B', '#FFB020', '#8BE36B', '#6D8CFF'];
 
 // URL param overrides (used by exploration canvas iframes)
 const urlParams = new URLSearchParams(window.location.search);
