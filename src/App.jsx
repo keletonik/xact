@@ -57,14 +57,12 @@ export default function App() {
   }
 
   return (
-    <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
-      <div className="app-main" style={{
-        marginLeft: sidebarCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)',
-      }}>
+      <div className="app-main">
         <Header onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
         <main className="app-content">
           <Suspense fallback={fallback}>

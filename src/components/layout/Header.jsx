@@ -4,179 +4,168 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell,
   Search,
-  Sun,
-  Moon,
-  User,
-  LogOut,
-  Settings,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
+  LogOut,
+  Settings as SettingsIcon,
+  User,
   Menu,
 } from 'lucide-react';
-import { useTheme } from '../../hooks/useTheme';
 
-const breadcrumbMap = {
-  '/': 'Dashboard',
-  '/opportunities': 'Opportunities',
-  '/projects': 'Projects',
-  '/takeoff': 'Takeoff',
-  '/estimates': 'Estimates',
-  '/proposals': 'Proposals',
-  '/price-book': 'Price Book',
-  '/vendors': 'Vendors',
-  '/reports': 'Reports',
-  '/admin': 'Admin',
-  '/settings': 'Settings',
-  '/help': 'Help Center',
-  '/notifications': 'Notifications',
-  '/profile': 'Profile',
+const crumbMap = {
+  '/':                 'Dashboard',
+  '/opportunities':    'Opportunities',
+  '/projects':         'Projects',
+  '/takeoff':          'Takeoff',
+  '/markup':           'Markup',
+  '/catalog':          'Catalog',
+  '/servicing':        'Servicing',
+  '/quick-estimate':   'Quick Estimate',
+  '/estimates':        'Estimates',
+  '/proposals':        'Proposals',
+  '/price-book':       'Price Book',
+  '/vendors':          'Vendors',
+  '/reports':          'Reports',
+  '/admin':            'Admin',
+  '/settings':         'Settings',
+  '/help':             'Help',
+  '/notifications':    'Notifications',
+  '/profile':          'Profile',
 };
 
+const sectionFor = (path) => {
+  if (path.startsWith('/admin') || path.startsWith('/settings') || path.startsWith('/help')) return 'System';
+  if (path.startsWith('/catalog') || path.startsWith('/price-book') ||
+      path.startsWith('/vendors') || path.startsWith('/servicing')) return 'Catalogue';
+  if (path.startsWith('/reports')) return 'Insights';
+  return 'Estimating';
+};
+
+const envBadge = (() => {
+  if (typeof window === 'undefined') return 'LOCAL';
+  const host = window.location.hostname;
+  if (host === 'localhost' || host.startsWith('127.')) return 'DEV';
+  if (host.includes('preview') || host.includes('vercel.app')) return 'PREV';
+  return 'PROD';
+})();
+
 export default function Header({ onMobileMenuToggle }) {
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const [showSearch, setShowSearch] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const profileRef = useRef(null);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const notifRef = useRef(null);
+  const profileRef = useRef(null);
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false);
-      if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false);
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const close = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
+      if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
   }, []);
 
-  const pageTitle = breadcrumbMap[location.pathname] ||
-    Object.keys(breadcrumbMap).find((key) => key !== '/' && location.pathname.startsWith(key))
-      ?.replace(/^\//, '')
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase()) ||
-    'Page';
+  const current = crumbMap[location.pathname]
+    || crumbMap[Object.keys(crumbMap).find((k) => k !== '/' && location.pathname.startsWith(k))]
+    || 'Page';
+  const section = sectionFor(location.pathname);
+
+  const openCmd = () => {
+    const evt = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true });
+    document.dispatchEvent(evt);
+  };
 
   return (
-    <header
-      style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        left: 0,
-        height: 'var(--header-height)',
-        backgroundColor: 'rgba(255,255,255,0.85)',
-        backdropFilter: 'saturate(180%) blur(10px)',
-        WebkitBackdropFilter: 'saturate(180%) blur(10px)',
-        borderBottom: '1px solid var(--geist-border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 24px',
-        zIndex: 90,
-      }}
-    >
-      {/* Left: Mobile menu + Breadcrumb */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+    <header className="xact-topbar" role="banner">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <button
+          type="button"
           onClick={onMobileMenuToggle}
-          style={{
-            display: 'none',
-            padding: 8,
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--text-secondary)',
-          }}
-          className="mobile-menu-btn"
+          className="xact-icon-btn mobile-menu-btn"
+          aria-label="Open menu"
+          style={{ display: 'none' }}
         >
-          <Menu size={20} />
+          <Menu size={16} />
         </button>
-        <div>
-          <h1 style={{
-            fontSize: '1.125rem',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-          }}>
-            {breadcrumbMap[location.pathname] || pageTitle}
-          </h1>
+
+        <div className="xact-nav-history" role="group" aria-label="History">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label="Back"
+            title="Back (Alt+Left)"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(1)}
+            aria-label="Forward"
+            title="Forward (Alt+Right)"
+          >
+            <ChevronRight size={14} />
+          </button>
         </div>
+
+        <nav className="xact-crumbs" aria-label="Breadcrumb">
+          <span>XACT</span>
+          <span className="xact-crumb-sep">/</span>
+          <span>{section}</span>
+          <span className="xact-crumb-sep">/</span>
+          <span className="cur">{current}</span>
+          <span className="xact-env" title="Environment">{envBadge}</span>
+        </nav>
       </div>
 
-      {/* Right: Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        {/* Search Toggle */}
-        <AnimatePresence>
-          {showSearch && (
-            <motion.input
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 240, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              type="text"
-              placeholder="Search anything..."
-              autoFocus
-              onBlur={() => setShowSearch(false)}
-              style={{
-                height: 36,
-                padding: '0 12px',
-                backgroundColor: 'var(--bg-input)',
-                border: '1px solid var(--border-focus)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--text-primary)',
-                fontSize: '0.8125rem',
-                outline: 'none',
-              }}
-            />
-          )}
-        </AnimatePresence>
+      <button
+        type="button"
+        onClick={openCmd}
+        className="xact-search"
+        aria-label="Open command palette"
+      >
+        <span className="xact-search-ic"><Search size={14} /></span>
+        <span className="xact-search-txt">Search jobs, products, palettes…</span>
+        <span className="xact-kbd">⌘ K</span>
+      </button>
 
-        <HeaderButton icon={Search} onClick={() => setShowSearch(!showSearch)} tooltip="Search" />
-
-        {/* Notifications */}
+      <div className="xact-top-actions">
         <div ref={notifRef} style={{ position: 'relative' }}>
-          <HeaderButton
-            icon={Bell}
-            onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
-            tooltip="Notifications"
-          />
+          <button
+            type="button"
+            onClick={() => { setNotifOpen((v) => !v); setProfileOpen(false); }}
+            className="xact-icon-btn"
+            aria-label="Notifications"
+            aria-expanded={notifOpen}
+          >
+            <Bell size={15} />
+            <span className="xact-icon-btn-dot" aria-hidden="true" />
+          </button>
           <AnimatePresence>
-            {showNotifications && (
+            {notifOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: 8,
-                  width: 360,
-                  backgroundColor: 'var(--bg-card)',
-                  borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--border-primary)',
-                  boxShadow: 'var(--shadow-xl)',
-                  overflow: 'hidden',
-                  zIndex: 100,
-                }}
+                role="dialog"
+                aria-label="Notifications"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.14 }}
+                style={popoverStyle()}
               >
-                <div style={{
-                  padding: '16px 20px',
-                  borderBottom: '1px solid var(--border-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Notifications</span>
+                <div style={popoverHd()}>
+                  <span style={{ fontFamily: 'var(--geist-font-mono)', fontSize: 10.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--geist-fg-3)' }}>
+                    Notifications
+                  </span>
                   <button
-                    onClick={() => navigate('/notifications')}
-                    style={{
-                      fontSize: '0.75rem',
-                      color: 'var(--color-fire-500)',
-                      fontWeight: 600,
-                    }}
+                    type="button"
+                    onClick={() => { setNotifOpen(false); navigate('/notifications'); }}
+                    style={{ fontSize: 12, color: 'var(--geist-accent)', fontWeight: 600 }}
                   >
-                    View All
+                    View all
                   </button>
                 </div>
-                <div style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.8125rem' }}>
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--geist-fg-3)', fontSize: 12.5 }}>
                   No new notifications
                 </div>
               </motion.div>
@@ -184,87 +173,60 @@ export default function Header({ onMobileMenuToggle }) {
           </AnimatePresence>
         </div>
 
-        {/* Theme Toggle */}
-        <HeaderButton
-          icon={theme === 'dark' ? Sun : Moon}
-          onClick={toggleTheme}
-          tooltip={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-        />
-
-        {/* Separator */}
-        <div style={{
-          width: 1,
-          height: 24,
-          backgroundColor: 'var(--border-primary)',
-          margin: '0 8px',
-        }} />
-
-        {/* Profile */}
         <div ref={profileRef} style={{ position: 'relative' }}>
           <button
-            onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
+            type="button"
+            onClick={() => { setProfileOpen((v) => !v); setNotifOpen(false); }}
+            aria-expanded={profileOpen}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-md)',
-              transition: 'all var(--transition-fast)',
+              gap: 8,
+              padding: '4px 8px 4px 4px',
+              border: '1px solid var(--geist-border)',
+              background: 'var(--geist-bg)',
+              color: 'inherit',
+              cursor: 'pointer',
+              transition: 'background var(--geist-duration-fast) var(--geist-easing)',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--geist-bg-2)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'var(--geist-bg)'}
           >
-            <div style={{
-              width: 32,
-              height: 32,
-              borderRadius: 'var(--radius-full)',
+            <span style={{
+              width: 28,
+              height: 28,
+              display: 'grid',
+              placeItems: 'center',
               background: 'var(--geist-fg)',
               color: 'var(--geist-bg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 700,
+              fontFamily: 'var(--geist-font-mono)',
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.04em',
             }}>
               PE
-            </div>
-            <div style={{ textAlign: 'left', lineHeight: 1.3 }}>
-              <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Estimator
-              </div>
-              <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)' }}>
-                Senior Estimator
-              </div>
-            </div>
-            <ChevronDown size={14} style={{ color: 'var(--text-tertiary)' }} />
+            </span>
+            <span style={{ textAlign: 'left', lineHeight: 1.2 }}>
+              <span style={{ display: 'block', fontSize: 12.5, fontWeight: 600 }}>Estimator</span>
+              <span style={{ display: 'block', fontSize: 10, color: 'var(--geist-fg-3)', fontFamily: 'var(--geist-font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Senior</span>
+            </span>
+            <ChevronDown size={12} style={{ color: 'var(--geist-fg-3)' }} />
           </button>
 
           <AnimatePresence>
-            {showProfile && (
+            {profileOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: 8,
-                  width: 220,
-                  backgroundColor: 'var(--bg-card)',
-                  borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--border-primary)',
-                  boxShadow: 'var(--shadow-xl)',
-                  overflow: 'hidden',
-                  zIndex: 100,
-                }}
+                role="menu"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.14 }}
+                style={popoverStyle()}
               >
-                <div style={{ padding: 4 }}>
-                  <DropdownItem icon={User} label="Profile" onClick={() => { navigate('/profile'); setShowProfile(false); }} />
-                  <DropdownItem icon={Settings} label="Settings" onClick={() => { navigate('/settings'); setShowProfile(false); }} />
-                  <div style={{ height: 1, backgroundColor: 'var(--border-primary)', margin: '4px 0' }} />
-                  <DropdownItem icon={LogOut} label="Sign Out" onClick={() => { navigate('/login'); setShowProfile(false); }} danger />
-                </div>
+                <MenuRow icon={User}         label="Profile"  onClick={() => { setProfileOpen(false); navigate('/profile'); }} />
+                <MenuRow icon={SettingsIcon} label="Settings" onClick={() => { setProfileOpen(false); navigate('/settings'); }} />
+                <div style={{ height: 1, background: 'var(--geist-border)', margin: '4px 0' }} />
+                <MenuRow icon={LogOut}       label="Sign out" tone="danger" onClick={() => { setProfileOpen(false); navigate('/login'); }} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -274,63 +236,55 @@ export default function Header({ onMobileMenuToggle }) {
   );
 }
 
-function HeaderButton({ icon: Icon, onClick, tooltip, badge }) {
+function MenuRow({ icon: Icon, label, onClick, tone }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      title={tooltip}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 36,
-        height: 36,
-        borderRadius: 'var(--radius-md)',
-        color: 'var(--text-secondary)',
-        position: 'relative',
-        transition: 'all var(--transition-fast)',
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-    >
-      <Icon size={18} />
-      {badge && (
-        <span style={{
-          position: 'absolute',
-          top: 4,
-          right: 4,
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          backgroundColor: 'var(--color-danger-500)',
-          border: '2px solid var(--bg-primary)',
-        }} />
-      )}
-    </button>
-  );
-}
-
-function DropdownItem({ icon: Icon, label, onClick, danger }) {
-  return (
-    <button
-      onClick={onClick}
+      role="menuitem"
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 10,
+        padding: '8px 12px',
         width: '100%',
-        padding: '10px 12px',
-        borderRadius: 'var(--radius-sm)',
-        fontSize: '0.8125rem',
-        fontWeight: 500,
-        color: danger ? 'var(--color-danger-600)' : 'var(--text-primary)',
-        transition: 'all var(--transition-fast)',
+        background: 'transparent',
+        border: 0,
+        color: tone === 'danger' ? 'var(--geist-error)' : 'var(--geist-fg)',
+        fontSize: 13,
+        cursor: 'pointer',
+        textAlign: 'left',
       }}
-      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--geist-bg-2)'}
+      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
     >
-      <Icon size={16} />
+      <Icon size={14} />
       {label}
     </button>
   );
+}
+
+function popoverStyle() {
+  return {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: 8,
+    width: 280,
+    background: 'var(--geist-bg)',
+    border: '1px solid var(--geist-border)',
+    boxShadow: 'var(--geist-shadow-md)',
+    padding: 6,
+    zIndex: 100,
+  };
+}
+
+function popoverHd() {
+  return {
+    padding: '10px 12px 8px',
+    borderBottom: '1px solid var(--geist-border)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  };
 }

@@ -1,53 +1,45 @@
 /* ============================================================
-   App shell layout — sidebar + header + content
+   App shell layout — sidebar + topbar + content column
+   Layout primitives live in src/ui/shell.css; this file just
+   wires the grid + the route fade.
    ============================================================ */
 
 .app-layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
   min-height: 100vh;
-  background: var(--geist-bg);
+  background: var(--geist-bg-1);
   color: var(--geist-fg);
+  transition: grid-template-columns var(--geist-duration-slow) var(--geist-easing);
+}
+.app-layout.sidebar-collapsed {
+  grid-template-columns: var(--sidebar-collapsed-width) 1fr;
 }
 
 .app-main {
-  flex: 1;
-  margin-left: var(--sidebar-width);
-  min-height: 100vh;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  transition: margin-left var(--transition-slow);
-  background: var(--geist-bg);
-}
-
-.app-layout.sidebar-collapsed .app-main {
-  margin-left: var(--sidebar-collapsed-width);
 }
 
 .app-content {
   flex: 1;
-  padding: var(--geist-space-6) var(--geist-space-7);
-  margin-top: var(--geist-header-h);
-  max-width: var(--geist-max-content);
   width: 100%;
+  max-width: var(--geist-max-content);
   margin-inline: auto;
+  padding: 18px 22px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   animation: fadeIn var(--geist-duration-slow) var(--geist-easing);
 }
 
 @media (max-width: 1024px) {
-  .app-main { margin-left: 0; }
-  .app-content { padding: var(--geist-space-5); }
+  .app-layout, .app-layout.sidebar-collapsed { grid-template-columns: 1fr; }
+  .app-content { padding: 14px 16px 48px; }
+  .mobile-menu-btn { display: grid !important; }
 }
 
 @media (max-width: 640px) {
-  .app-content { padding: var(--geist-space-4); }
-}
-
-.page-enter {
-  opacity: 0;
-  transform: translateY(6px);
-}
-.page-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity var(--transition), transform var(--transition);
+  .app-content { padding: 12px 14px 40px; }
 }
