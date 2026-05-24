@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -80,6 +81,12 @@ export default function CommandPalette() {
       setSelectedIndex((i) => Math.max(i - 1, 0));
     } else if (e.key === 'Enter' && filtered[selectedIndex]) {
       handleSelect(filtered[selectedIndex]);
+    } else if (e.key === 'Tab') {
+      // Trap focus: keep keyboard inside the palette while open so
+      // it does not leak into the page behind. The input is the only
+      // focusable element here, so cycling means staying put.
+      e.preventDefault();
+      inputRef.current?.focus();
     }
   }
 
@@ -94,7 +101,7 @@ export default function CommandPalette() {
 
   let flatIndex = -1;
 
-  return (
+  const palette = (
     <AnimatePresence>
       {open && (
         <motion.div
@@ -115,6 +122,9 @@ export default function CommandPalette() {
           onClick={() => setOpen(false)}
         >
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Command palette"
             initial={{ opacity: 0, scale: 0.95, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -235,4 +245,9 @@ export default function CommandPalette() {
       )}
     </AnimatePresence>
   );
+
+  // Portal to document.body so ancestor stacking contexts (Sidebar's
+  // transform, motion wrappers, etc.) cannot bound the overlay.
+  if (typeof document === 'undefined') return null;
+  return createPortal(palette, document.body);
 }

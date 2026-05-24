@@ -20,37 +20,89 @@ async function loadPdfJs() {
   return pdfjsPromise;
 }
 
-const docCache = new Map();
+// Two caches, keyed differently. The WeakMap keys by Blob identity:
+// when the caller passes the same Blob instance twice we return the
+// already-parsed document with zero work and zero GC pressure. The
+// Map is the cross-instance cache, keyed by a real content hash, so
+// two Blobs holding the same bytes hit once.
+//
+// The old key was `${size}:${type}` which collides for two different
+// PDFs of identical size + mime type. Real risk for revisioned
+// drawings where revisions are commonly within bytes of each other.
+const docCacheByBlob = new WeakMap();
+const docCacheByHash = new Map();
 
 export async function getPdfDocument(blob) {
-  const cacheKey = await blobKey(blob);
-  if (docCache.has(cacheKey)) return docCache.get(cacheKey);
+  const hit = docCacheByBlob.get(blob);
+  if (hit) return hit;
+  const hash = await blobHash(blob);
+  const cached = docCacheByHash.get(hash);
+  if (cached) {
+    docCacheByBlob.set(blob, cached);
+    return cached;
+  }
   const pdfjs = await loadPdfJs();
   const buf = await blob.arrayBuffer();
   const loadingTask = pdfjs.getDocument({ data: buf, isEvalSupported: false, disableFontFace: false });
   const doc = await loadingTask.promise;
-  docCache.set(cacheKey, doc);
+  docCacheByBlob.set(blob, doc);
+  docCacheByHash.set(hash, doc);
   return doc;
 }
 
-async function blobKey(blob) {
-  return `${blob.size}:${blob.type}`;
+async function blobHash(blob) {
+  const buf = await blob.arrayBuffer();
+  const digest = await crypto.subtle.digest('SHA-256', buf);
+  const bytes = new Uint8Array(digest);
+  let hex = '';
+  for (let i = 0; i < bytes.length; i++) {
+    hex += bytes[i].toString(16).padStart(2, '0');
+  }
+  return hex;
 }
 
 /**
  * Render a page into a target <canvas> at a given pixel scale.
- * Returns { width, height } of the rendered page in CSS pixels.
+ * Returns { width, height, cancel } where cancel() aborts the
+ * in-flight render. Pdf.js's RenderTask continues even when the
+ * caller forgets it, so the canvas can end up half-painted by an
+ * outdated page if the React effect re-fires before the previous
+ * render finishes. The cancel handle lets the caller abort cleanly.
  */
-export async function renderPdfPage({ doc, pageNumber, canvas, scale = 1.5 }) {
-  const page = await doc.getPage(pageNumber);
-  const viewport = page.getViewport({ scale });
-  const ctx = canvas.getContext('2d', { alpha: false });
-  canvas.width = Math.floor(viewport.width);
-  canvas.height = Math.floor(viewport.height);
-  canvas.style.width = `${viewport.width}px`;
-  canvas.style.height = `${viewport.height}px`;
-  await page.render({ canvasContext: ctx, viewport }).promise;
-  return { width: viewport.width, height: viewport.height };
+export function renderPdfPage({ doc, pageNumber, canvas, scale = 1.5 }) {
+  let renderTask = null;
+  let cancelled = false;
+  const promise = (async () => {
+    const page = await doc.getPage(pageNumber);
+    if (cancelled) throw new RenderCancelled();
+    const viewport = page.getViewport({ scale });
+    const ctx = canvas.getContext('2d', { alpha: false });
+    canvas.width = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    canvas.style.width = `${viewport.width}px`;
+    canvas.style.height = `${viewport.height}px`;
+    renderTask = page.render({ canvasContext: ctx, viewport });
+    try {
+      await renderTask.promise;
+    } catch (e) {
+      if (cancelled || e?.name === 'RenderingCancelledException') throw new RenderCancelled();
+      throw e;
+    }
+    return { width: viewport.width, height: viewport.height };
+  })();
+  return {
+    promise,
+    cancel() {
+      cancelled = true;
+      if (renderTask) {
+        try { renderTask.cancel(); } catch (e) { /* idempotent */ }
+      }
+    },
+  };
+}
+
+export class RenderCancelled extends Error {
+  constructor() { super('render cancelled'); this.name = 'RenderCancelled'; }
 }
 
 /**
@@ -73,5 +125,7 @@ export async function renderImage({ blob, canvas, scale = 1 }) {
 }
 
 export function clearPdfCache() {
-  docCache.clear();
+  // WeakMap has no clear(); entries vanish when their Blob is GC'd.
+  // The hash map is the long-lived one and gets emptied here.
+  docCacheByHash.clear();
 }

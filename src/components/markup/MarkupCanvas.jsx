@@ -7,7 +7,7 @@ import {
 } from '../../markup/geometry';
 import { calibratePage } from '../../markup/scale';
 import { getSymbol } from '../../markup/symbolLibrary';
-import { getPdfDocument, renderImage, renderPdfPage } from './pdfPageRender';
+import { getPdfDocument, renderImage, renderPdfPage, RenderCancelled } from './pdfPageRender';
 
 /**
  * MarkupCanvas — pdf.js raster + Konva overlay.
@@ -78,13 +78,15 @@ export default function MarkupCanvas({
   // ------- raster render -------
   useEffect(() => {
     let cancelled = false;
+    let renderHandle = null;
     (async () => {
       if (!drawingBlob || !canvasRef.current) return;
       try {
         if (drawingContentType === 'application/pdf') {
           const doc = await getPdfDocument(drawingBlob);
           if (cancelled) return;
-          const result = await renderPdfPage({ doc, pageNumber, canvas: canvasRef.current, scale: renderScale });
+          renderHandle = renderPdfPage({ doc, pageNumber, canvas: canvasRef.current, scale: renderScale });
+          const result = await renderHandle.promise;
           if (cancelled) return;
           setRenderSize(result);
         } else {
@@ -93,10 +95,16 @@ export default function MarkupCanvas({
           setRenderSize(result);
         }
       } catch (err) {
+        // Cancellations are expected when the effect re-fires.
+        if (err instanceof RenderCancelled) return;
+        if (err?.name === 'RenderingCancelledException') return;
         console.error('Markup render failed', err);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (renderHandle) renderHandle.cancel();
+    };
   }, [drawingBlob, drawingContentType, pageNumber, renderScale]);
 
   // ------- tool instantiation -------
