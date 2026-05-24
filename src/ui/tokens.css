@@ -170,12 +170,16 @@
   --color-bg-card:        var(--geist-bg);
   --color-bg-secondary:   var(--geist-bg-1);
   --color-border:         var(--geist-border);
+  --color-text-primary:   var(--geist-fg);
   --color-text-tertiary:  var(--geist-fg-3);
   --color-text-secondary: var(--geist-fg-2);
+  --color-overlay:        rgba(11, 15, 20, 0.55);
 
   --bg-primary:    var(--geist-bg);
   --bg-secondary:  var(--geist-bg-1);
   --bg-tertiary:   var(--geist-bg-2);
+  --bg-card:       var(--geist-bg);
+  --bg-overlay:    rgba(11, 15, 20, 0.55);
   --bg-sidebar:        #0B0F14;       /* near-black ink rail on light canvas */
   --bg-sidebar-hover:  #14181F;
   --bg-sidebar-active: #1F2531;
@@ -185,7 +189,15 @@
   --text-sidebar:        #A8B0BC;
   --text-sidebar-active: #FFFFFF;
   --border-color:    var(--geist-border);
+  --border-primary:  var(--geist-border);
   --surface:         var(--geist-bg);
+
+  /* Aliases consumed by shared components (Modal, CommandPalette).
+     Mapped onto the geist scale so a theme change here propagates
+     to every overlay-driven UI in the app. */
+  --shadow-xl:       0 10px 30px rgba(11, 15, 20, 0.18), 0 2px 6px rgba(11, 15, 20, 0.06);
+  --transition-fast: var(--geist-duration-fast) var(--geist-easing);
+  --transition:      var(--geist-duration)      var(--geist-easing);
 
   --radius-sm:   var(--geist-radius-sm);
   --radius-md:   var(--geist-radius);
