@@ -20,6 +20,15 @@ const COMMON = {
   defaultStyle: () => ({ stroke: '#ef4444', strokeWidth: 2, fill: 'rgba(239,68,68,0.15)', opacity: 1, dash: null }),
 };
 
+// Resolve mm-per-px from the tool context. Defaults to 1 when the
+// page has not been calibrated yet, so tools never crash on commit
+// when an operator forgets to calibrate first. The committed
+// geometry is preserved; the measuredValueMm is provisional until
+// the page is calibrated and the object is re-measured.
+function mmPerPx(ctx) {
+  return ctx?.pageScale?.mmPerPx ?? 1;
+}
+
 // Click-drag commit threshold in page pixels. Below this, a click-without-drag
 // gesture is treated as no-op rather than producing a zero-size shape that
 // pollutes the legend.
@@ -124,7 +133,7 @@ export function makeLengthTool() {
           productId: ctx.productId ?? null,
           assemblyId: ctx.assemblyId ?? null,
           quantity: 1,
-          measuredValueMm: lengthPx * ctx.pageScale.mmPerPx,
+          measuredValueMm: lengthPx * mmPerPx(ctx),
           note: '',
         },
       };
@@ -189,8 +198,8 @@ export function makeAreaTool() {
           productId: ctx.productId ?? null,
           assemblyId: ctx.assemblyId ?? null,
           quantity: 1,
-          measuredValueMm: areaPx * ctx.pageScale.mmPerPx * ctx.pageScale.mmPerPx,
-          perimeterMm: perimeterPx * ctx.pageScale.mmPerPx,
+          measuredValueMm: areaPx * mmPerPx(ctx) * mmPerPx(ctx),
+          perimeterMm: perimeterPx * mmPerPx(ctx),
           note: '',
         },
       };
@@ -257,7 +266,7 @@ export function makeRectangleTool() {
         style: ctx.style ?? COMMON.defaultStyle(),
         metadata: {
           quantity: 1,
-          measuredValueMm: geom.width * geom.height * ctx.pageScale.mmPerPx * ctx.pageScale.mmPerPx,
+          measuredValueMm: geom.width * geom.height * mmPerPx(ctx) * mmPerPx(ctx),
           note: '',
         },
       };
@@ -482,7 +491,7 @@ export function makeLineTool({ arrow = false } = {}) {
           style: ctx.style ?? COMMON.defaultStyle(),
           metadata: {
             quantity: 1,
-            measuredValueMm: distancePx(origin, finalPoint) * ctx.pageScale.mmPerPx,
+            measuredValueMm: distancePx(origin, finalPoint) * mmPerPx(ctx),
             note: '',
           },
         };
@@ -543,7 +552,7 @@ export function makeDiameterTool() {
         style: ctx.style ?? COMMON.defaultStyle(),
         metadata: {
           quantity: 1,
-          measuredValueMm: diameterPx * ctx.pageScale.mmPerPx,
+          measuredValueMm: diameterPx * mmPerPx(ctx),
           note: '',
         },
       };
@@ -678,7 +687,7 @@ export function makePerimeterTool() {
         style: ctx.style ?? COMMON.defaultStyle(),
         metadata: {
           quantity: 1,
-          measuredValueMm: perimeterPx * ctx.pageScale.mmPerPx,
+          measuredValueMm: perimeterPx * mmPerPx(ctx),
           note: '',
         },
       };
