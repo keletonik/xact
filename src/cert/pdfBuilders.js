@@ -31,12 +31,21 @@ export function newDoc({ orientation = 'portrait' } = {}) {
   return new jsPDF({ unit: 'pt', format: 'a4', orientation });
 }
 
-export function drawHeader(doc, { title, project, packType }) {
+export function drawHeader(doc, { title, project, packType, logoDataUrl }) {
   const company = localStorage.getItem('xact-company-name') || 'XACT Passive Fire';
+
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, 'PNG', MARGIN_PT, MARGIN_PT - 24, 50, 24, undefined, 'FAST');
+    } catch {
+      // Bad logo blob — fall through, header still renders the text.
+    }
+  }
+
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(60, 60, 60);
-  doc.text(company, MARGIN_PT, MARGIN_PT - 12);
+  doc.text(company, logoDataUrl ? MARGIN_PT + 56 : MARGIN_PT, MARGIN_PT - 12);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);

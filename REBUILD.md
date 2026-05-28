@@ -136,16 +136,40 @@ Everything else is derived. No alarms, no extinguishers, no sprinklers.
 
 ## 9. Phasing
 
-1. Strip bloat, fresh dexie v2 schema, prune routes.
-2. SystemLibrary + matrix search.
-3. Asset register + markup pin layer.
-4. Photo capture per stage.
-5. AS 1851 inspections + defects.
-6. Quote + takeoff.
-7. Cert pack templates.
-8. Work orders + dispatch.
-9. Dashboard KPIs.
-10. Polish, settings, cert branding.
+| # | Phase | Status |
+|---|---|---|
+| 1 | Strip bloat, fresh dexie v2 schema, prune routes | done |
+| 2 | SystemLibrary + matrix search | done |
+| 3a | Asset register + type-aware editor + matrix integration | done |
+| 3b | Markup-canvas pin overlay (click drawing → create / open asset) | **outstanding** |
+| 4 | Photo capture per stage (EXIF + SHA-256 blob dedupe) | done |
+| 5 | AS 1851 inspections + defects (atomic walk + defect raising) | done |
+| 6 | Quote + line items + convert-to-assets bridge | done |
+| 7 | Cert pack PDFs (5 generators on shared builders) | done |
+| 8 | Work orders + crew dispatch | done |
+| 9 | Dashboard KPIs across all stores | done |
+| 10 | Polish: settings (logo + roster), vendors CRUD, library import/export | done |
+
+### Phase 3b notes
+
+Deferred from the main rebuild because the existing `MarkupCanvas.jsx`
+is 611 lines of dense Konva (lasso selection, transformer handles,
+calibration, panning, controlled props) and an incorrect overlay
+integration risks regressing the markup tool that already ships.
+
+Suggested approach for 3b when picked up:
+- Add a new `AssetPinLayer.jsx` as a sibling Konva `<Layer>` inside
+  `MarkupCanvas`, controlled by a new `assetsOnPlan` prop and the
+  existing selection mechanism.
+- Add an `active tool = pinAsset` that disables lasso while active.
+- Click in pin mode creates an Asset via `useAssetStore.createAsset`
+  with `drawingId` and `locationOnPlan` populated, then opens the
+  AssetEditor for the new row.
+- Existing pins render as small circles + tag-label; click opens the
+  editor.
+- Add `forDrawing(drawingId)` selector (already on store) to filter
+  the layer's input.
+- Add Vitest coverage for hit-testing and pin-mode mode-exclusivity.
 
 ## 10. Non-goals
 

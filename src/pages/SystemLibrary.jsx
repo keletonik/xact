@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Library, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Library, Plus, Pencil, Trash2, X, Upload, Download } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
@@ -64,6 +64,20 @@ export default function SystemLibraryPage() {
           <span style={{ fontSize: 12, color: 'var(--geist-fg-4)' }}>
             {visible.length} of {systems.length}
           </span>
+          <Button size="sm" variant="ghost" onClick={() => downloadJSON(systems)}>
+            <Download size={12} /> Export
+          </Button>
+          <label style={{ cursor: 'pointer' }}>
+            <input
+              type="file"
+              accept="application/json"
+              style={{ display: 'none' }}
+              onChange={(e) => importFromFile(e.target.files?.[0], addSystem, () => e.target.value = '')}
+            />
+            <span style={ghostButton}>
+              <Upload size={12} /> Import
+            </span>
+          </label>
           <Button size="sm" onClick={() => setEditing('new')}>
             <Plus size={14} /> Add system
           </Button>
@@ -354,6 +368,40 @@ function ChipGroup({ options, selected, onChange }) {
   );
 }
 
+function downloadJSON(systems) {
+  const exportable = systems.map(({ id: _id, createdAt: _ca, updatedAt: _ua, ...rest }) => rest);
+  const blob = new Blob([JSON.stringify(exportable, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `xact-system-library-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importFromFile(file, addSystem, reset) {
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed)) throw new Error('Expected a JSON array of systems');
+    let ok = 0, skipped = 0;
+    for (const sys of parsed) {
+      if (!sys.manufacturer || !sys.systemName || !sys.testedFrl) {
+        skipped += 1;
+        continue;
+      }
+      await addSystem(sys);
+      ok += 1;
+    }
+    alert(`Imported ${ok} system${ok === 1 ? '' : 's'}${skipped ? `, skipped ${skipped} missing required fields` : ''}.`);
+  } catch (err) {
+    alert(`Import failed: ${err.message}`);
+  } finally {
+    reset?.();
+  }
+}
+
 const inputStyle = {
   padding: '8px 10px',
   border: '1px solid var(--geist-border-strong)',
@@ -363,6 +411,12 @@ const inputStyle = {
   fontSize: 13,
   width: '100%',
   boxSizing: 'border-box',
+};
+const ghostButton = {
+  display: 'inline-flex', alignItems: 'center', gap: 4,
+  padding: '4px 10px', fontSize: 12,
+  border: '1px solid transparent', borderRadius: 4,
+  color: 'var(--geist-fg-2)', cursor: 'pointer',
 };
 const th = { padding: '6px 10px', fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 };
 const td = { padding: '8px 10px', verticalAlign: 'top' };

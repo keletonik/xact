@@ -5,6 +5,7 @@ import {
   drawDefectSummary, drawPhotoEvidence, drawSignatoryPage,
   summariseInspections, MARGIN_PT,
 } from './pdfBuilders';
+import { getBlob } from '../services/db';
 import { CERT_PACK_TYPES, ASSET_STATUSES } from '../utils/constants';
 
 /**
@@ -20,7 +21,7 @@ import { CERT_PACK_TYPES, ASSET_STATUSES } from '../utils/constants';
 
 export async function generateCertPack({
   type, project, assets, systems, photos, defects = [],
-  inspections = [], resultsByInspection = {}, signatories = [],
+  inspections = [], resultsByInspection = {}, signatories: signatoriesIn,
 }) {
   const config = CONFIGS[type];
   if (!config) throw new Error(`Unknown cert pack type ${type}`);
@@ -34,8 +35,12 @@ export async function generateCertPack({
   const referencedSystems = systems.filter((s) => referencedSystemIds.has(s.id));
   const inScopeDefects = defects.filter((d) => inScopeIds.has(d.assetId));
 
+  // Pull company branding from Settings localStorage / dexie blob.
+  const logoDataUrl = await loadLogoDataUrl();
+  const signatories = signatoriesIn || loadSignatoryRoster();
+
   const doc = newDoc();
-  drawHeader(doc, { title: config.title, project, packType: type });
+  drawHeader(doc, { title: config.title, project, packType: type, logoDataUrl });
   drawFooter(doc);
 
   let y = MARGIN_PT + 80;
@@ -108,6 +113,28 @@ export async function generateCertPack({
   }
 
   return doc.output('blob');
+}
+
+async function loadLogoDataUrl() {
+  const hash = localStorage.getItem('xact-company-logo-hash');
+  if (!hash) return null;
+  const blob = await getBlob(hash);
+  if (!blob) return null;
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(blob);
+  });
+}
+
+function loadSignatoryRoster() {
+  try {
+    const raw = localStorage.getItem('xact-signatory-roster');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
 }
 
 const CONFIGS = {
