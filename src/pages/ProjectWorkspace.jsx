@@ -17,6 +17,7 @@ import PerformInspection from '../components/inspection/PerformInspection';
 import DefectTable from '../components/defect/DefectTable';
 import QuoteList from '../components/quote/QuoteList';
 import QuoteEditor from '../components/quote/QuoteEditor';
+import CertPackPanel from '../components/cert/CertPackPanel';
 import useProjectStore from '../stores/useProjectStore';
 import useAssetStore from '../stores/useAssetStore';
 import useSystemLibraryStore from '../stores/useSystemLibraryStore';
@@ -281,7 +282,17 @@ export default function ProjectWorkspace() {
           </Card>
         )
       )}
-      {tab === TAB_CERTS && <StubTab label="Cert packs" detail="Form 15, Form 16, AS 1851 baseline and install certification PDFs land in phase 7." />}
+      {tab === TAB_CERTS && (
+        <CertPackPanel
+          project={project}
+          assets={projectAssets}
+          systems={useSystemLibraryStore.getState().systems}
+          photos={allPhotos.filter((p) => assetIdSet.has(p.assetId))}
+          defects={projectDefects}
+          inspections={projectInspections}
+          resultsByInspection={resultsByInspection}
+        />
+      )}
 
       {editingAsset && (
         <AssetEditor
