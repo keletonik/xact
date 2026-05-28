@@ -14,32 +14,21 @@ import {
 } from 'lucide-react';
 
 const crumbMap = {
-  '/':                 'Dashboard',
-  '/opportunities':    'Opportunities',
-  '/projects':         'Projects',
-  '/takeoff':          'Takeoff',
-  '/markup':           'Markup',
-  '/catalog':          'Catalog',
-  '/servicing':        'Servicing',
-  '/quick-estimate':   'Quick Estimate',
-  '/estimates':        'Estimates',
-  '/proposals':        'Proposals',
-  '/price-book':       'Price Book',
-  '/vendors':          'Vendors',
-  '/reports':          'Reports',
-  '/admin':            'Admin',
-  '/settings':         'Settings',
-  '/help':             'Help',
-  '/notifications':    'Notifications',
-  '/profile':          'Profile',
+  '/':                'Dashboard',
+  '/projects':        'Projects',
+  '/markup':          'Markup',
+  '/system-library':  'System library',
+  '/catalog':         'Symbol catalog',
+  '/vendors':         'Vendors',
+  '/admin':           'Audit log',
+  '/settings':        'Settings',
+  '/profile':         'Profile',
 };
 
 const sectionFor = (path) => {
-  if (path.startsWith('/admin') || path.startsWith('/settings') || path.startsWith('/help')) return 'System';
-  if (path.startsWith('/catalog') || path.startsWith('/price-book') ||
-      path.startsWith('/vendors') || path.startsWith('/servicing')) return 'Catalogue';
-  if (path.startsWith('/reports')) return 'Insights';
-  return 'Estimating';
+  if (path.startsWith('/admin') || path.startsWith('/settings') || path.startsWith('/profile')) return 'System';
+  if (path.startsWith('/system-library') || path.startsWith('/catalog') || path.startsWith('/vendors')) return 'Library';
+  return 'Operations';
 };
 
 const envBadge = (() => {
@@ -159,10 +148,10 @@ export default function Header({ onMobileMenuToggle }) {
                   </span>
                   <button
                     type="button"
-                    onClick={() => { setNotifOpen(false); navigate('/notifications'); }}
+                    onClick={() => setNotifOpen(false)}
                     style={{ fontSize: 12, color: 'var(--geist-accent)', fontWeight: 600 }}
                   >
-                    View all
+                    Close
                   </button>
                 </div>
                 <div style={{ padding: '20px', textAlign: 'center', color: 'var(--geist-fg-3)', fontSize: 12.5 }}>

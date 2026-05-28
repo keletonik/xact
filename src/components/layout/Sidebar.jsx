@@ -1,49 +1,33 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  Users,
   FolderOpen,
-  Ruler,
-  Calculator,
-  FileText,
-  BookOpen,
+  Pencil,
+  Library,
+  Package,
   Building2,
-  BarChart3,
   Shield,
   Settings,
   ChevronLeft,
-  HelpCircle,
-  Pencil,
-  Package,
-  Wrench,
+  User,
 } from 'lucide-react';
 
-const estimating = [
-  { path: '/',                label: 'Dashboard',       icon: LayoutDashboard },
-  { path: '/opportunities',   label: 'Opportunities',   icon: Users },
-  { path: '/projects',        label: 'Projects',        icon: FolderOpen },
-  { path: '/takeoff',         label: 'Takeoff',         icon: Ruler },
-  { path: '/markup',          label: 'Markup',          icon: Pencil },
-  { path: '/quick-estimate',  label: 'Quick estimate',  icon: Calculator },
-  { path: '/estimates',       label: 'Estimates',       icon: Calculator },
-  { path: '/proposals',       label: 'Proposals',       icon: FileText },
+const operations = [
+  { path: '/',                label: 'Dashboard',      icon: LayoutDashboard },
+  { path: '/projects',        label: 'Projects',       icon: FolderOpen },
+  { path: '/markup',          label: 'Markup',         icon: Pencil },
 ];
 
-const catalogue = [
-  { path: '/catalog',         label: 'Catalog',         icon: Package },
-  { path: '/price-book',      label: 'Price Book',      icon: BookOpen },
-  { path: '/vendors',         label: 'Vendors',         icon: Building2 },
-  { path: '/servicing',       label: 'Servicing',       icon: Wrench },
-];
-
-const insights = [
-  { path: '/reports',         label: 'Reports',         icon: BarChart3 },
+const library = [
+  { path: '/system-library',  label: 'System library', icon: Library },
+  { path: '/catalog',         label: 'Symbol catalog', icon: Package },
+  { path: '/vendors',         label: 'Vendors',        icon: Building2 },
 ];
 
 const system = [
-  { path: '/admin',           label: 'Admin',           icon: Shield },
-  { path: '/settings',        label: 'Settings',        icon: Settings },
-  { path: '/help',            label: 'Help',            icon: HelpCircle },
+  { path: '/admin',           label: 'Audit log',      icon: Shield },
+  { path: '/settings',        label: 'Settings',       icon: Settings },
+  { path: '/profile',         label: 'Profile',        icon: User },
 ];
 
 export default function Sidebar({ collapsed, onToggle }) {
@@ -60,7 +44,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           {!collapsed && (
             <span className="xact-logo-txt">
               <span className="xact-logo-name">XACT</span>
-              <span className="xact-logo-tag">Estimating · 03</span>
+              <span className="xact-logo-tag">Passive fire</span>
             </span>
           )}
         </div>
@@ -78,18 +62,13 @@ export default function Sidebar({ collapsed, onToggle }) {
       </div>
 
       <nav className="xact-nav" aria-label="Main">
-        <div className="xact-nav-section">{collapsed ? '' : 'Estimating'}</div>
-        {estimating.map((item) => (
+        <div className="xact-nav-section">{collapsed ? '' : 'Operations'}</div>
+        {operations.map((item) => (
           <SideLink key={item.path} item={item} active={isActive(item.path)} collapsed={collapsed} />
         ))}
 
-        <div className="xact-nav-section">{collapsed ? '' : 'Catalogue'}</div>
-        {catalogue.map((item) => (
-          <SideLink key={item.path} item={item} active={isActive(item.path)} collapsed={collapsed} />
-        ))}
-
-        <div className="xact-nav-section">{collapsed ? '' : 'Insights'}</div>
-        {insights.map((item) => (
+        <div className="xact-nav-section">{collapsed ? '' : 'Library'}</div>
+        {library.map((item) => (
           <SideLink key={item.path} item={item} active={isActive(item.path)} collapsed={collapsed} />
         ))}
       </nav>

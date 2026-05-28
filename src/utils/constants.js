@@ -1,204 +1,230 @@
+/**
+ * XACT passive-fire constants. See REBUILD.md §3 for the domain model.
+ */
+
 export const ROLES = {
-  ADMIN: 'admin',
-  ESTIMATOR: 'estimator',
-  VIEWER: 'viewer',
-  AUDITOR: 'auditor',
+  OFFICE:     'office',     // estimator / admin
+  SUPERVISOR: 'supervisor',
+  INSTALLER:  'installer',
+  INSPECTOR:  'inspector',  // AS 1851 routine inspection
+  CERTIFIER:  'certifier',  // read-mostly
 };
 
 export const ROLE_LABELS = {
-  [ROLES.ADMIN]: 'Admin',
-  [ROLES.ESTIMATOR]: 'Estimator',
-  [ROLES.VIEWER]: 'Viewer',
-  [ROLES.AUDITOR]: 'Auditor',
+  [ROLES.OFFICE]:     'Office',
+  [ROLES.SUPERVISOR]: 'Supervisor',
+  [ROLES.INSTALLER]:  'Installer',
+  [ROLES.INSPECTOR]:  'Inspector',
+  [ROLES.CERTIFIER]:  'Certifier',
+};
+
+export const PROJECT_TYPES = {
+  NEW_INSTALL:      'new_install',
+  SURVEY:           'survey',             // AS 1851 baseline + audit
+  SERVICE_CONTRACT: 'service_contract',   // ongoing AS 1851 routine
+};
+
+export const PROJECT_TYPE_LABELS = {
+  [PROJECT_TYPES.NEW_INSTALL]:      'New install',
+  [PROJECT_TYPES.SURVEY]:           'Survey / baseline',
+  [PROJECT_TYPES.SERVICE_CONTRACT]: 'Service contract',
 };
 
 export const PROJECT_STATUSES = {
-  LEAD: 'lead',
-  OPPORTUNITY: 'opportunity',
-  QUOTING: 'quoting',
-  QUOTED: 'quoted',
-  WON: 'won',
-  LOST: 'lost',
-  ON_HOLD: 'on_hold',
+  ACTIVE:    'active',
+  ON_HOLD:   'on_hold',
+  COMPLETED: 'completed',
+  ARCHIVED:  'archived',
 };
 
 export const PROJECT_STATUS_LABELS = {
-  [PROJECT_STATUSES.LEAD]: 'Lead',
-  [PROJECT_STATUSES.OPPORTUNITY]: 'Opportunity',
-  [PROJECT_STATUSES.QUOTING]: 'Quoting',
-  [PROJECT_STATUSES.QUOTED]: 'Quoted',
-  [PROJECT_STATUSES.WON]: 'Won',
-  [PROJECT_STATUSES.LOST]: 'Lost',
-  [PROJECT_STATUSES.ON_HOLD]: 'On Hold',
+  [PROJECT_STATUSES.ACTIVE]:    'Active',
+  [PROJECT_STATUSES.ON_HOLD]:   'On hold',
+  [PROJECT_STATUSES.COMPLETED]: 'Completed',
+  [PROJECT_STATUSES.ARCHIVED]:  'Archived',
 };
 
-export const ESTIMATE_STATUSES = {
-  DRAFT: 'draft',
-  IN_REVIEW: 'in_review',
-  APPROVED: 'approved',
-  SENT: 'sent',
-  ACCEPTED: 'accepted',
-  DECLINED: 'declined',
-  SUPERSEDED: 'superseded',
+export const ASSET_TYPES = {
+  PENETRATION:         'penetration',
+  FIRE_DOOR:           'fire_door',
+  FIRE_DAMPER:         'fire_damper',
+  FIRE_SHUTTER:        'fire_shutter',
+  JOINT_SEAL:          'joint_seal',
+  STRUCTURAL_COATING:  'structural_coating',
+  SMOKE_SEAL:          'smoke_seal',
 };
 
-export const ESTIMATE_STATUS_LABELS = {
-  [ESTIMATE_STATUSES.DRAFT]: 'Draft',
-  [ESTIMATE_STATUSES.IN_REVIEW]: 'In Review',
-  [ESTIMATE_STATUSES.APPROVED]: 'Approved',
-  [ESTIMATE_STATUSES.SENT]: 'Sent',
-  [ESTIMATE_STATUSES.ACCEPTED]: 'Accepted',
-  [ESTIMATE_STATUSES.DECLINED]: 'Declined',
-  [ESTIMATE_STATUSES.SUPERSEDED]: 'Superseded',
+export const ASSET_TYPE_LABELS = {
+  [ASSET_TYPES.PENETRATION]:        'Penetration',
+  [ASSET_TYPES.FIRE_DOOR]:          'Fire door',
+  [ASSET_TYPES.FIRE_DAMPER]:        'Fire damper',
+  [ASSET_TYPES.FIRE_SHUTTER]:       'Fire shutter',
+  [ASSET_TYPES.JOINT_SEAL]:         'Joint seal',
+  [ASSET_TYPES.STRUCTURAL_COATING]: 'Structural coating',
+  [ASSET_TYPES.SMOKE_SEAL]:         'Smoke seal',
 };
 
-export const TAKEOFF_OBJECT_TYPES = {
-  COUNT: 'count',
-  LINEAR: 'linear',
-  AREA: 'area',
-  VOLUME: 'volume',
+export const SUBSTRATES = {
+  CONCRETE_SLAB:      'concrete_slab',
+  CONCRETE_WALL:      'concrete_wall',
+  MASONRY_WALL:       'masonry_wall',
+  PLASTERBOARD_WALL:  'plasterboard_wall',
+  SHAFT_WALL:         'shaft_wall',
+  FLOOR_SLAB:         'floor_slab',
+  RISER_SHAFT:        'riser_shaft',
+  CEILING_MEMBRANE:   'ceiling_membrane',
 };
 
-export const ITEM_CATEGORIES = {
-  MATERIAL: 'material',
-  LABOUR: 'labour',
-  PLANT: 'plant',
-  SUBCONTRACT: 'subcontract',
-  PERMIT: 'permit',
-  PRELIMINARY: 'preliminary',
+export const SUBSTRATE_LABELS = {
+  [SUBSTRATES.CONCRETE_SLAB]:     'Concrete slab',
+  [SUBSTRATES.CONCRETE_WALL]:     'Concrete wall',
+  [SUBSTRATES.MASONRY_WALL]:      'Masonry wall',
+  [SUBSTRATES.PLASTERBOARD_WALL]: 'Plasterboard wall',
+  [SUBSTRATES.SHAFT_WALL]:        'Shaft wall',
+  [SUBSTRATES.FLOOR_SLAB]:        'Floor slab',
+  [SUBSTRATES.RISER_SHAFT]:       'Riser shaft',
+  [SUBSTRATES.CEILING_MEMBRANE]:  'Ceiling membrane',
 };
 
-export const ITEM_CATEGORY_LABELS = {
-  [ITEM_CATEGORIES.MATERIAL]: 'Material',
-  [ITEM_CATEGORIES.LABOUR]: 'Labour',
-  [ITEM_CATEGORIES.PLANT]: 'Plant & Equipment',
-  [ITEM_CATEGORIES.SUBCONTRACT]: 'Subcontract',
-  [ITEM_CATEGORIES.PERMIT]: 'Permits & Fees',
-  [ITEM_CATEGORIES.PRELIMINARY]: 'Preliminaries',
+export const SERVICE_TYPES = {
+  CABLE_TRAY:    'cable_tray',
+  CABLE_BUNDLE:  'cable_bundle',
+  SINGLE_CABLE:  'single_cable',
+  COPPER_PIPE:   'copper_pipe',
+  PVC_PIPE:      'pvc_pipe',
+  CAST_IRON:     'cast_iron',
+  HVAC_DUCT:     'hvac_duct',
+  STEEL_PIPE:    'steel_pipe',
+  CONDUIT:       'conduit',
+  EMPTY:         'empty_opening',
 };
 
-export const FIRE_SCOPES = {
-  SPRINKLER: 'sprinkler',
-  ALARM: 'alarm',
-  PASSIVE: 'passive',
-  EXTINGUISHER: 'extinguisher',
-  HYDRANT: 'hydrant',
-  EGRESS: 'egress',
-  EWIS: 'ewis',
-  DETECTION: 'detection',
-  SUPPRESSION: 'suppression',
+export const SERVICE_TYPE_LABELS = {
+  [SERVICE_TYPES.CABLE_TRAY]:   'Cable tray',
+  [SERVICE_TYPES.CABLE_BUNDLE]: 'Cable bundle',
+  [SERVICE_TYPES.SINGLE_CABLE]: 'Single cable',
+  [SERVICE_TYPES.COPPER_PIPE]:  'Copper pipe',
+  [SERVICE_TYPES.PVC_PIPE]:     'PVC pipe',
+  [SERVICE_TYPES.CAST_IRON]:    'Cast iron pipe',
+  [SERVICE_TYPES.HVAC_DUCT]:    'HVAC duct',
+  [SERVICE_TYPES.STEEL_PIPE]:   'Steel pipe',
+  [SERVICE_TYPES.CONDUIT]:      'Conduit',
+  [SERVICE_TYPES.EMPTY]:        'Empty opening',
 };
 
-export const FIRE_SCOPE_LABELS = {
-  [FIRE_SCOPES.SPRINKLER]: 'Fire Sprinkler',
-  [FIRE_SCOPES.ALARM]: 'Fire Alarm',
-  [FIRE_SCOPES.PASSIVE]: 'Passive Fire Protection',
-  [FIRE_SCOPES.EXTINGUISHER]: 'Portable Extinguishers',
-  [FIRE_SCOPES.HYDRANT]: 'Hydrants & Hose Reels',
-  [FIRE_SCOPES.EGRESS]: 'Emergency Egress',
-  [FIRE_SCOPES.EWIS]: 'EWIS',
-  [FIRE_SCOPES.DETECTION]: 'Detection Systems',
-  [FIRE_SCOPES.SUPPRESSION]: 'Special Suppression',
+export const ASSET_STATUSES = {
+  PLANNED:        'planned',
+  INSTALLED:      'installed',
+  RECTIFICATION:  'rectification',
+  CERTIFIED:      'certified',
+  NONCONFORMANCE: 'nonconformance',
 };
 
-export const MARKUP_TYPES = {
-  MARGIN: 'margin',
-  OVERHEAD: 'overhead',
-  PROFIT: 'profit',
-  CONTINGENCY: 'contingency',
-  RISK: 'risk',
+export const ASSET_STATUS_LABELS = {
+  [ASSET_STATUSES.PLANNED]:        'Planned',
+  [ASSET_STATUSES.INSTALLED]:      'Installed',
+  [ASSET_STATUSES.RECTIFICATION]:  'Rectification',
+  [ASSET_STATUSES.CERTIFIED]:      'Certified',
+  [ASSET_STATUSES.NONCONFORMANCE]: 'Non-conformance',
 };
 
-export const TAX_RATE = 0.10; // 10% GST
+export const PHOTO_STAGES = {
+  PRE_INSTALL:        'pre_install',
+  DURING:             'during',
+  POST_INSTALL:       'post_install',
+  ANNUAL_INSPECTION:  'annual_inspection',
+};
 
-export const AUDIT_ACTIONS = {
-  ESTIMATE_CREATED: 'estimate_created',
-  ESTIMATE_UPDATED: 'estimate_updated',
-  ESTIMATE_VERSION_CREATED: 'estimate_version_created',
-  ESTIMATE_APPROVED: 'estimate_approved',
-  ESTIMATE_SENT: 'estimate_sent',
-  LINE_ADDED: 'line_added',
-  LINE_UPDATED: 'line_updated',
-  LINE_DELETED: 'line_deleted',
-  PRICE_BOOK_ITEM_CREATED: 'price_book_item_created',
-  PRICE_BOOK_ITEM_UPDATED: 'price_book_item_updated',
-  PRICE_BOOK_ITEM_DELETED: 'price_book_item_deleted',
-  ASSEMBLY_CREATED: 'assembly_created',
-  ASSEMBLY_UPDATED: 'assembly_updated',
-  AI_SUGGESTION_CREATED: 'ai_suggestion_created',
-  AI_SUGGESTION_APPROVED: 'ai_suggestion_approved',
-  AI_SUGGESTION_REJECTED: 'ai_suggestion_rejected',
-  PERMISSION_CHANGED: 'permission_changed',
-  PROPOSAL_GENERATED: 'proposal_generated',
-  PROPOSAL_SENT: 'proposal_sent',
-  PROPOSAL_ACCEPTED: 'proposal_accepted',
-  TAKEOFF_OBJECT_CREATED: 'takeoff_object_created',
-  TAKEOFF_OBJECT_UPDATED: 'takeoff_object_updated',
-  PROJECT_CREATED: 'project_created',
-  PROJECT_UPDATED: 'project_updated',
+export const PHOTO_STAGE_LABELS = {
+  [PHOTO_STAGES.PRE_INSTALL]:       'Pre-install',
+  [PHOTO_STAGES.DURING]:            'During',
+  [PHOTO_STAGES.POST_INSTALL]:      'Post-install',
+  [PHOTO_STAGES.ANNUAL_INSPECTION]: 'Annual inspection',
+};
+
+export const INSPECTION_FREQUENCIES = {
+  BASELINE:    'baseline',
+  ANNUAL:      'annual',
+  FIVE_YEARLY: '5_yearly',
+};
+
+export const INSPECTION_FREQUENCY_LABELS = {
+  [INSPECTION_FREQUENCIES.BASELINE]:    'Baseline',
+  [INSPECTION_FREQUENCIES.ANNUAL]:      'Annual',
+  [INSPECTION_FREQUENCIES.FIVE_YEARLY]: '5-yearly',
+};
+
+export const DEFECT_CLASSES = {
+  A: 'A',  // immediate / safety critical
+  B: 'B',  // requires rectification within a defined period
+  C: 'C',  // observation / minor
+};
+
+export const DEFECT_CLASS_LABELS = {
+  [DEFECT_CLASSES.A]: 'A (immediate)',
+  [DEFECT_CLASSES.B]: 'B (programmed)',
+  [DEFECT_CLASSES.C]: 'C (observation)',
+};
+
+export const TEST_STANDARDS = {
+  AS_1530_4:   'AS 1530.4',
+  EN_1366_3:   'EN 1366-3',
+  EN_1366_4:   'EN 1366-4',
+  UL_1479:     'UL 1479',
+  ASTM_E814:   'ASTM E814',
+};
+
+export const CERT_PACK_TYPES = {
+  FORM_15:              'form_15',
+  FORM_16:              'form_16',
+  AS_1851_BASELINE:     'as_1851_baseline',
+  AS_1851_ANNUAL:       'as_1851_annual',
+  INSTALL_CERTIFICATION:'install_certification',
+};
+
+export const CERT_PACK_TYPE_LABELS = {
+  [CERT_PACK_TYPES.FORM_15]:              'Form 15 (design certificate)',
+  [CERT_PACK_TYPES.FORM_16]:              'Form 16 (inspection certificate)',
+  [CERT_PACK_TYPES.AS_1851_BASELINE]:     'AS 1851 baseline survey',
+  [CERT_PACK_TYPES.AS_1851_ANNUAL]:       'AS 1851 annual inspection',
+  [CERT_PACK_TYPES.INSTALL_CERTIFICATION]:'Install certification pack',
+};
+
+export const MANUFACTURERS = {
+  HILTI:     'Hilti',
+  PROMAT:    'Promat',
+  TRAFALGAR: 'Trafalgar Fire',
+  BOSS:      'Boss Fire',
+  FIRESAFE:  'FireSAFE',
+  THREE_M:   '3M',
+  PYROPHOBIC:'Pyrophobic',
+  ROCKWOOL:  'Rockwool',
 };
 
 export const REGIONS = {
-  NSW: 'nsw',
-  VIC: 'vic',
-  QLD: 'qld',
-  WA: 'wa',
-  SA: 'sa',
-  TAS: 'tas',
-  NT: 'nt',
-  ACT: 'act',
+  NSW: 'nsw', VIC: 'vic', QLD: 'qld', WA: 'wa',
+  SA:  'sa',  TAS: 'tas', NT:  'nt',  ACT: 'act',
 };
 
 export const REGION_LABELS = {
-  [REGIONS.NSW]: 'New South Wales',
-  [REGIONS.VIC]: 'Victoria',
-  [REGIONS.QLD]: 'Queensland',
-  [REGIONS.WA]: 'Western Australia',
-  [REGIONS.SA]: 'South Australia',
-  [REGIONS.TAS]: 'Tasmania',
-  [REGIONS.NT]: 'Northern Territory',
-  [REGIONS.ACT]: 'Australian Capital Territory',
+  [REGIONS.NSW]: 'NSW', [REGIONS.VIC]: 'VIC', [REGIONS.QLD]: 'QLD',
+  [REGIONS.WA]:  'WA',  [REGIONS.SA]:  'SA',  [REGIONS.TAS]: 'TAS',
+  [REGIONS.NT]:  'NT',  [REGIONS.ACT]: 'ACT',
 };
 
-export const UNITS = {
-  EACH: 'ea',
-  METRE: 'm',
-  SQ_METRE: 'm²',
-  CU_METRE: 'm³',
-  HOUR: 'hr',
-  DAY: 'day',
-  LOT: 'lot',
-  KG: 'kg',
-  LITRE: 'L',
-  SET: 'set',
-  ROLL: 'roll',
-  LENGTH: 'length',
-  PAIR: 'pair',
-};
+export const TAX_RATE = 0.10; // GST
 
-export const ACCESS_DIFFICULTY = {
-  STANDARD: 'standard',
-  RESTRICTED: 'restricted',
-  HIGH_LEVEL: 'high_level',
-  CONFINED: 'confined',
-  AFTER_HOURS: 'after_hours',
-};
-
-export const ACCESS_DIFFICULTY_MULTIPLIERS = {
-  [ACCESS_DIFFICULTY.STANDARD]: 1.0,
-  [ACCESS_DIFFICULTY.RESTRICTED]: 1.15,
-  [ACCESS_DIFFICULTY.HIGH_LEVEL]: 1.35,
-  [ACCESS_DIFFICULTY.CONFINED]: 1.25,
-  [ACCESS_DIFFICULTY.AFTER_HOURS]: 1.50,
-};
-
-export const REGION_MODIFIERS = {
-  [REGIONS.NSW]: 1.0,
-  [REGIONS.VIC]: 0.98,
-  [REGIONS.QLD]: 0.95,
-  [REGIONS.WA]: 1.08,
-  [REGIONS.SA]: 0.93,
-  [REGIONS.TAS]: 0.96,
-  [REGIONS.NT]: 1.15,
-  [REGIONS.ACT]: 1.02,
+export const AUDIT_ACTIONS = {
+  PROJECT_CREATED:        'project_created',
+  PROJECT_UPDATED:        'project_updated',
+  ASSET_CREATED:          'asset_created',
+  ASSET_UPDATED:          'asset_updated',
+  ASSET_INSTALLED:        'asset_installed',
+  ASSET_SIGNED_OFF:       'asset_signed_off',
+  PHOTO_CAPTURED:         'photo_captured',
+  INSPECTION_PERFORMED:   'inspection_performed',
+  DEFECT_RAISED:          'defect_raised',
+  DEFECT_RECTIFIED:       'defect_rectified',
+  CERT_PACK_GENERATED:    'cert_pack_generated',
+  SYSTEM_LIBRARY_UPDATED: 'system_library_updated',
 };

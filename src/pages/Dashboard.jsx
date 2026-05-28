@@ -1,254 +1,121 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  DollarSign, TrendingUp, FolderOpen, Calculator, FileText,
-  BookOpen, ArrowRight, AlertTriangle, CheckCircle,
-  Ruler, BarChart3, Activity,
+  FolderOpen, ArrowRight, ShieldCheck, AlertTriangle, CalendarClock, FileBadge2,
 } from 'lucide-react';
-import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import useProjectStore, { computePipelineStats } from '../stores/useProjectStore';
-import useEstimateStore from '../stores/useEstimateStore';
-import usePriceBookStore from '../stores/usePriceBookStore';
-import useAuditStore from '../stores/useAuditStore';
-import { formatCurrency, formatRelativeTime, formatPercent } from '../utils/formatters';
-
-const CHART_COLORS = ['#f97316', '#3b82f6', '#22c55e', '#8b5cf6', '#ef4444', '#eab308'];
+import useProjectStore from '../stores/useProjectStore';
+import useAssetStore from '../stores/useAssetStore';
+import {
+  ASSET_STATUSES, PROJECT_STATUSES, PROJECT_TYPE_LABELS,
+} from '../utils/constants';
+import { formatRelativeTime } from '../utils/formatters';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  // Select the stable array reference, then derive stats once per change.
-  // Calling `s.getPipelineStats()` from inside the selector returned a fresh
-  // object every render and tripped React 19's getSnapshot caching loop.
   const projects = useProjectStore((s) => s.projects);
-  const pipelineStats = useMemo(() => computePipelineStats(projects), [projects]);
-  const estimates = useEstimateStore((s) => s.estimates);
-  const items = usePriceBookStore((s) => s.items);
-  const pendingUpdates = usePriceBookStore((s) => s.pendingUpdates);
-  const auditEntries = useAuditStore((s) => s.entries);
+  const hydrateProjects = useProjectStore((s) => s.hydrate);
+  const assets = useAssetStore((s) => s.assets);
+  const hydrateAssets = useAssetStore((s) => s.hydrate);
 
-  const pending = pendingUpdates.filter((u) => u.status === 'pending');
+  useEffect(() => { hydrateProjects(); hydrateAssets(); }, [hydrateProjects, hydrateAssets]);
 
   const stats = useMemo(() => {
-    const totalEstimateValue = estimates.reduce((s, e) => s + e.totals.totalIncTax, 0);
-    const avgMargin = estimates.length > 0
-      ? estimates.reduce((s, e) => s + e.totals.effectiveMargin, 0) / estimates.length
-      : 0;
+    const active = projects.filter((p) => p.status === PROJECT_STATUSES.ACTIVE).length;
+    const installed = assets.filter((a) => a.status === ASSET_STATUSES.INSTALLED).length;
+    const certified = assets.filter((a) => a.status === ASSET_STATUSES.CERTIFIED).length;
+    const ncr = assets.filter((a) => a.status === ASSET_STATUSES.NONCONFORMANCE).length;
+    return { active, installed, certified, ncr };
+  }, [projects, assets]);
 
-    return { totalEstimateValue, avgMargin };
-  }, [estimates]);
-
-  const pipelineData = [
-    { stage: 'Leads', value: pipelineStats.leads },
-    { stage: 'Opps', value: pipelineStats.opportunities },
-    { stage: 'Quoting', value: pipelineStats.quoting },
-    { stage: 'Quoted', value: pipelineStats.quoted },
-    { stage: 'Won', value: pipelineStats.won },
-    { stage: 'Lost', value: pipelineStats.lost },
-  ];
-
-  const categoryBreakdown = useMemo(() => {
-    const cats = { Material: 0, Labour: 0, Plant: 0, Subcontract: 0, Preliminary: 0 };
-    for (const est of estimates) {
-      cats.Material += est.totals.breakdown.material;
-      cats.Labour += est.totals.breakdown.labour;
-      cats.Plant += est.totals.breakdown.plant;
-      cats.Subcontract += est.totals.breakdown.subcontract;
-      cats.Preliminary += est.totals.breakdown.preliminary;
-    }
-    return Object.entries(cats)
-      .filter(([, v]) => v > 0)
-      .map(([name, value]) => ({ name, value: Math.round(value) }));
-  }, [estimates]);
-
-  const recentActivity = auditEntries.slice(0, 8);
+  const recent = projects.slice(0, 6);
 
   return (
-    <div style={{ padding: '24px 32px' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Dashboard</h1>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-tertiary)', margin: '4px 0 0' }}>
-          Estimating overview and activity
-        </p>
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18 }}
+      style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <h1 style={{ margin: 0, fontSize: 22 }}>Dashboard</h1>
+        <span style={{ color: 'var(--geist-fg-4)', fontSize: 12 }}>XACT, passive-fire ops</span>
       </div>
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
-        {[
-          { label: 'Pipeline Value', value: formatCurrency(pipelineStats.pipelineValue, 0), icon: DollarSign, color: 'var(--color-fire-500)', onClick: () => navigate('/opportunities') },
-          { label: 'Active Estimates', value: estimates.filter((e) => e.status === 'draft').length, icon: Calculator, color: 'var(--color-info-500)', onClick: () => navigate('/estimates') },
-          { label: 'Total Estimate Value', value: formatCurrency(stats.totalEstimateValue, 0), icon: TrendingUp, color: 'var(--color-success-500)' },
-          { label: 'Avg. Margin', value: formatPercent(stats.avgMargin), icon: BarChart3, color: 'var(--color-warning-500)' },
-          { label: 'Price Book Items', value: items.length, icon: BookOpen, color: 'var(--color-text-secondary)', onClick: () => navigate('/price-book') },
-        ].map((stat) => (
-          <motion.div key={stat.label} whileHover={{ y: -2 }} transition={{ duration: 0.15 }}>
-            <Card hover={!!stat.onClick} onClick={stat.onClick}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--color-text-tertiary)', marginBottom: 4 }}>{stat.label}</div>
-                  <div style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>{stat.value}</div>
-                </div>
-                <div style={{
-                  width: 40, height: 40, borderRadius: 'var(--radius-md)', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', background: `${stat.color}12`,
-                }}>
-                  <stat.icon size={20} style={{ color: stat.color }} />
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+        <Stat icon={FolderOpen}    label="Active projects"  value={stats.active} />
+        <Stat icon={ShieldCheck}   label="Assets installed" value={stats.installed} />
+        <Stat icon={FileBadge2}    label="Assets certified" value={stats.certified} />
+        <Stat icon={AlertTriangle} label="Non-conformances" value={stats.ncr} accent="warning" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, marginBottom: 24 }}>
-        {/* Pipeline Chart */}
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>Project Pipeline</h3>
-            <Button size="sm" variant="ghost" onClick={() => navigate('/opportunities')}>View All <ArrowRight size={12} /></Button>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={pipelineData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="stage" tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }} />
-              <YAxis tick={{ fontSize: 11, fill: 'var(--color-text-tertiary)' }} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 12 }} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {pipelineData.map((_, i) => (
-                  <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
-        {/* Cost Category Breakdown */}
-        <Card>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: '0 0 16px' }}>Cost Breakdown</h3>
-          {categoryBreakdown.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={160}>
-                <PieChart>
-                  <Pie data={categoryBreakdown} dataKey="value" cx="50%" cy="50%" outerRadius={60} strokeWidth={2}>
-                    {categoryBreakdown.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 12 }} formatter={(v) => formatCurrency(v)} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8, justifyContent: 'center' }}>
-                {categoryBreakdown.map((cat, i) => (
-                  <span key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
-                    <div style={{ width: 8, height: 8, borderRadius: 2, background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                    {cat.name}
+      <Card>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <strong>Recent projects</strong>
+          <Button size="sm" variant="ghost" onClick={() => navigate('/projects')}>
+            View all <ArrowRight size={14} />
+          </Button>
+        </div>
+        {recent.length === 0 ? (
+          <p style={{ color: 'var(--geist-fg-4)', fontSize: 13 }}>
+            No projects yet. Create one from the Projects page to get started.
+          </p>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {recent.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/projects/${p.id}`)}
+                  style={{
+                    width: '100%', textAlign: 'left', padding: '8px 10px',
+                    background: 'transparent', border: '1px solid var(--geist-border)',
+                    borderRadius: 6, cursor: 'pointer', display: 'grid',
+                    gridTemplateColumns: '90px 1fr auto auto', gap: 12, alignItems: 'center',
+                    fontSize: 13,
+                  }}
+                >
+                  <code style={{ color: 'var(--geist-fg-3)' }}>{p.code}</code>
+                  <span>{p.name}</span>
+                  <span style={{ color: 'var(--geist-fg-4)', fontSize: 12 }}>
+                    {PROJECT_TYPE_LABELS[p.projectType]}
                   </span>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 160, color: 'var(--color-text-tertiary)', fontSize: '0.8125rem' }}>
-              No estimate data yet
-            </div>
-          )}
-        </Card>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
-        {/* Recent Activity */}
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>Recent Activity</h3>
-            <Button size="sm" variant="ghost" onClick={() => navigate('/admin')}>View All</Button>
-          </div>
-          {recentActivity.length === 0 ? (
-            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: '0.8125rem' }}>No activity yet</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {recentActivity.map((entry) => (
-                <div key={entry.id} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--color-border)' }}>
-                  <Activity size={14} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0, marginTop: 2 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-primary)' }}>{entry.description}</div>
-                    <div style={{ fontSize: '0.625rem', color: 'var(--color-text-tertiary)' }}>{formatRelativeTime(entry.timestamp)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        {/* Quick Actions */}
-        <Card>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: '0 0 12px' }}>Quick Actions</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              { label: 'New Project', icon: FolderOpen, path: '/projects', color: 'var(--color-info-500)' },
-              { label: 'New Estimate', icon: Calculator, path: '/estimates', color: 'var(--color-success-500)' },
-              { label: 'Open Takeoff', icon: Ruler, path: '/takeoff', color: 'var(--color-warning-500)' },
-              { label: 'New Proposal', icon: FileText, path: '/proposals', color: 'var(--color-fire-500)' },
-              { label: 'Browse Price Book', icon: BookOpen, path: '/price-book', color: 'var(--color-text-secondary)' },
-            ].map((action) => (
-              <button
-                key={action.label}
-                onClick={() => navigate(action.path)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-                  borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
-                  background: 'var(--color-bg-secondary)', cursor: 'pointer', width: '100%',
-                  transition: 'all var(--transition-fast)',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = action.color}
-                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--color-border)'}
-              >
-                <action.icon size={16} style={{ color: action.color }} />
-                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--color-text-primary)', flex: 1, textAlign: 'left' }}>{action.label}</span>
-                <ArrowRight size={14} style={{ color: 'var(--color-text-tertiary)' }} />
-              </button>
+                  <span style={{ color: 'var(--geist-fg-4)', fontSize: 12 }}>
+                    <CalendarClock size={11} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                    {formatRelativeTime(p.updatedAt)}
+                  </span>
+                </button>
+              </li>
             ))}
-          </div>
-        </Card>
+          </ul>
+        )}
+      </Card>
 
-        {/* Alerts */}
-        <Card>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', margin: '0 0 12px' }}>Alerts</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {pending.length > 0 && (
-              <div style={{ display: 'flex', gap: 8, padding: '10px', borderRadius: 'var(--radius-md)', background: 'var(--color-warning-50)', border: '1px solid var(--color-warning-200)' }}>
-                <AlertTriangle size={16} style={{ color: 'var(--color-warning-600)', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-warning-800)' }}>{pending.length} Price Updates Pending</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--color-warning-600)' }}>Review in Price Book</div>
-                </div>
-              </div>
-            )}
+      <Card>
+        <strong>Phase status</strong>
+        <p style={{ fontSize: 13, color: 'var(--geist-fg-3)', marginTop: 8 }}>
+          Phase 1 complete: schema reset, bloat removed. SystemLibrary seeded with starter entries from Hilti, Promat, Trafalgar, Boss. Asset register and plan-pin layer land in phase 3, AS 1851 inspections in phase 5, cert pack generation in phase 7. See <code>REBUILD.md</code> for the full plan.
+        </p>
+      </Card>
+    </motion.div>
+  );
+}
 
-            {estimates.filter((e) => e.status === 'draft' && e.lines.length === 0).length > 0 && (
-              <div style={{ display: 'flex', gap: 8, padding: '10px', borderRadius: 'var(--radius-md)', background: 'var(--color-info-50)', border: '1px solid var(--color-info-200)' }}>
-                <Calculator size={16} style={{ color: 'var(--color-info-600)', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-info-800)' }}>Empty Estimates</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--color-info-600)' }}>
-                    {estimates.filter((e) => e.status === 'draft' && e.lines.length === 0).length} estimates need line items
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {pending.length === 0 && estimates.filter((e) => e.status === 'draft' && e.lines.length === 0).length === 0 && (
-              <div style={{ display: 'flex', gap: 8, padding: '10px', borderRadius: 'var(--radius-md)', background: 'var(--color-success-50)', border: '1px solid var(--color-success-200)' }}>
-                <CheckCircle size={16} style={{ color: 'var(--color-success-600)', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-success-800)' }}>All Clear</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--color-success-600)' }}>No pending actions</div>
-                </div>
-              </div>
-            )}
-          </div>
-        </Card>
+function Stat({ icon: Icon, label, value, accent }) {
+  const colour =
+    accent === 'warning' ? 'var(--geist-warning, #f59e0b)'
+    : 'var(--geist-fg-2, #6b7280)';
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Icon size={18} color={colour} />
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 600 }}>{value}</div>
+          <div style={{ fontSize: 11, color: 'var(--geist-fg-4)' }}>{label}</div>
+        </div>
       </div>
-    </div>
+    </Card>
   );
 }

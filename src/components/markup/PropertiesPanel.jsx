@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link2, Tag, MessageSquare } from 'lucide-react';
 import { formatLength, formatArea, formatAngle } from '../../markup/geometry';
 import { getSymbol } from '../../markup/symbolLibrary';
-import useCatalogStore from '../../stores/useCatalogStore';
+import useSystemLibraryStore from '../../stores/useSystemLibraryStore';
 
 const STATUSES = [
   { value: 'none',     label: '—',            colour: 'var(--geist-fg-4)' },
@@ -21,7 +21,7 @@ export default function PropertiesPanel({
   page,
   onUpdate,
 }) {
-  const products = useCatalogStore((s) => s.products);
+  const systems = useSystemLibraryStore((s) => s.systems);
 
   const single = selectedObjects.length === 1 ? selectedObjects[0] : null;
   const allSameType = useMemo(() => {
@@ -35,7 +35,7 @@ export default function PropertiesPanel({
       <div style={wrap}>
         <Header label="Properties" />
         <div style={emptyMsg}>
-          Select a markup to edit its properties — subject, status, layer, product link, comment.
+          Select a markup to edit its properties, subject, status, layer, linked tested system, comment.
         </div>
       </div>
     );
@@ -45,7 +45,7 @@ export default function PropertiesPanel({
   const subj  = unanimous(selectedObjects.map((o) => o.metadata?.subject ?? ''));
   const note  = unanimous(selectedObjects.map((o) => o.metadata?.note ?? ''));
   const status = unanimous(selectedObjects.map((o) => o.metadata?.status ?? 'none')) ?? 'none';
-  const productId = unanimous(selectedObjects.map((o) => o.metadata?.productId ?? ''));
+  const testedSystemId = unanimous(selectedObjects.map((o) => o.metadata?.testedSystemId ?? ''));
   const qty   = unanimous(selectedObjects.map((o) => o.metadata?.quantity ?? 1));
   const url   = unanimous(selectedObjects.map((o) => o.metadata?.url ?? ''));
 
@@ -108,10 +108,14 @@ export default function PropertiesPanel({
         <input style={input} type="number" min="0" step="0.5" value={qty ?? 1} onChange={(e) => update({ quantity: Number(e.target.value) })} />
       </Field>
 
-      <Field label={<><Link2 size={11} strokeWidth={2.5} style={{ verticalAlign: 'middle' }} /> Link to product</>}>
-        <select style={input} value={productId ?? ''} onChange={(e) => update({ productId: e.target.value || null })}>
-          <option value="">— none —</option>
-          {products.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.sku || p.id.slice(0, 6)})</option>)}
+      <Field label={<><Link2 size={11} strokeWidth={2.5} style={{ verticalAlign: 'middle' }} /> Tested system</>}>
+        <select style={input} value={testedSystemId ?? ''} onChange={(e) => update({ testedSystemId: e.target.value || null })}>
+          <option value="">none</option>
+          {systems.map((sys) => (
+            <option key={sys.id} value={sys.id}>
+              {sys.manufacturer} {sys.systemName} ({sys.testedFrl})
+            </option>
+          ))}
         </select>
       </Field>
 

@@ -1,0 +1,108 @@
+import { TEST_STANDARDS, MANUFACTURERS, SUBSTRATES, SERVICE_TYPES } from '../utils/constants';
+
+/**
+ * Starter SystemLibrary seed. Placeholder data, intentionally small and
+ * obviously incomplete; real catalogue import (Hilti / Promat / Trafalgar
+ * tested-system PDFs) lands in Phase 2 as part of the import flow.
+ *
+ * Test report numbers below are illustrative; substitute against the
+ * manufacturer's current tested-system schedule before relying on them.
+ */
+export const SYSTEM_LIBRARY_SEED = [
+  {
+    id: 'sys-hilti-cfs-ct',
+    manufacturer: MANUFACTURERS.HILTI,
+    systemName: 'CFS-CT Composite Sheet',
+    testReportNo: 'WF 412345',
+    testStandard: TEST_STANDARDS.AS_1530_4,
+    testedFrl: '-/240/240',
+    substratesSupported: [SUBSTRATES.CONCRETE_SLAB, SUBSTRATES.CONCRETE_WALL, SUBSTRATES.MASONRY_WALL],
+    servicesSupported: [SERVICE_TYPES.CABLE_TRAY, SERVICE_TYPES.CABLE_BUNDLE, SERVICE_TYPES.SINGLE_CABLE],
+    openingSizeRangeMm: [100, 1200],
+    notes: 'Composite intumescent sheet, common large-opening cable solution.',
+  },
+  {
+    id: 'sys-hilti-fs-one-max',
+    manufacturer: MANUFACTURERS.HILTI,
+    systemName: 'FS-ONE MAX Sealant',
+    testReportNo: 'WF 410998',
+    testStandard: TEST_STANDARDS.AS_1530_4,
+    testedFrl: '-/180/180',
+    substratesSupported: [SUBSTRATES.CONCRETE_SLAB, SUBSTRATES.CONCRETE_WALL, SUBSTRATES.PLASTERBOARD_WALL, SUBSTRATES.SHAFT_WALL],
+    servicesSupported: [SERVICE_TYPES.COPPER_PIPE, SERVICE_TYPES.PVC_PIPE, SERVICE_TYPES.STEEL_PIPE, SERVICE_TYPES.SINGLE_CABLE],
+    openingSizeRangeMm: [10, 200],
+    notes: 'Intumescent acrylic sealant, small-to-medium penetrations.',
+  },
+  {
+    id: 'sys-hilti-cp-644',
+    manufacturer: MANUFACTURERS.HILTI,
+    systemName: 'CP 644 Intumescent Pipe Collar',
+    testReportNo: 'WF 411203',
+    testStandard: TEST_STANDARDS.AS_1530_4,
+    testedFrl: '-/120/120',
+    substratesSupported: [SUBSTRATES.CONCRETE_SLAB, SUBSTRATES.CONCRETE_WALL, SUBSTRATES.PLASTERBOARD_WALL],
+    servicesSupported: [SERVICE_TYPES.PVC_PIPE, SERVICE_TYPES.CAST_IRON],
+    openingSizeRangeMm: [40, 200],
+    notes: 'Wrap-around intumescent collar for combustible service pipes.',
+  },
+  {
+    id: 'sys-promat-promaseal-collar',
+    manufacturer: MANUFACTURERS.PROMAT,
+    systemName: 'PROMASEAL Pipe Collar',
+    testReportNo: 'FRT 220511',
+    testStandard: TEST_STANDARDS.AS_1530_4,
+    testedFrl: '-/120/120',
+    substratesSupported: [SUBSTRATES.CONCRETE_SLAB, SUBSTRATES.CONCRETE_WALL, SUBSTRATES.PLASTERBOARD_WALL],
+    servicesSupported: [SERVICE_TYPES.PVC_PIPE, SERVICE_TYPES.CAST_IRON],
+    openingSizeRangeMm: [40, 250],
+    notes: 'Steel-shell intumescent collar.',
+  },
+  {
+    id: 'sys-promat-promaseal-batt',
+    manufacturer: MANUFACTURERS.PROMAT,
+    systemName: 'PROMASEAL Coated Batt',
+    testReportNo: 'FRT 219844',
+    testStandard: TEST_STANDARDS.AS_1530_4,
+    testedFrl: '-/180/180',
+    substratesSupported: [SUBSTRATES.CONCRETE_SLAB, SUBSTRATES.CONCRETE_WALL, SUBSTRATES.SHAFT_WALL],
+    servicesSupported: [SERVICE_TYPES.CABLE_TRAY, SERVICE_TYPES.CABLE_BUNDLE, SERVICE_TYPES.CONDUIT, SERVICE_TYPES.HVAC_DUCT],
+    openingSizeRangeMm: [150, 2000],
+    notes: 'Coated mineral-wool batt for large mixed penetrations.',
+  },
+  {
+    id: 'sys-trafalgar-firecollar',
+    manufacturer: MANUFACTURERS.TRAFALGAR,
+    systemName: 'FyreCollar',
+    testReportNo: 'TFR 1102',
+    testStandard: TEST_STANDARDS.AS_1530_4,
+    testedFrl: '-/120/120',
+    substratesSupported: [SUBSTRATES.CONCRETE_SLAB, SUBSTRATES.PLASTERBOARD_WALL],
+    servicesSupported: [SERVICE_TYPES.PVC_PIPE, SERVICE_TYPES.CAST_IRON],
+    openingSizeRangeMm: [40, 160],
+    notes: 'Locally manufactured pipe collar; common AU mid-market.',
+  },
+  {
+    id: 'sys-trafalgar-firesleeve',
+    manufacturer: MANUFACTURERS.TRAFALGAR,
+    systemName: 'FyreSleeve',
+    testReportNo: 'TFR 1218',
+    testStandard: TEST_STANDARDS.AS_1530_4,
+    testedFrl: '-/180/180',
+    substratesSupported: [SUBSTRATES.CONCRETE_SLAB, SUBSTRATES.CONCRETE_WALL],
+    servicesSupported: [SERVICE_TYPES.SINGLE_CABLE, SERVICE_TYPES.CONDUIT],
+    openingSizeRangeMm: [10, 80],
+    notes: 'Cast-in cable sleeve.',
+  },
+  {
+    id: 'sys-boss-firemastic',
+    manufacturer: MANUFACTURERS.BOSS,
+    systemName: 'FireMastic Sealant',
+    testReportNo: 'BFR 0921',
+    testStandard: TEST_STANDARDS.AS_1530_4,
+    testedFrl: '-/120/120',
+    substratesSupported: [SUBSTRATES.CONCRETE_SLAB, SUBSTRATES.PLASTERBOARD_WALL, SUBSTRATES.SHAFT_WALL],
+    servicesSupported: [SERVICE_TYPES.COPPER_PIPE, SERVICE_TYPES.STEEL_PIPE, SERVICE_TYPES.SINGLE_CABLE, SERVICE_TYPES.EMPTY],
+    openingSizeRangeMm: [5, 150],
+    notes: 'Acrylic intumescent sealant.',
+  },
+];

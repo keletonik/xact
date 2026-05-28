@@ -3,25 +3,21 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, LayoutDashboard, Users, FolderOpen, Ruler, Calculator, FileText,
-  BookOpen, Building2, BarChart3, Shield, Settings, ArrowRight, Command,
+  Search, LayoutDashboard, FolderOpen, Pencil, Library, Package,
+  Building2, Shield, Settings, ArrowRight, Command, User,
 } from 'lucide-react';
 
 const COMMANDS = [
-  { id: 'dashboard', label: 'Go to Dashboard', icon: LayoutDashboard, path: '/', section: 'Navigation' },
-  { id: 'opportunities', label: 'Go to Opportunities', icon: Users, path: '/opportunities', section: 'Navigation' },
-  { id: 'projects', label: 'Go to Projects', icon: FolderOpen, path: '/projects', section: 'Navigation' },
-  { id: 'takeoff', label: 'Go to Takeoff', icon: Ruler, path: '/takeoff', section: 'Navigation' },
-  { id: 'estimates', label: 'Go to Estimates', icon: Calculator, path: '/estimates', section: 'Navigation' },
-  { id: 'proposals', label: 'Go to Proposals', icon: FileText, path: '/proposals', section: 'Navigation' },
-  { id: 'pricebook', label: 'Go to Price Book', icon: BookOpen, path: '/price-book', section: 'Navigation' },
-  { id: 'vendors', label: 'Go to Vendors', icon: Building2, path: '/vendors', section: 'Navigation' },
-  { id: 'reports', label: 'Go to Reports', icon: BarChart3, path: '/reports', section: 'Navigation' },
-  { id: 'admin', label: 'Go to Admin', icon: Shield, path: '/admin', section: 'Navigation' },
-  { id: 'settings', label: 'Go to Settings', icon: Settings, path: '/settings', section: 'Navigation' },
-  { id: 'new-project', label: 'Create New Project', icon: FolderOpen, path: '/projects?action=new', section: 'Actions' },
-  { id: 'new-estimate', label: 'Create New Estimate', icon: Calculator, path: '/estimates?action=new', section: 'Actions' },
-  { id: 'new-proposal', label: 'Create New Proposal', icon: FileText, path: '/proposals?action=new', section: 'Actions' },
+  { id: 'dashboard',      label: 'Go to Dashboard',       icon: LayoutDashboard, path: '/',                section: 'Navigation' },
+  { id: 'projects',       label: 'Go to Projects',        icon: FolderOpen,      path: '/projects',        section: 'Navigation' },
+  { id: 'markup',         label: 'Go to Markup',          icon: Pencil,          path: '/markup',          section: 'Navigation' },
+  { id: 'system-library', label: 'Go to System library',  icon: Library,         path: '/system-library',  section: 'Navigation' },
+  { id: 'catalog',        label: 'Go to Symbol catalog',  icon: Package,         path: '/catalog',         section: 'Navigation' },
+  { id: 'vendors',        label: 'Go to Vendors',         icon: Building2,       path: '/vendors',         section: 'Navigation' },
+  { id: 'audit',          label: 'Go to Audit log',       icon: Shield,          path: '/admin',           section: 'Navigation' },
+  { id: 'settings',       label: 'Go to Settings',        icon: Settings,        path: '/settings',        section: 'Navigation' },
+  { id: 'profile',        label: 'Go to Profile',         icon: User,            path: '/profile',         section: 'Navigation' },
+  { id: 'new-project',    label: 'Create new project',    icon: FolderOpen,      path: '/projects',        section: 'Actions' },
 ];
 
 export default function CommandPalette() {

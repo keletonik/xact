@@ -1,129 +1,79 @@
 import { create } from 'zustand';
 import { v4 as uuid } from 'uuid';
-import { PROJECT_STATUSES } from '../utils/constants';
+import db from '../services/db';
 import useAuditStore from './useAuditStore';
-
-/**
- * Pure derivation. Exported so callers can memoise it locally via useMemo
- * (rather than calling a store getter from inside a Zustand selector, which
- * returns a fresh object every read and causes React 19 to log
- * "The result of getSnapshot should be cached" and re-render in a loop).
- */
-export function computePipelineStats(projects) {
-  return {
-    leads: projects.filter((p) => p.status === PROJECT_STATUSES.LEAD).length,
-    opportunities: projects.filter((p) => p.status === PROJECT_STATUSES.OPPORTUNITY).length,
-    quoting: projects.filter((p) => p.status === PROJECT_STATUSES.QUOTING).length,
-    quoted: projects.filter((p) => p.status === PROJECT_STATUSES.QUOTED).length,
-    won: projects.filter((p) => p.status === PROJECT_STATUSES.WON).length,
-    lost: projects.filter((p) => p.status === PROJECT_STATUSES.LOST).length,
-    totalValue: projects.reduce((sum, p) => sum + (p.estimatedValue || 0), 0),
-    pipelineValue: projects
-      .filter((p) => [PROJECT_STATUSES.QUOTING, PROJECT_STATUSES.QUOTED].includes(p.status))
-      .reduce((sum, p) => sum + (p.estimatedValue || 0), 0),
-  };
-}
+import { PROJECT_STATUSES, PROJECT_TYPES, AUDIT_ACTIONS } from '../utils/constants';
 
 const useProjectStore = create((set, get) => ({
   projects: [],
-  contacts: [],
-  selectedProjectId: null,
+  selectedId: null,
+  ready: false,
 
-  createProject(data) {
+  async hydrate() {
+    const projects = await db.projects.toArray();
+    projects.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+    set({ projects, ready: true });
+  },
+
+  selectProject(id) { set({ selectedId: id }); },
+
+  async createProject(input) {
+    const now = new Date().toISOString();
     const project = {
-      id: uuid(),
-      ref: `PRJ-${String(get().projects.length + 1).padStart(4, '0')}`,
-      name: data.name,
-      client: data.client || '',
-      clientContact: data.clientContact || '',
-      status: data.status || PROJECT_STATUSES.LEAD,
-      scopes: data.scopes || [],
-      region: data.region || 'nsw',
-      estimatedValue: data.estimatedValue || 0,
-      dueDate: data.dueDate || null,
-      notes: data.notes || '',
-      tags: data.tags || [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      id: input.id || uuid(),
+      companyId: input.companyId || 'default',
+      code: input.code || autoCode(get().projects),
+      name: input.name,
+      client: input.client || '',
+      siteAddress: input.siteAddress || '',
+      region: input.region || 'nsw',
+      projectType: input.projectType || PROJECT_TYPES.NEW_INSTALL,
+      status: input.status || PROJECT_STATUSES.ACTIVE,
+      notes: input.notes || '',
+      createdAt: now,
+      updatedAt: now,
     };
-
-    set((state) => ({
-      projects: [...state.projects, project],
-    }));
-
-    useAuditStore.getState().log('project_created', {
-      entityType: 'project',
-      entityId: project.id,
-      description: `Created project "${project.name}"`,
+    await db.projects.put(project);
+    set((s) => ({ projects: [project, ...s.projects] }));
+    useAuditStore.getState().log(AUDIT_ACTIONS.PROJECT_CREATED, {
+      entityType: 'project', entityId: project.id,
+      description: `Created project ${project.code} — ${project.name}`,
     });
-
     return project;
   },
 
-  updateProject(id, updates) {
-    const prev = get().projects.find((p) => p.id === id);
-    set((state) => ({
-      projects: state.projects.map((p) =>
-        p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p
-      ),
-    }));
-
-    useAuditStore.getState().log('project_updated', {
-      entityType: 'project',
-      entityId: id,
-      projectId: id,
-      description: `Updated project "${prev?.name}"`,
-      previousValue: prev,
-      newValue: { ...prev, ...updates },
+  async updateProject(id, patch) {
+    const current = await db.projects.get(id);
+    if (!current) return null;
+    const next = { ...current, ...patch, updatedAt: new Date().toISOString() };
+    await db.projects.put(next);
+    set((s) => ({ projects: s.projects.map((p) => (p.id === id ? next : p)) }));
+    useAuditStore.getState().log(AUDIT_ACTIONS.PROJECT_UPDATED, {
+      entityType: 'project', entityId: id,
+      description: `Updated project ${next.code}`,
     });
+    return next;
   },
 
-  deleteProject(id) {
-    set((state) => ({
-      projects: state.projects.filter((p) => p.id !== id),
-      selectedProjectId: state.selectedProjectId === id ? null : state.selectedProjectId,
+  async deleteProject(id) {
+    await db.projects.delete(id);
+    set((s) => ({
+      projects: s.projects.filter((p) => p.id !== id),
+      selectedId: s.selectedId === id ? null : s.selectedId,
     }));
-  },
-
-  selectProject(id) {
-    set({ selectedProjectId: id });
-  },
-
-  getProject(id) {
-    return get().projects.find((p) => p.id === id);
-  },
-
-  getProjectsByStatus(status) {
-    return get().projects.filter((p) => p.status === status);
-  },
-
-  addContact(data) {
-    const contact = {
-      id: uuid(),
-      name: data.name,
-      email: data.email || '',
-      phone: data.phone || '',
-      company: data.company || '',
-      role: data.role || '',
-      projectIds: data.projectIds || [],
-      createdAt: new Date().toISOString(),
-    };
-    set((state) => ({
-      contacts: [...state.contacts, contact],
-    }));
-    return contact;
-  },
-
-  /**
-   * Imperative escape hatch for non-React callers. React components MUST NOT
-   * call this from inside a `useStore((s) => s.getPipelineStats())` selector —
-   * the fresh object on every render triggers React 19's getSnapshot loop.
-   * Components should `select projects` and call `computePipelineStats(projects)`
-   * inside a `useMemo`.
-   */
-  getPipelineStats() {
-    return computePipelineStats(get().projects);
   },
 }));
+
+function autoCode(existing) {
+  const year = new Date().getFullYear();
+  const prefix = `PF${year}-`;
+  const used = existing
+    .map((p) => p.code)
+    .filter((c) => c?.startsWith(prefix))
+    .map((c) => Number.parseInt(c.slice(prefix.length), 10))
+    .filter((n) => !Number.isNaN(n));
+  const next = (used.length ? Math.max(...used) : 0) + 1;
+  return `${prefix}${String(next).padStart(4, '0')}`;
+}
 
 export default useProjectStore;
