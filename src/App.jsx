@@ -11,8 +11,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 
-const Projects      = lazy(() => import('./pages/Projects'));
-const MarkupPage    = lazy(() => import('./pages/Markup'));
+const Projects         = lazy(() => import('./pages/Projects'));
+const ProjectWorkspace = lazy(() => import('./pages/ProjectWorkspace'));
+const MarkupPage       = lazy(() => import('./pages/Markup'));
 const SystemLibrary = lazy(() => import('./pages/SystemLibrary'));
 const Catalog       = lazy(() => import('./pages/Catalog'));
 const Vendors       = lazy(() => import('./pages/Vendors'));
@@ -56,7 +57,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/projects" element={<Projects />} />
-              <Route path="/projects/:id" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectWorkspace />} />
               <Route path="/markup" element={<MarkupPage />} />
               <Route path="/system-library" element={<SystemLibrary />} />
               <Route path="/catalog" element={<Catalog />} />

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, FolderOpen } from 'lucide-react';
 import Card from '../components/common/Card';
@@ -19,12 +19,9 @@ import { formatRelativeTime } from '../utils/formatters';
 
 export default function Projects() {
   const navigate = useNavigate();
-  const { id } = useParams();
   const projects = useProjectStore((s) => s.projects);
   const hydrate = useProjectStore((s) => s.hydrate);
   const createProject = useProjectStore((s) => s.createProject);
-  const updateProject = useProjectStore((s) => s.updateProject);
-  const deleteProject = useProjectStore((s) => s.deleteProject);
 
   useEffect(() => { hydrate(); }, [hydrate]);
 
@@ -32,8 +29,6 @@ export default function Projects() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [showCreate, setShowCreate] = useState(false);
-
-  const selected = id ? projects.find((p) => p.id === id) : null;
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -45,17 +40,6 @@ export default function Projects() {
         return [p.name, p.code, p.client, p.siteAddress].some((v) => (v || '').toLowerCase().includes(q));
       });
   }, [projects, search, statusFilter, typeFilter]);
-
-  if (selected) {
-    return (
-      <ProjectWorkspace
-        project={selected}
-        onBack={() => navigate('/projects')}
-        updateProject={updateProject}
-        deleteProject={deleteProject}
-      />
-    );
-  }
 
   return (
     <motion.div
@@ -192,62 +176,6 @@ function CreateProjectModal({ onClose, onCreate }) {
         </div>
       </form>
     </Modal>
-  );
-}
-
-function ProjectWorkspace({ project, onBack, updateProject, deleteProject }) {
-  const navigate = useNavigate();
-  return (
-    <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <Button variant="ghost" size="sm" onClick={onBack}>← All projects</Button>
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-          <div>
-            <h2 style={{ margin: 0 }}>{project.name}</h2>
-            <div style={{ fontSize: 12, color: 'var(--geist-fg-4)', marginTop: 2 }}>
-              <code>{project.code}</code> · {PROJECT_TYPE_LABELS[project.projectType]} · {REGION_LABELS[project.region]}
-            </div>
-          </div>
-          <StatusBadge status={project.status} />
-        </div>
-        {project.client && <p style={{ marginTop: 12, fontSize: 13 }}>Client: {project.client}</p>}
-        {project.siteAddress && <p style={{ marginTop: 4, fontSize: 13 }}>Site: {project.siteAddress}</p>}
-      </Card>
-
-      <Card>
-        <strong>Project workspace</strong>
-        <p style={{ fontSize: 13, color: 'var(--geist-fg-3)', marginTop: 8 }}>
-          Plans, asset register, photos, inspections, defects, quote, work orders and cert packs land here in phases 2 to 7. For now the global Markup tool at <code>/markup</code> handles drawings and annotation; the asset-pin overlay arrives in phase 3.
-        </p>
-        <div style={{ marginTop: 8 }}>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/markup')}>Open Markup</Button>
-        </div>
-      </Card>
-
-      <Card>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button
-            variant="ghost"
-            onClick={async () => {
-              const next = project.status === PROJECT_STATUSES.ARCHIVED ? PROJECT_STATUSES.ACTIVE : PROJECT_STATUSES.ARCHIVED;
-              await updateProject(project.id, { status: next });
-            }}
-          >
-            {project.status === PROJECT_STATUSES.ARCHIVED ? 'Restore' : 'Archive'}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={async () => {
-              if (!window.confirm(`Delete project ${project.code}? This removes its assets too.`)) return;
-              await deleteProject(project.id);
-              onBack();
-            }}
-          >
-            Delete project
-          </Button>
-        </div>
-      </Card>
-    </div>
   );
 }
 
