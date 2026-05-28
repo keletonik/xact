@@ -1,94 +1,72 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  FolderOpen,
-  Pencil,
-  Library,
-  Package,
-  Building2,
-  Shield,
-  Settings,
-  ChevronLeft,
-  User,
+  LayoutDashboard, FolderOpen, Pencil, Library, Package, Building2,
+  Shield, Settings, ChevronLeft, ChevronRight, User,
 } from 'lucide-react';
 
 const operations = [
-  { path: '/',                label: 'Dashboard',      icon: LayoutDashboard },
-  { path: '/projects',        label: 'Projects',       icon: FolderOpen },
-  { path: '/markup',          label: 'Markup',         icon: Pencil },
+  { path: '/',                label: 'Dashboard',      icon: LayoutDashboard, code: '01' },
+  { path: '/projects',        label: 'Projects',       icon: FolderOpen,      code: '02' },
+  { path: '/markup',          label: 'Markup',         icon: Pencil,          code: '03' },
 ];
 
 const library = [
-  { path: '/system-library',  label: 'System library', icon: Library },
-  { path: '/catalog',         label: 'Symbol catalog', icon: Package },
-  { path: '/vendors',         label: 'Vendors',        icon: Building2 },
+  { path: '/system-library',  label: 'Systems',        icon: Library,         code: '04' },
+  { path: '/catalog',         label: 'Symbols',        icon: Package,         code: '05' },
+  { path: '/vendors',         label: 'Vendors',        icon: Building2,       code: '06' },
 ];
 
 const system = [
-  { path: '/admin',           label: 'Audit log',      icon: Shield },
-  { path: '/settings',        label: 'Settings',       icon: Settings },
-  { path: '/profile',         label: 'Profile',        icon: User },
+  { path: '/admin',           label: 'Audit',          icon: Shield,          code: '07' },
+  { path: '/settings',        label: 'Settings',       icon: Settings,        code: '08' },
+  { path: '/profile',         label: 'Profile',        icon: User,            code: '09' },
 ];
 
 export default function Sidebar({ collapsed, onToggle }) {
   const location = useLocation();
-
   const isActive = (path) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
   return (
-    <aside className={`xact-sidebar ${collapsed ? 'collapsed' : ''}`} aria-label="Primary navigation">
-      <div className="xact-side-hd">
-        <div className="xact-logo">
-          <span className="xact-logo-mark" aria-hidden="true">X</span>
-          {!collapsed && (
-            <span className="xact-logo-txt">
-              <span className="xact-logo-name">XACT</span>
-              <span className="xact-logo-tag">Passive fire</span>
-            </span>
-          )}
-        </div>
-        {!collapsed && (
-          <button
-            type="button"
-            className="xact-collapse"
-            onClick={onToggle}
-            aria-label="Collapse sidebar"
-            title="Collapse sidebar (Cmd/Ctrl+B)"
-          >
-            <ChevronLeft size={16} />
-          </button>
-        )}
-      </div>
-
+    <aside className={`xc-rail xact-sidebar ${collapsed ? 'is-collapsed collapsed' : ''}`} aria-label="Primary navigation">
       <nav className="xact-nav" aria-label="Main">
-        <div className="xact-nav-section">{collapsed ? '' : 'Operations'}</div>
+        {!collapsed && <div className="xact-nav-section">Operations</div>}
         {operations.map((item) => (
           <SideLink key={item.path} item={item} active={isActive(item.path)} collapsed={collapsed} />
         ))}
 
-        <div className="xact-nav-section">{collapsed ? '' : 'Library'}</div>
+        {!collapsed && <div className="xact-nav-section">Library</div>}
         {library.map((item) => (
+          <SideLink key={item.path} item={item} active={isActive(item.path)} collapsed={collapsed} />
+        ))}
+
+        {!collapsed && <div className="xact-nav-section">System</div>}
+        {system.map((item) => (
           <SideLink key={item.path} item={item} active={isActive(item.path)} collapsed={collapsed} />
         ))}
       </nav>
 
-      <div className="xact-side-ft">
-        {system.map((item) => (
-          <SideLink key={item.path} item={item} active={isActive(item.path)} collapsed={collapsed} />
-        ))}
-        {collapsed && (
-          <button
-            type="button"
-            className="xact-collapse"
-            onClick={onToggle}
-            aria-label="Expand sidebar"
-            title="Expand sidebar (Cmd/Ctrl+B)"
-            style={{ alignSelf: 'center', marginTop: 6 }}
-          >
-            <ChevronLeft size={16} />
-          </button>
+      <div className="xc-rail-foot" style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between' }}>
+        {!collapsed && (
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 9,
+            letterSpacing: 'var(--tracking-label)',
+            textTransform: 'uppercase',
+            color: 'var(--ink-3)',
+          }}>
+            v2 · drafted
+          </span>
         )}
+        <button
+          type="button"
+          className="xact-collapse"
+          onClick={onToggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title="Toggle sidebar (Cmd/Ctrl+B)"
+        >
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
       </div>
     </aside>
   );
@@ -101,9 +79,27 @@ function SideLink({ item, active, collapsed }) {
       to={item.path}
       className={`xact-nav-item ${active ? 'active' : ''}`}
       title={collapsed ? item.label : undefined}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'space-between',
+        padding: collapsed ? '10px 0' : '8px 16px',
+      }}
     >
-      <span className="xact-nav-ic"><Icon size={16} /></span>
-      <span className="xact-nav-lbl">{item.label}</span>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span className="xact-nav-ic"><Icon size={16} strokeWidth={2.25} /></span>
+        {!collapsed && <span className="xact-nav-lbl">{item.label}</span>}
+      </span>
+      {!collapsed && (
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 9,
+          letterSpacing: '0.08em',
+          color: 'var(--ink-4)',
+        }}>
+          {item.code}
+        </span>
+      )}
     </NavLink>
   );
 }

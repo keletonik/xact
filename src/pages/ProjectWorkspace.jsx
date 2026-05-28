@@ -7,8 +7,11 @@ import {
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import StatusBadge from '../components/common/StatusBadge';
-import Tabs from '../components/common/Tabs';
 import EmptyState from '../components/common/EmptyState';
+import PaperCard from '../components/draft/PaperCard';
+import InkStamp from '../components/draft/InkStamp';
+import CalloutBalloon from '../components/draft/CalloutBalloon';
+import RevisionStamp from '../components/draft/RevisionStamp';
 import AssetTable from '../components/asset/AssetTable';
 import AssetEditor from '../components/asset/AssetEditor';
 import PhotoCapture from '../components/asset/PhotoCapture';
@@ -143,29 +146,50 @@ export default function ProjectWorkspace() {
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18 }}
-      style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}
+      className="xc-stagger"
+      style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}
     >
-      <Button variant="ghost" size="sm" onClick={() => navigate('/projects')}>← All projects</Button>
+      <button
+        type="button"
+        onClick={() => navigate('/projects')}
+        style={backCrumb}
+      >
+        ← project register
+      </button>
 
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-          <div>
-            <h2 style={{ margin: 0 }}>{project.name}</h2>
-            <div style={{ fontSize: 12, color: 'var(--geist-fg-4)', marginTop: 2 }}>
-              <code>{project.code}</code> · {PROJECT_TYPE_LABELS[project.projectType]} · {REGION_LABELS[project.region]}
-            </div>
+      <section style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr auto',
+        alignItems: 'flex-end',
+        gap: 22,
+        borderBottom: '1.5px solid var(--rule-ink)',
+        paddingBottom: 14,
+      }}>
+        <div>
+          <div className="xc-stamp" style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <CalloutBalloon size="md">{project.code}</CalloutBalloon>
+            <span>{PROJECT_TYPE_LABELS[project.projectType]} · {REGION_LABELS[project.region]}</span>
           </div>
-          <StatusBadge status={project.status} />
+          <h1 className="xc-display-italic" style={{ margin: 0, fontSize: 52, lineHeight: 1, color: 'var(--ink)' }}>
+            {project.name}
+          </h1>
+          {(project.client || project.siteAddress) && (
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 10 }}>
+              {project.client ? `client: ${project.client}` : ''}
+              {project.client && project.siteAddress ? ' · ' : ''}
+              {project.siteAddress ? `site: ${project.siteAddress}` : ''}
+            </p>
+          )}
         </div>
-        {(project.client || project.siteAddress) && (
-          <div style={{ marginTop: 12, fontSize: 13, color: 'var(--geist-fg-2)' }}>
-            {project.client && <div>Client: {project.client}</div>}
-            {project.siteAddress && <div>Site: {project.siteAddress}</div>}
-          </div>
-        )}
-      </Card>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <InkStamp tone={projectStampTone(project.status)} size="md" rotate={-3}>
+            {PROJECT_STATUS_LABELS[project.status]}
+          </InkStamp>
+          <RevisionStamp letter="B" />
+        </div>
+      </section>
 
-      <Tabs tabs={tabs} activeTab={tab} onChange={setTab} />
+      <DraftingTabs tabs={tabs} active={tab} onChange={setTab} />
 
       {tab === TAB_OVERVIEW && <OverviewTab project={project} assets={projectAssets} onChangeStatus={updateProject} onDelete={async () => {
         if (!window.confirm(`Delete project ${project.code}? This removes its assets too.`)) return;
@@ -339,63 +363,196 @@ function OverviewTab({ project, assets, onChangeStatus, onDelete }) {
   }, [assets]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
-        <Tile label="Total assets" value={stats.total} />
-        <Tile label="Planned" value={stats.planned} />
-        <Tile label="Installed" value={stats.installed} />
-        <Tile label="Certified" value={stats.certified} />
-        <Tile label="Non-conform" value={stats.ncr} accent={stats.ncr > 0 ? 'warning' : 'default'} />
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <PaperCard title="asset roll-up" meta={`${stats.total} total`}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          gridAutoRows: '88px',
+          borderTop: '1px solid var(--rule)',
+          borderLeft: '1px solid var(--rule)',
+        }}>
+          <OverviewCell label="Total" value={stats.total} accent="ink" />
+          <OverviewCell label="Planned" value={stats.planned} accent="planned" />
+          <OverviewCell label="Installed" value={stats.installed} accent="installed" />
+          <OverviewCell label="Certified" value={stats.certified} accent="certified" />
+          <OverviewCell label="Non-conform" value={stats.ncr} accent={stats.ncr > 0 ? 'nonconformance' : 'mute'} />
+        </div>
+      </PaperCard>
 
-      <Card>
-        <strong>Lifecycle controls</strong>
-        <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-          <Button
-            variant="ghost"
+      <PaperCard title="lifecycle" meta={`status: ${PROJECT_STATUS_LABELS[project.status]}`}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            type="button"
             onClick={async () => {
               const next = project.status === PROJECT_STATUSES.ARCHIVED ? PROJECT_STATUSES.ACTIVE : PROJECT_STATUSES.ARCHIVED;
               await onChangeStatus(project.id, { status: next });
             }}
+            style={lifecycleAction}
           >
-            {project.status === PROJECT_STATUSES.ARCHIVED ? 'Restore' : 'Archive'}
-          </Button>
-          <Button
-            variant="ghost"
+            {project.status === PROJECT_STATUSES.ARCHIVED ? 'restore' : 'archive'}
+          </button>
+          <button
+            type="button"
             onClick={async () => {
               const next = project.status === PROJECT_STATUSES.COMPLETED ? PROJECT_STATUSES.ACTIVE : PROJECT_STATUSES.COMPLETED;
               await onChangeStatus(project.id, { status: next });
             }}
+            style={lifecycleAction}
           >
-            Mark {project.status === PROJECT_STATUSES.COMPLETED ? 'active' : 'completed'}
-          </Button>
-          <Button variant="danger" onClick={onDelete}>
-            Delete project
-          </Button>
+            mark {project.status === PROJECT_STATUSES.COMPLETED ? 'active' : 'completed'}
+          </button>
+          <button type="button" onClick={onDelete} style={{ ...lifecycleAction, color: 'var(--accent)', borderColor: 'var(--accent)' }}>
+            delete project
+          </button>
         </div>
-      </Card>
+      </PaperCard>
 
       {project.notes && (
-        <Card>
-          <strong>Notes</strong>
-          <p style={{ fontSize: 13, color: 'var(--geist-fg-2)', marginTop: 6, whiteSpace: 'pre-wrap' }}>
+        <PaperCard title="notes">
+          <p style={{ fontSize: 14, color: 'var(--ink)', margin: 0, whiteSpace: 'pre-wrap' }}>
             {project.notes}
           </p>
-        </Card>
+        </PaperCard>
       )}
     </div>
   );
 }
 
-function Tile({ label, value, accent }) {
-  const fg = accent === 'warning' ? 'var(--geist-warning, #b45309)' : 'var(--geist-fg)';
+function OverviewCell({ label, value, accent }) {
+  const fg = {
+    ink: 'var(--ink)',
+    planned: 'var(--ink-3)',
+    installed: 'var(--status-installed-ink)',
+    certified: 'var(--status-certified-ink)',
+    nonconformance: 'var(--accent)',
+    mute: 'var(--ink-4)',
+  }[accent] || 'var(--ink)';
   return (
-    <div style={{ padding: 12, border: '1px solid var(--geist-border)', borderRadius: 6, background: 'var(--geist-bg)' }}>
-      <div style={{ fontSize: 22, fontWeight: 600, color: fg }}>{value}</div>
-      <div style={{ fontSize: 11, color: 'var(--geist-fg-4)', marginTop: 2 }}>{label}</div>
+    <div style={{
+      borderRight: '1px solid var(--rule)',
+      borderBottom: '1px solid var(--rule)',
+      padding: '14px 16px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      minWidth: 0,
+    }}>
+      <span style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: 9,
+        letterSpacing: 'var(--tracking-label)',
+        textTransform: 'uppercase',
+        color: 'var(--ink-3)',
+      }}>{label}</span>
+      <span style={{
+        fontFamily: 'var(--font-display)',
+        fontStyle: 'italic',
+        fontSize: 34,
+        lineHeight: 1,
+        color: fg,
+      }}>
+        {value}
+      </span>
     </div>
   );
 }
+
+function DraftingTabs({ tabs, active, onChange }) {
+  return (
+    <div style={{
+      display: 'flex',
+      gap: 0,
+      borderBottom: '1.5px solid var(--rule-ink)',
+      flexWrap: 'wrap',
+    }}>
+      {tabs.map((t) => {
+        const isActive = active === t.id;
+        const Icon = t.icon;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => onChange(t.id)}
+            style={{
+              background: isActive ? 'var(--ink)' : 'transparent',
+              color: isActive ? 'var(--paper-1)' : 'var(--ink-2)',
+              border: 'none',
+              borderRight: '1px solid var(--rule)',
+              padding: '10px 16px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              letterSpacing: 'var(--tracking-label)',
+              textTransform: 'uppercase',
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              position: 'relative',
+            }}
+            aria-pressed={isActive}
+          >
+            {Icon && <Icon size={12} strokeWidth={2.25} />}
+            <span>{t.label}</span>
+            {t.count != null && (
+              <span style={{
+                marginLeft: 4,
+                fontSize: 10,
+                color: isActive ? 'var(--paper-3)' : 'var(--ink-4)',
+                fontFamily: 'var(--font-mono)',
+              }}>
+                {String(t.count).padStart(2, '0')}
+              </span>
+            )}
+            {isActive && (
+              <span aria-hidden="true" style={{
+                position: 'absolute',
+                left: 0, right: 0, bottom: -1.5,
+                height: 3,
+                background: 'var(--accent)',
+              }} />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function projectStampTone(status) {
+  switch (status) {
+    case PROJECT_STATUSES.ACTIVE:    return 'installed';
+    case PROJECT_STATUSES.COMPLETED: return 'certified';
+    case PROJECT_STATUSES.ON_HOLD:   return 'rectification';
+    case PROJECT_STATUSES.ARCHIVED:  return 'planned';
+    default:                         return 'draft';
+  }
+}
+
+const backCrumb = {
+  background: 'transparent',
+  border: 'none',
+  color: 'var(--ink-3)',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  padding: 0,
+  cursor: 'pointer',
+  textAlign: 'left',
+};
+const lifecycleAction = {
+  background: 'transparent',
+  border: '1px solid var(--rule-strong)',
+  padding: '8px 14px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-2)',
+  cursor: 'pointer',
+};
 
 function StubTab({ label, detail }) {
   return (

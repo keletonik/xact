@@ -1,65 +1,110 @@
 /* ============================================================
-   XACT design tokens — Event Stream (direction 03), Audit Light
+   XACT design tokens, "Drafting Sheet" identity
    ------------------------------------------------------------
-   Loaded once at app boot via src/index.css. Every component
-   that needs a colour / spacing / radius value reads from here
-   so the look is unified and theming is a one-file change.
+   Aesthetic: a passive-fire app drafted like an AS 1100
+   construction sheet. Cream drafting paper with a hairline
+   blueprint grid undertone. Title-block chrome. AS-1742
+   safety red as the single sharp accent. Newsreader Italic for
+   display moments, Geist for body, Geist Mono for technical
+   readouts.
 
-   Brand intent (per MASTER_PROMPT.md):
-     - Off-white #F6F8FA canvas, true-white #FFFFFF surfaces
-     - Burgundy accent #8B0E2A reserved for primary action
-     - Squared corners (brutalist-leaning), no rounded radii
-     - Inter Tight body, JetBrains Mono numerics, Archivo display
+   Variable names retain the legacy --geist-* prefix because
+   every component in src/ reads from it. Values are remapped
+   onto the drafting-sheet palette so a theme change is
+   one-file global.
    ============================================================ */
 
 :root {
-  /* ---------- Greyscale (foreground & background) ---------- */
-  --geist-fg:           #0B0F14;
-  --geist-fg-1:         #14181F;
-  --geist-fg-2:         #3A4252;
-  --geist-fg-3:         #6B7484;
-  --geist-fg-4:         #8E97A5;
-  --geist-fg-5:         #A8B0BC;
+  /* ---------- Paper + ink (the drafting plane) ---------- */
+  --paper:              #F4EFE2;   /* drafting vellum, warm cream */
+  --paper-1:            #F8F3E6;   /* paper highlight */
+  --paper-2:            #ECE5D2;   /* paper sunk (alt rows, panels) */
+  --paper-3:            #E0D7BE;   /* heavy sunk (revision strip) */
 
-  --geist-bg:           #FFFFFF;   /* surface */
-  --geist-bg-1:         #F6F8FA;   /* canvas */
-  --geist-bg-2:         #F2F5F8;   /* sunk */
-  --geist-bg-3:         #E6EBF1;   /* alt sunk */
+  --ink:                #0E0E0F;   /* true ink, near-black */
+  --ink-1:              #1F1F22;   /* secondary ink */
+  --ink-2:              #43413B;   /* graphite */
+  --ink-3:              #6E695B;   /* pencil-grey */
+  --ink-4:              #8E8978;   /* hairline labels */
+  --ink-5:              #B5AF9C;   /* watermark */
 
-  --geist-border:       rgba(11, 15, 20, 0.08);
-  --geist-border-strong:rgba(11, 15, 20, 0.16);
-  --geist-border-soft:  rgba(11, 15, 20, 0.04);
+  --rule:               rgba(14, 14, 15, 0.10);   /* paper hairline */
+  --rule-strong:        rgba(14, 14, 15, 0.20);   /* sub-rule */
+  --rule-heavy:         rgba(14, 14, 15, 0.85);   /* title-block heavy */
+  --rule-ink:           #0E0E0F;                  /* full ink */
 
-  /* ---------- Accent (XACT burgundy) ---------- */
-  --geist-accent:       #8B0E2A;
-  --geist-accent-fg:    #FFFFFF;
-  --geist-accent-soft:  rgba(139, 14, 42, 0.10);
-  --geist-accent-hover: #6B0820;
+  /* Blueprint grid underlay, set on the body via pseudo-element. */
+  --grid-minor:         rgba(14, 14, 15, 0.045);  /* 8mm grid */
+  --grid-major:         rgba(14, 14, 15, 0.075);  /* 40mm major */
+  --grid-minor-step:    8px;
+  --grid-major-step:    40px;
 
-  /* Event-stream companions, used for status / heat / chart fills */
-  --xact-accent-2:      #6D8CFF;
-  --xact-accent-3:      #16A34A;
-  --xact-accent-4:      #F5A623;
+  /* ---------- Accent (AS 1742 fire safety red) ---------- */
+  --accent:             #C8102E;
+  --accent-fg:          #FCFAF3;
+  --accent-soft:        rgba(200, 16, 46, 0.10);
+  --accent-glow:        rgba(200, 16, 46, 0.22);
+  --accent-hover:       #A50E26;
 
-  /* ---------- Semantic ---------- */
-  --geist-success:      #16A34A;
-  --geist-success-soft: rgba(22, 163, 74, 0.10);
-  --geist-warning:      #F5A623;
-  --geist-warning-soft: rgba(245, 166, 35, 0.12);
-  --geist-error:        #C81E2A;
-  --geist-error-soft:   rgba(200, 30, 42, 0.08);
-  --geist-info:         var(--xact-accent-2);
-  --geist-info-soft:    rgba(109, 140, 255, 0.10);
+  /* ---------- Status palette (calibrated to drafting-sheet inks) ---------- */
+  --status-planned-ink: #6E695B;
+  --status-planned-bg:  rgba(14, 14, 15, 0.04);
+
+  --status-installed-ink: #1E4FB8;     /* drawing blueprint blue */
+  --status-installed-bg:  rgba(30, 79, 184, 0.08);
+
+  --status-certified-ink: #1B5E2A;     /* fern ink */
+  --status-certified-bg:  rgba(27, 94, 42, 0.08);
+
+  --status-rectification-ink: #B0660F; /* ochre */
+  --status-rectification-bg:  rgba(176, 102, 15, 0.10);
+
+  --status-nonconformance-ink: #C8102E;
+  --status-nonconformance-bg:  rgba(200, 16, 46, 0.10);
+
+  /* ---------- Legacy --geist-* shims, remapped onto paper+ink ---------- */
+  --geist-fg:           var(--ink);
+  --geist-fg-1:         var(--ink-1);
+  --geist-fg-2:         var(--ink-2);
+  --geist-fg-3:         var(--ink-3);
+  --geist-fg-4:         var(--ink-4);
+  --geist-fg-5:         var(--ink-5);
+
+  --geist-bg:           var(--paper-1);
+  --geist-bg-1:         var(--paper);
+  --geist-bg-2:         var(--paper-2);
+  --geist-bg-3:         var(--paper-3);
+
+  --geist-border:       var(--rule);
+  --geist-border-strong:var(--rule-strong);
+  --geist-border-soft:  rgba(14, 14, 15, 0.04);
+
+  --geist-accent:       var(--accent);
+  --geist-accent-fg:    var(--accent-fg);
+  --geist-accent-soft:  var(--accent-soft);
+  --geist-accent-hover: var(--accent-hover);
+
+  --geist-success:      var(--status-certified-ink);
+  --geist-success-soft: var(--status-certified-bg);
+  --geist-warning:      var(--status-rectification-ink);
+  --geist-warning-soft: var(--status-rectification-bg);
+  --geist-error:        var(--status-nonconformance-ink);
+  --geist-error-soft:   var(--status-nonconformance-bg);
+  --geist-info:         var(--status-installed-ink);
+  --geist-info-soft:    var(--status-installed-bg);
 
   /* ---------- Typography ---------- */
-  --geist-font-sans:    "Inter Tight", "Inter", ui-sans-serif, system-ui,
-                        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --geist-font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-  --geist-font-display: "Archivo", "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-display:       "Newsreader", "Lyon", Georgia, serif;
+  --font-sans:          "Geist", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:          "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+
+  --geist-font-sans:    var(--font-sans);
+  --geist-font-mono:    var(--font-mono);
+  --geist-font-display: var(--font-display);
 
   --geist-text-xs:      0.6875rem;  /* 11 */
   --geist-text-sm:      0.8125rem;  /* 13 */
-  --geist-text-md:      0.9375rem;  /* 15 — body */
+  --geist-text-md:      0.9375rem;  /* 15 */
   --geist-text-lg:      1.0625rem;  /* 17 */
   --geist-text-xl:      1.25rem;    /* 20 */
   --geist-text-2xl:     1.5rem;     /* 24 */
@@ -72,14 +117,15 @@
   --geist-weight-bold:    700;
 
   --geist-tracking-tight:   -0.005em;
-  --geist-tracking-tighter: -0.015em;
-  --geist-tracking-mono:     0.12em;   /* mono caps, per brand */
+  --geist-tracking-tighter: -0.018em;
+  --geist-tracking-mono:     0.16em;
+  --tracking-label:          0.20em;   /* drafting-stamp letter-spacing */
 
-  --geist-leading-tight:  1.2;
+  --geist-leading-tight:  1.18;
   --geist-leading-normal: 1.5;
   --geist-leading-relaxed:1.65;
 
-  /* ---------- Spacing (4-px scale) ---------- */
+  /* ---------- Spacing (mm-derived, 4-px scale) ---------- */
   --geist-space-1:  4px;
   --geist-space-2:  8px;
   --geist-space-3:  12px;
@@ -91,29 +137,25 @@
   --geist-space-9:  48px;
   --geist-space-10: 64px;
 
-  /* ---------- Radius (squared per brand) ---------- */
+  /* ---------- Radius (sheet corners are square, callouts soften only at 2px) ---------- */
   --geist-radius-sm: 0px;
-  --geist-radius:    2px;     /* near-square; just enough to soften hairlines */
+  --geist-radius:    0px;
   --geist-radius-md: 2px;
-  --geist-radius-lg: 3px;
-  --geist-radius-full: 999px; /* keep for pills / badges where needed */
+  --geist-radius-lg: 2px;
+  --geist-radius-full: 999px;
 
-  /* ---------- Shadows ---------- */
-  --geist-shadow-sm: 0 1px 0 rgba(11, 15, 20, 0.04);
-  --geist-shadow:    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-                     0 1px 0 rgba(11, 15, 20, 0.04),
-                     0 4px 12px rgba(11, 15, 20, 0.04);
-  --geist-shadow-md: 0 1px 0 rgba(255, 255, 255, 0.6) inset,
-                     0 8px 24px rgba(11, 15, 20, 0.06);
-  --geist-shadow-lg: 0 1px 0 rgba(255, 255, 255, 0.6) inset,
-                     0 16px 40px rgba(11, 15, 20, 0.10);
+  /* ---------- Shadows: paper has no float, only ink + hairline ---------- */
+  --geist-shadow-sm: 0 0 0 1px var(--rule);
+  --geist-shadow:    0 0 0 1px var(--rule);
+  --geist-shadow-md: 0 0 0 1px var(--rule-strong);
+  --geist-shadow-lg: 0 12px 32px rgba(14, 14, 15, 0.10);
 
   /* ---------- Motion ---------- */
-  --geist-easing:    cubic-bezier(0.2, 0.7, 0.2, 1);
-  --geist-easing-out:cubic-bezier(0.4, 0, 0.6, 1);
-  --geist-duration-fast:   120ms;
-  --geist-duration:        180ms;
-  --geist-duration-slow:   260ms;
+  --geist-easing:     cubic-bezier(0.22, 1, 0.36, 1);
+  --geist-easing-out: cubic-bezier(0.32, 0, 0.67, 0);
+  --geist-duration-fast: 140ms;
+  --geist-duration:      220ms;
+  --geist-duration-slow: 380ms;
 
   /* ---------- Component heights ---------- */
   --geist-control-sm: 28px;
@@ -121,100 +163,98 @@
   --geist-control-lg: 44px;
 
   /* ---------- Layout ---------- */
-  --geist-sidebar-w:           240px;
-  --geist-sidebar-collapsed-w: 64px;
-  --geist-header-h:            56px;
-  --geist-max-content:         1320px;
+  --geist-sidebar-w:           220px;
+  --geist-sidebar-collapsed-w: 56px;
+  --geist-header-h:            72px;     /* title-block taller than usual */
+  --geist-subheader-h:         32px;
+  --geist-footer-h:            34px;
+  --geist-sheet-pad:           18px;     /* margin between viewport edge and sheet */
+  --geist-max-content:         1440px;
 
-  /* ---------- Backwards-compat shims ----------
-     Older components reference these older names. Re-point to the
-     Event Stream palette so nothing visually goes stale.
-  ----------------------------------------------- */
-  --color-fire-50:  var(--geist-accent-soft);
-  --color-fire-100: var(--geist-accent-soft);
-  --color-fire-400: var(--geist-accent);
-  --color-fire-500: var(--geist-accent);
-  --color-fire-600: var(--geist-accent-hover);
-  --color-fire-700: var(--geist-accent-hover);
+  /* ---------- Backwards-compat shims (kept for older component code) ---------- */
+  --color-fire-50:  var(--accent-soft);
+  --color-fire-100: var(--accent-soft);
+  --color-fire-400: var(--accent);
+  --color-fire-500: var(--accent);
+  --color-fire-600: var(--accent-hover);
+  --color-fire-700: var(--accent-hover);
 
-  --color-slate-50:  var(--geist-bg-1);
-  --color-slate-100: var(--geist-bg-2);
-  --color-slate-200: var(--geist-border);
-  --color-slate-300: var(--geist-border-strong);
-  --color-slate-400: var(--geist-fg-5);
-  --color-slate-500: var(--geist-fg-4);
-  --color-slate-600: var(--geist-fg-3);
-  --color-slate-700: var(--geist-fg-2);
-  --color-slate-800: var(--geist-fg-1);
-  --color-slate-900: var(--geist-fg);
+  --color-slate-50:  var(--paper);
+  --color-slate-100: var(--paper-2);
+  --color-slate-200: var(--rule);
+  --color-slate-300: var(--rule-strong);
+  --color-slate-400: var(--ink-5);
+  --color-slate-500: var(--ink-4);
+  --color-slate-600: var(--ink-3);
+  --color-slate-700: var(--ink-2);
+  --color-slate-800: var(--ink-1);
+  --color-slate-900: var(--ink);
 
-  --color-success-50:  var(--geist-success-soft);
-  --color-success-500: var(--geist-success);
-  --color-success-600: var(--geist-success);
-  --color-success-700: var(--geist-success);
+  --color-success-50:  var(--status-certified-bg);
+  --color-success-500: var(--status-certified-ink);
+  --color-success-600: var(--status-certified-ink);
+  --color-success-700: var(--status-certified-ink);
 
-  --color-warning-50:  var(--geist-warning-soft);
-  --color-warning-200: var(--geist-warning-soft);
-  --color-warning-500: var(--geist-warning);
+  --color-warning-50:  var(--status-rectification-bg);
+  --color-warning-200: var(--status-rectification-bg);
+  --color-warning-500: var(--status-rectification-ink);
+  --color-warning-600: var(--status-rectification-ink);
 
-  --color-info-50:  var(--geist-info-soft);
-  --color-info-200: var(--geist-info-soft);
-  --color-info-400: var(--geist-info);
-  --color-info-500: var(--geist-info);
-  --color-info-600: var(--geist-info);
+  --color-info-50:  var(--status-installed-bg);
+  --color-info-200: var(--status-installed-bg);
+  --color-info-400: var(--status-installed-ink);
+  --color-info-500: var(--status-installed-ink);
+  --color-info-600: var(--status-installed-ink);
 
-  --color-danger-400: var(--geist-error);
-  --color-danger-500: var(--geist-error);
-  --color-danger-600: var(--geist-error);
+  --color-danger-400: var(--accent);
+  --color-danger-500: var(--accent);
+  --color-danger-600: var(--accent-hover);
 
-  --color-bg-card:        var(--geist-bg);
-  --color-bg-secondary:   var(--geist-bg-1);
-  --color-border:         var(--geist-border);
-  --color-text-primary:   var(--geist-fg);
-  --color-text-tertiary:  var(--geist-fg-3);
-  --color-text-secondary: var(--geist-fg-2);
-  --color-overlay:        rgba(11, 15, 20, 0.55);
+  --color-bg-card:        var(--paper-1);
+  --color-bg-secondary:   var(--paper);
+  --color-border:         var(--rule);
+  --color-text-primary:   var(--ink);
+  --color-text-tertiary:  var(--ink-3);
+  --color-text-secondary: var(--ink-2);
+  --color-overlay:        rgba(14, 14, 15, 0.55);
 
-  --bg-primary:    var(--geist-bg);
-  --bg-secondary:  var(--geist-bg-1);
-  --bg-tertiary:   var(--geist-bg-2);
-  --bg-card:       var(--geist-bg);
-  --bg-overlay:    rgba(11, 15, 20, 0.55);
-  --bg-sidebar:        #0B0F14;       /* near-black ink rail on light canvas */
-  --bg-sidebar-hover:  #14181F;
-  --bg-sidebar-active: #1F2531;
-  --text-primary:    var(--geist-fg);
-  --text-secondary:  var(--geist-fg-2);
-  --text-tertiary:   var(--geist-fg-3);
-  --text-sidebar:        #A8B0BC;
-  --text-sidebar-active: #FFFFFF;
-  --border-color:    var(--geist-border);
-  --border-primary:  var(--geist-border);
-  --surface:         var(--geist-bg);
+  --bg-primary:    var(--paper);
+  --bg-secondary:  var(--paper-2);
+  --bg-tertiary:   var(--paper-3);
+  --bg-card:       var(--paper-1);
+  --bg-input:      var(--paper-1);
+  --bg-overlay:    rgba(14, 14, 15, 0.55);
 
-  /* Aliases consumed by shared components (Modal, CommandPalette).
-     Mapped onto the geist scale so a theme change here propagates
-     to every overlay-driven UI in the app. */
-  --shadow-xl:       0 10px 30px rgba(11, 15, 20, 0.18), 0 2px 6px rgba(11, 15, 20, 0.06);
-  --transition-fast: var(--geist-duration-fast) var(--geist-easing);
-  --transition:      var(--geist-duration)      var(--geist-easing);
+  --bg-sidebar:        var(--ink);
+  --bg-sidebar-hover:  var(--ink-1);
+  --bg-sidebar-active: var(--ink-2);
+  --text-primary:        var(--ink);
+  --text-secondary:      var(--ink-2);
+  --text-tertiary:       var(--ink-3);
+  --text-sidebar:        var(--ink-5);
+  --text-sidebar-active: var(--paper-1);
+  --border-color:        var(--rule);
+  --border-primary:      var(--rule-strong);
+  --border-focus:        var(--accent);
+  --surface:             var(--paper-1);
 
-  --radius-sm:   var(--geist-radius-sm);
-  --radius-md:   var(--geist-radius);
-  --radius-lg:   var(--geist-radius-md);
-  --radius-xl:   var(--geist-radius-lg);
-  --radius-full: var(--geist-radius-full);
-
+  --shadow-xl:       0 12px 32px rgba(14, 14, 15, 0.18), 0 2px 6px rgba(14, 14, 15, 0.06);
   --transition-fast: var(--geist-duration-fast) var(--geist-easing);
   --transition:      var(--geist-duration)      var(--geist-easing);
   --transition-slow: var(--geist-duration-slow) var(--geist-easing);
+
+  --radius-sm:   0px;
+  --radius-md:   2px;
+  --radius-lg:   2px;
+  --radius-xl:   3px;
+  --radius-full: 999px;
 
   --sidebar-width:           var(--geist-sidebar-w);
   --sidebar-collapsed-width: var(--geist-sidebar-collapsed-w);
   --header-height:           var(--geist-header-h);
 }
 
-/* Honour reduced-motion. */
+/* Reduced motion: kill durations, keep all visual treatments. */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --geist-duration-fast: 0ms;
@@ -224,49 +264,96 @@
   * { animation-duration: 0ms !important; transition-duration: 0ms !important; }
 }
 
+/* ---------- The drafting plane ---------- */
 html, body {
-  background: var(--geist-bg-1);
-  color: var(--geist-fg);
-  font-family: var(--geist-font-sans);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
   font-size: var(--geist-text-md);
   line-height: var(--geist-leading-normal);
   letter-spacing: var(--geist-tracking-tight);
-  font-feature-settings: "ss01", "cv11", "cv02";
 }
 
-/* Headings: brand wants display weight, tight tracking. */
+/* Blueprint grid underlay. Two layered linear-gradients give the
+   8mm minor + 40mm major pattern of an architectural sheet. The
+   `fixed` background keeps the grid still while content scrolls,
+   which is the visual cue that the sheet is paper, not a panel. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(to right, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(to right, var(--grid-minor) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-minor) 1px, transparent 1px);
+  background-size:
+    var(--grid-major-step) var(--grid-major-step),
+    var(--grid-major-step) var(--grid-major-step),
+    var(--grid-minor-step) var(--grid-minor-step),
+    var(--grid-minor-step) var(--grid-minor-step);
+}
+
+#root { position: relative; z-index: 1; }
+
+/* Headings: Newsreader for the editorial-italic display moments,
+   Geist semibold otherwise. */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--geist-font-sans);
+  font-family: var(--font-sans);
   letter-spacing: var(--geist-tracking-tighter);
   font-weight: var(--geist-weight-semibold);
-  color: var(--geist-fg);
+  color: var(--ink);
   line-height: var(--geist-leading-tight);
 }
 
-/* Numerics: tabular by default everywhere a mono is used. */
+.xc-display, .xc-display-italic {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+.xc-display-italic { font-style: italic; }
+
+/* Drafting-stamp text: monospace caps with generous tracking,
+   used for title-block labels, sheet metadata, and revision tags. */
+.xc-stamp {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.xc-stamp-ink { color: var(--ink); }
+.xc-stamp-accent { color: var(--accent); }
+
+/* Numerics + technical readouts: tabular figures. */
 code, pre, kbd, samp, .mono, .xc-mono {
-  font-family: var(--geist-font-mono);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
-/* Focus ring — visible, single colour, never invisible. */
+/* Focus ring: a single 2px ink line with a 2px offset gap. No glow. */
 *:focus-visible {
-  outline: 2px solid var(--geist-accent);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
-  border-radius: var(--geist-radius-sm);
+  border-radius: 0;
 }
 
-/* Scrollbar — thin and unobtrusive on light backgrounds. */
+/* Scrollbars: hairline, paper-coloured. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--geist-border-strong) transparent;
+  scrollbar-color: var(--rule-strong) transparent;
 }
-*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
 *::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb {
-  background: var(--geist-border-strong);
-  border: 2px solid transparent;
-  border-radius: 999px;
-  background-clip: padding-box;
+*::-webkit-scrollbar-thumb { background: var(--rule-strong); border-radius: 0; }
+*::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+
+/* Selection: ink on accent-soft, never the other way around. */
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
 }
-*::-webkit-scrollbar-thumb:hover { background: var(--geist-fg-4); background-clip: padding-box; }

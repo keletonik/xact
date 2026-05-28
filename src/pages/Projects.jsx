@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Plus, FolderOpen } from 'lucide-react';
-import Card from '../components/common/Card';
-import Button from '../components/common/Button';
+import { Plus, FolderOpen, Search, X } from 'lucide-react';
+import PaperCard from '../components/draft/PaperCard';
+import CalloutBalloon from '../components/draft/CalloutBalloon';
+import InkStamp from '../components/draft/InkStamp';
+import RevisionStamp from '../components/draft/RevisionStamp';
 import Modal from '../components/common/Modal';
-import SearchInput from '../components/common/SearchInput';
-import EmptyState from '../components/common/EmptyState';
-import StatusBadge from '../components/common/StatusBadge';
 import FormField from '../components/common/FormField';
 import useProjectStore from '../stores/useProjectStore';
 import {
@@ -22,7 +20,6 @@ export default function Projects() {
   const projects = useProjectStore((s) => s.projects);
   const hydrate = useProjectStore((s) => s.hydrate);
   const createProject = useProjectStore((s) => s.createProject);
-
   useEffect(() => { hydrate(); }, [hydrate]);
 
   const [search, setSearch] = useState('');
@@ -42,57 +39,84 @@ export default function Projects() {
   }, [projects, search, statusFilter, typeFilter]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18 }}
-      style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16 }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0, fontSize: 22 }}>Projects</h1>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus size={14} /> New project
-        </Button>
-      </div>
+    <div className="xc-stagger" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 22 }}>
 
-      <Card>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <SearchInput
+      {/* Sheet preamble */}
+      <section style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr auto',
+        alignItems: 'flex-end',
+        gap: 22,
+        borderBottom: '1.5px solid var(--rule-ink)',
+        paddingBottom: 14,
+      }}>
+        <div>
+          <div className="xc-stamp" style={{ marginBottom: 6 }}>index · projects</div>
+          <h1 className="xc-display-italic" style={{ margin: 0, fontSize: 52, lineHeight: 1, color: 'var(--ink)' }}>
+            Project register
+          </h1>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 12 }}>
+            {projects.length} on file · {visible.length} shown
+          </p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <RevisionStamp letter="B" />
+          <button
+            type="button"
+            onClick={() => setShowCreate(true)}
+            style={primaryAction}
+          >
+            <Plus size={14} strokeWidth={2.5} />
+            new project
+          </button>
+        </div>
+      </section>
+
+      {/* Filter ruler */}
+      <PaperCard title="filter · query" meta={`${visible.length}/${projects.length}`}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', gap: 12 }}>
+          <div style={searchWrap}>
+            <Search size={14} color="var(--ink-3)" style={{ marginRight: 8, flexShrink: 0 }} />
+            <input
               value={search}
-              onChange={setSearch}
-              placeholder="Search by name, code, client, address"
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="name, code, client, site"
+              style={searchInput}
             />
+            {search && (
+              <button type="button" onClick={() => setSearch('')} style={searchClear} aria-label="Clear">
+                <X size={12} />
+              </button>
+            )}
           </div>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={selectStyle}>
-            <option value="all">All statuses</option>
+            <option value="all">ALL STATUSES</option>
             {Object.values(PROJECT_STATUSES).map((s) => (
-              <option key={s} value={s}>{PROJECT_STATUS_LABELS[s]}</option>
+              <option key={s} value={s}>{PROJECT_STATUS_LABELS[s].toUpperCase()}</option>
             ))}
           </select>
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={selectStyle}>
-            <option value="all">All types</option>
+            <option value="all">ALL TYPES</option>
             {Object.values(PROJECT_TYPES).map((t) => (
-              <option key={t} value={t}>{PROJECT_TYPE_LABELS[t]}</option>
+              <option key={t} value={t}>{PROJECT_TYPE_LABELS[t].toUpperCase()}</option>
             ))}
           </select>
         </div>
-      </Card>
+      </PaperCard>
 
-      {visible.length === 0 ? (
-        <EmptyState icon={FolderOpen} title="No projects" description="Create the first project to start a passive-fire job." />
-      ) : (
-        <Card>
+      <PaperCard title="project schedule" meta="click any row to open" noPad>
+        {visible.length === 0 ? (
+          <div style={emptyDraftStyle}>
+            <FolderOpen size={20} color="var(--ink-4)" strokeWidth={2} />
+            <span style={{ marginLeft: 10 }}>no projects on this filter</span>
+          </div>
+        ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ textAlign: 'left', color: 'var(--geist-fg-4)' }}>
-                <th style={th}>Code</th>
-                <th style={th}>Name</th>
-                <th style={th}>Client</th>
-                <th style={th}>Type</th>
-                <th style={th}>Status</th>
-                <th style={th}>Region</th>
-                <th style={th}>Updated</th>
+              <tr>
+                {['Code', 'Project name', 'Client', 'Type', 'Status', 'Region', 'Updated'].map((h) => (
+                  <th key={h} style={th}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -100,21 +124,35 @@ export default function Projects() {
                 <tr
                   key={p.id}
                   onClick={() => navigate(`/projects/${p.id}`)}
-                  style={{ cursor: 'pointer', borderTop: '1px solid var(--geist-border)' }}
+                  className="xc-sched-row"
+                  style={{ cursor: 'pointer' }}
                 >
-                  <td style={td}><code>{p.code}</code></td>
-                  <td style={td}>{p.name}</td>
+                  <td style={tdMono}><CalloutBalloon size="md">{p.code}</CalloutBalloon></td>
+                  <td style={td}>
+                    <span className="xc-display-italic" style={{ fontSize: 17 }}>{p.name}</span>
+                    {p.siteAddress && (
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--ink-4)', marginTop: 2 }}>
+                        {p.siteAddress}
+                      </div>
+                    )}
+                  </td>
                   <td style={td}>{p.client || '—'}</td>
-                  <td style={td}>{PROJECT_TYPE_LABELS[p.projectType]}</td>
-                  <td style={td}><StatusBadge status={p.status} /></td>
-                  <td style={td}>{REGION_LABELS[p.region] || p.region}</td>
-                  <td style={td}>{formatRelativeTime(p.updatedAt)}</td>
+                  <td style={tdMono}>
+                    <span style={mutedStamp}>{PROJECT_TYPE_LABELS[p.projectType]}</span>
+                  </td>
+                  <td style={td}>
+                    <InkStamp tone={stampTone(p.status)} size="sm" rotate={-2}>{p.status}</InkStamp>
+                  </td>
+                  <td style={tdMono}>{REGION_LABELS[p.region] || p.region}</td>
+                  <td style={tdMono}>
+                    <span style={{ color: 'var(--ink-3)' }}>{formatRelativeTime(p.updatedAt)}</span>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </Card>
-      )}
+        )}
+      </PaperCard>
 
       {showCreate && (
         <CreateProjectModal
@@ -126,7 +164,21 @@ export default function Projects() {
           }}
         />
       )}
-    </motion.div>
+
+      <style>{`
+        .xc-sched-row { position: relative; }
+        .xc-sched-row::after {
+          content: "";
+          position: absolute;
+          left: 0; right: 100%; bottom: 0;
+          height: 1.5px;
+          background: var(--accent);
+          transition: right 220ms var(--geist-easing);
+        }
+        .xc-sched-row:hover::after { right: 0; }
+        .xc-sched-row:hover { background: rgba(200, 16, 46, 0.03) !important; }
+      `}</style>
+    </div>
   );
 }
 
@@ -145,56 +197,158 @@ function CreateProjectModal({ onClose, onCreate }) {
     onCreate(form);
   };
   return (
-    <Modal isOpen onClose={onClose} title="New project">
-      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <Modal isOpen onClose={onClose} title="New project" subtitle="A row in the project register">
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <FormField label="Project name" required>
-          <input style={inputStyle} value={form.name} onChange={(e) => update({ name: e.target.value })} autoFocus />
+          <input style={modalInput} value={form.name} onChange={(e) => update({ name: e.target.value })} autoFocus placeholder="e.g. tower hill medical centre" />
         </FormField>
         <FormField label="Client">
-          <input style={inputStyle} value={form.client} onChange={(e) => update({ client: e.target.value })} />
+          <input style={modalInput} value={form.client} onChange={(e) => update({ client: e.target.value })} />
         </FormField>
         <FormField label="Site address">
-          <input style={inputStyle} value={form.siteAddress} onChange={(e) => update({ siteAddress: e.target.value })} />
+          <input style={modalInput} value={form.siteAddress} onChange={(e) => update({ siteAddress: e.target.value })} />
         </FormField>
-        <FormField label="Project type">
-          <select style={inputStyle} value={form.projectType} onChange={(e) => update({ projectType: e.target.value })}>
-            {Object.values(PROJECT_TYPES).map((t) => (
-              <option key={t} value={t}>{PROJECT_TYPE_LABELS[t]}</option>
-            ))}
-          </select>
-        </FormField>
-        <FormField label="Region">
-          <select style={inputStyle} value={form.region} onChange={(e) => update({ region: e.target.value })}>
-            {Object.values(REGIONS).map((r) => (
-              <option key={r} value={r}>{REGION_LABELS[r]}</option>
-            ))}
-          </select>
-        </FormField>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
-          <Button variant="ghost" type="button" onClick={onClose}>Cancel</Button>
-          <Button type="submit">Create project</Button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <FormField label="Project type">
+            <select style={modalInput} value={form.projectType} onChange={(e) => update({ projectType: e.target.value })}>
+              {Object.values(PROJECT_TYPES).map((t) => (
+                <option key={t} value={t}>{PROJECT_TYPE_LABELS[t]}</option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Region">
+            <select style={modalInput} value={form.region} onChange={(e) => update({ region: e.target.value })}>
+              {Object.values(REGIONS).map((r) => (
+                <option key={r} value={r}>{REGION_LABELS[r]}</option>
+              ))}
+            </select>
+          </FormField>
+        </div>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
+          <button type="button" onClick={onClose} style={ghostAction}>cancel</button>
+          <button type="submit" style={primaryAction}>draft project</button>
         </div>
       </form>
     </Modal>
   );
 }
 
-const selectStyle = {
-  padding: '6px 10px',
-  border: '1px solid var(--geist-border-strong)',
-  borderRadius: 4,
-  background: 'var(--geist-bg)',
-  fontSize: 12,
+function stampTone(status) {
+  switch (status) {
+    case PROJECT_STATUSES.ACTIVE:    return 'installed';
+    case PROJECT_STATUSES.COMPLETED: return 'certified';
+    case PROJECT_STATUSES.ON_HOLD:   return 'rectification';
+    case PROJECT_STATUSES.ARCHIVED:  return 'planned';
+    default:                         return 'draft';
+  }
+}
+
+const primaryAction = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  background: 'var(--ink)',
+  color: 'var(--paper-1)',
+  border: '1px solid var(--ink)',
+  padding: '8px 14px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
 };
-const inputStyle = {
+const ghostAction = {
+  background: 'transparent',
+  color: 'var(--ink-2)',
+  border: '1px solid var(--rule-strong)',
+  padding: '8px 14px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+};
+
+const searchWrap = {
+  display: 'flex',
+  alignItems: 'center',
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
   padding: '8px 10px',
-  border: '1px solid var(--geist-border-strong)',
-  borderRadius: 4,
-  background: 'var(--geist-bg)',
-  color: 'var(--geist-fg)',
-  fontSize: 13,
-  width: '100%',
-  boxSizing: 'border-box',
 };
-const th = { padding: '6px 10px', fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 };
-const td = { padding: '8px 10px' };
+const searchInput = {
+  flex: 1,
+  border: 'none',
+  outline: 'none',
+  background: 'transparent',
+  fontSize: 13,
+  color: 'var(--ink)',
+  fontFamily: 'var(--font-mono)',
+  letterSpacing: '0.04em',
+};
+const searchClear = {
+  background: 'transparent',
+  border: 'none',
+  color: 'var(--ink-4)',
+  cursor: 'pointer',
+  padding: 4,
+};
+const selectStyle = {
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  padding: '8px 10px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink)',
+  appearance: 'none',
+};
+const modalInput = {
+  width: '100%',
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  padding: '10px 12px',
+  fontFamily: 'var(--font-sans)',
+  fontSize: 14,
+  color: 'var(--ink)',
+};
+const th = {
+  textAlign: 'left',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-3)',
+  fontWeight: 600,
+  padding: '10px 14px',
+  borderBottom: '1.5px solid var(--rule-ink)',
+  background: 'var(--paper-2)',
+};
+const td = {
+  padding: '12px 14px',
+  borderBottom: '1px solid var(--rule)',
+  verticalAlign: 'middle',
+};
+const tdMono = {
+  ...td,
+  fontFamily: 'var(--font-mono)',
+  fontSize: 12,
+  letterSpacing: '0.04em',
+};
+const mutedStamp = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-3)',
+};
+const emptyDraftStyle = {
+  padding: '40px 20px',
+  textAlign: 'center',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-4)',
+};
