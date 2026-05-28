@@ -104,4 +104,29 @@ describe('useAssetStore CRUD', () => {
     expect(updated.achievedFrl).toBe('-/120/120');
     expect(updated.updatedAt >= created.updatedAt).toBe(true);
   });
+
+  it('drawing + locationOnPlan survive a create / hydrate roundtrip (pin overlay)', async () => {
+    const project = await seedProject();
+    const created = await useAssetStore.getState().createAsset({
+      asset: {
+        projectId: project.id,
+        assetType: ASSET_TYPES.PENETRATION,
+        drawingId: 'drawing-xyz',
+        locationOnPlan: { x: 123.4, y: 567.8 },
+      },
+    });
+
+    // Rehydrate from dexie to confirm the persistence path.
+    useAssetStore.setState({ assets: [], specialisations: {}, ready: false });
+    await useAssetStore.getState().hydrate();
+
+    const reloaded = useAssetStore.getState().assets.find((a) => a.id === created.id);
+    expect(reloaded.drawingId).toBe('drawing-xyz');
+    expect(reloaded.locationOnPlan).toEqual({ x: 123.4, y: 567.8 });
+
+    // Filter behaviour used by the pin layer.
+    const pinsForDrawing = useAssetStore.getState().forDrawing('drawing-xyz');
+    expect(pinsForDrawing).toHaveLength(1);
+    expect(useAssetStore.getState().forDrawing('different-drawing')).toHaveLength(0);
+  });
 });

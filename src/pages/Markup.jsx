@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Upload, Download, FileText, Trash2 } from 'lucide-react';
+import { Upload, Download, FileText, Trash2, MapPin } from 'lucide-react';
 import MarkupCanvas from '../components/markup/MarkupCanvas';
 import MarkupToolbar from '../components/markup/MarkupToolbar';
 import LayerPanel from '../components/markup/LayerPanel';
@@ -8,8 +8,11 @@ import DrawingScalePicker from '../components/markup/DrawingScalePicker';
 import PropertiesPanel from '../components/markup/PropertiesPanel';
 import MarkupsListPanel from '../components/markup/MarkupsListPanel';
 import StatusBar from '../components/markup/StatusBar';
+import AssetEditor from '../components/asset/AssetEditor';
 import useMarkupStore from '../stores/useMarkupStore';
 import useProjectStore from '../stores/useProjectStore';
+import useAssetStore from '../stores/useAssetStore';
+import useSystemLibraryStore from '../stores/useSystemLibraryStore';
 import useToolbarPrefs from '../hooks/useToolbarPrefs';
 import { buildLegend, downloadString, legendToCSV } from '../markup/exporters';
 import { getPdfDocument } from '../components/markup/pdfPageRender';
@@ -17,7 +20,22 @@ import { sniffFileKind } from '../utils/fileSniff';
 
 export default function MarkupPage() {
   const projects = useProjectStore((s) => s.projects);
+  const hydrateProjects = useProjectStore((s) => s.hydrate);
   const [projectId, setProjectId] = useState(projects[0]?.id ?? null);
+
+  // Asset pin support: hydrate stores, filter to current drawing, and
+  // when the user clicks the canvas in pin-mode open the AssetEditor
+  // pre-filled with drawingId + location coordinates.
+  const assets = useAssetStore((s) => s.assets);
+  const specialisations = useAssetStore((s) => s.specialisations);
+  const hydrateAssets = useAssetStore((s) => s.hydrate);
+  const createAsset = useAssetStore((s) => s.createAsset);
+  const updateAsset = useAssetStore((s) => s.updateAsset);
+  const hydrateSystems = useSystemLibraryStore((s) => s.hydrate);
+
+  const [assetPinMode, setAssetPinMode] = useState(false);
+  const [editingAsset, setEditingAsset] = useState(null);   // null | 'new' | assetObject
+  const [pendingPinLocation, setPendingPinLocation] = useState(null);
 
   // store selectors
   const drawings           = useMarkupStore((s) => s.drawings);
@@ -68,7 +86,7 @@ export default function MarkupPage() {
   const [showLabels, setShowLabels]               = useState(true);
   const [rightPanel, setRightPanel]               = useState('properties'); // 'properties' | 'list'
 
-  useEffect(() => { hydrate(); }, [hydrate]);
+  useEffect(() => { hydrate(); hydrateProjects(); hydrateAssets(); hydrateSystems(); }, [hydrate, hydrateProjects, hydrateAssets, hydrateSystems]);
 
   const projectDrawings = useMemo(
     () => drawings.filter((d) => !projectId || d.projectId === projectId),
@@ -255,6 +273,23 @@ export default function MarkupPage() {
     transformObjects(markupDoc.id, page.pageNumber, ids, fn);
   }, [markupDoc, page, transformObjects]);
 
+  // Assets pinned to the currently visible drawing.
+  const drawingAssets = useMemo(
+    () => assets.filter((a) => drawing && a.drawingId === drawing.id && a.locationOnPlan),
+    [assets, drawing],
+  );
+
+  const handleCreateAssetAt = useCallback((point) => {
+    if (!drawing || !projectId) return;
+    setPendingPinLocation(point);
+    setEditingAsset('new');
+  }, [drawing, projectId]);
+
+  const handleSelectAssetPin = useCallback((assetId) => {
+    const asset = assets.find((a) => a.id === assetId);
+    if (asset) setEditingAsset(asset);
+  }, [assets]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--header-height))' }}>
       {/* Top control row */}
@@ -292,6 +327,22 @@ export default function MarkupPage() {
           <input type="checkbox" checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
           Labels
         </label>
+
+        <button
+          type="button"
+          onClick={() => setAssetPinMode((v) => !v)}
+          aria-pressed={assetPinMode}
+          title={assetPinMode ? 'Click an empty spot on the plan to drop an asset pin' : 'Asset pin mode (off)'}
+          style={{
+            ...iconBtn,
+            background: assetPinMode ? 'var(--geist-fg)' : 'transparent',
+            color: assetPinMode ? 'var(--geist-bg)' : 'var(--geist-fg-2)',
+            borderColor: assetPinMode ? 'var(--geist-fg)' : 'var(--geist-border-strong)',
+          }}
+          disabled={!drawing}
+        >
+          <MapPin size={14} strokeWidth={2.25} /> Pin asset{drawingAssets.length > 0 ? ` (${drawingAssets.length})` : ''}
+        </button>
 
         <button type="button" onClick={handleExportLegend} style={iconBtn} title="Export legend CSV" aria-label="Export legend">
           <Download size={14} strokeWidth={2.25} /> Legend
@@ -372,7 +423,31 @@ export default function MarkupPage() {
               stageScaleControl={zoom}
               showLabels={showLabels}
               onTransformObjects={handleTransform}
+              assetPins={drawingAssets}
+              assetPinMode={assetPinMode}
+              selectedAssetId={editingAsset && editingAsset !== 'new' ? editingAsset.id : null}
+              onCreateAssetAt={handleCreateAssetAt}
+              onSelectAsset={handleSelectAssetPin}
             />
+            {editingAsset && drawing && projectId && (
+              <AssetEditor
+                initial={editingAsset === 'new' ? null : editingAsset}
+                defaultProjectId={projectId}
+                defaultDrawingId={drawing.id}
+                defaultLocation={editingAsset === 'new' ? pendingPinLocation : editingAsset.locationOnPlan}
+                initialSpecialisation={editingAsset === 'new' ? null : specialisations[editingAsset.id]}
+                onClose={() => { setEditingAsset(null); setPendingPinLocation(null); }}
+                onSave={async ({ assetPatch, specialisation }) => {
+                  if (editingAsset === 'new') {
+                    await createAsset({ asset: assetPatch, specialisation });
+                  } else {
+                    await updateAsset(editingAsset.id, { asset: assetPatch, specialisation });
+                  }
+                  setEditingAsset(null);
+                  setPendingPinLocation(null);
+                }}
+              />
+            )}
             <StatusBar
               page={page}
               totalPages={markupDoc.pages.length}

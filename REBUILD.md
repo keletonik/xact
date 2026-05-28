@@ -141,7 +141,7 @@ Everything else is derived. No alarms, no extinguishers, no sprinklers.
 | 1 | Strip bloat, fresh dexie v2 schema, prune routes | done |
 | 2 | SystemLibrary + matrix search | done |
 | 3a | Asset register + type-aware editor + matrix integration | done |
-| 3b | Markup-canvas pin overlay (click drawing → create / open asset) | **outstanding** |
+| 3b | Markup-canvas pin overlay (click drawing → create / open asset) | done |
 | 4 | Photo capture per stage (EXIF + SHA-256 blob dedupe) | done |
 | 5 | AS 1851 inspections + defects (atomic walk + defect raising) | done |
 | 6 | Quote + line items + convert-to-assets bridge | done |
@@ -150,26 +150,25 @@ Everything else is derived. No alarms, no extinguishers, no sprinklers.
 | 9 | Dashboard KPIs across all stores | done |
 | 10 | Polish: settings (logo + roster), vendors CRUD, library import/export | done |
 
-### Phase 3b notes
+### Phase 3b as shipped
 
-Deferred from the main rebuild because the existing `MarkupCanvas.jsx`
-is 611 lines of dense Konva (lasso selection, transformer handles,
-calibration, panning, controlled props) and an incorrect overlay
-integration risks regressing the markup tool that already ships.
-
-Suggested approach for 3b when picked up:
-- Add a new `AssetPinLayer.jsx` as a sibling Konva `<Layer>` inside
-  `MarkupCanvas`, controlled by a new `assetsOnPlan` prop and the
-  existing selection mechanism.
-- Add an `active tool = pinAsset` that disables lasso while active.
-- Click in pin mode creates an Asset via `useAssetStore.createAsset`
-  with `drawingId` and `locationOnPlan` populated, then opens the
-  AssetEditor for the new row.
-- Existing pins render as small circles + tag-label; click opens the
-  editor.
-- Add `forDrawing(drawingId)` selector (already on store) to filter
-  the layer's input.
-- Add Vitest coverage for hit-testing and pin-mode mode-exclusivity.
+- `AssetPinLayer.jsx` renders pins as a sibling Konva `<Layer>` above
+  the markup layer. Pin clicks set `e.cancelBubble = true` so the
+  underlying stage handler does not also fire (no double-create / no
+  accidental lasso start).
+- `MarkupCanvas` accepts new props `assetPins`, `assetPinMode`,
+  `selectedAssetId`, `onCreateAssetAt`, `onSelectAsset`. Pin mode
+  short-circuits the existing tool dispatch only on empty-stage clicks,
+  so lasso, transformer, and every markup tool still work when pin
+  mode is off.
+- Per-type colour palette (`ASSET_PIN_TYPE_COLOUR`) covers every
+  `ASSET_TYPES` value; a test asserts both completeness and uniqueness
+  so a new asset type without a colour fails fast.
+- The Markup page wires `useAssetStore` + `useSystemLibraryStore`, adds
+  a Pin asset toggle in the top control row, filters pins to the
+  current drawing, and opens the existing `AssetEditor` modal pre-filled
+  with `drawingId` + `locationOnPlan` for creates and the asset record
+  for edits.
 
 ## 10. Non-goals
 

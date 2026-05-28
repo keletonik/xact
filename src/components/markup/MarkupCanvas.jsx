@@ -8,6 +8,7 @@ import {
 import { calibratePage } from '../../markup/scale';
 import { getSymbol } from '../../markup/symbolLibrary';
 import { getPdfDocument, renderImage, renderPdfPage, RenderCancelled } from './pdfPageRender';
+import AssetPinLayer from './AssetPinLayer';
 
 /**
  * MarkupCanvas — pdf.js raster + Konva overlay.
@@ -44,6 +45,11 @@ export default function MarkupCanvas({
   stageScaleControl,
   showLabels = true,
   onTransformObjects,
+  assetPins = [],
+  assetPinMode = false,
+  selectedAssetId = null,
+  onCreateAssetAt,
+  onSelectAsset,
 }) {
   const canvasRef = useRef(null);
   const stageRef = useRef(null);
@@ -165,6 +171,14 @@ export default function MarkupCanvas({
       return;
     }
     const p = getStagePoint(); if (!p) return;
+
+    // Asset pin add-mode: click on empty space drops a new pin.
+    // Existing pin clicks are short-circuited at the pin layer with
+    // e.cancelBubble = true, so this branch only fires on empty stage.
+    if (assetPinMode && !calibrationMode) {
+      onCreateAssetAt?.({ x: p.x, y: p.y });
+      return;
+    }
 
     if (calibrationMode) {
       if (!calibState) {
@@ -337,7 +351,17 @@ export default function MarkupCanvas({
   const layerLookup = useMemo(() => Object.fromEntries(page.layers.map((l) => [l.id, l])), [page.layers]);
   const visibleObjects = page.objects.filter((o) => layerLookup[o.layerId]?.visible !== false);
   const previewObj = tool?.getPreview?.();
-  const cursor = isPanning ? 'grabbing' : (activeTool ? 'crosshair' : (lasso ? 'crosshair' : 'default'));
+  const cursor = isPanning
+    ? 'grabbing'
+    : (assetPinMode ? 'crosshair' : (activeTool ? 'crosshair' : (lasso ? 'crosshair' : 'default')));
+
+  // Filter pins to the current drawing (caller may pass project-wide
+  // assets; rendering the wrong drawing's pins on this canvas is a
+  // common foot-gun, so guard here).
+  const pinsForThisDrawing = useMemo(
+    () => assetPins.filter((p) => p.drawingId === markupDoc?.drawingId && p.locationOnPlan),
+    [assetPins, markupDoc?.drawingId],
+  );
 
   // ------- live readout (HUD) -------
   const readout = useMemo(() => {
@@ -420,6 +444,11 @@ export default function MarkupCanvas({
               onTransformEnd={handleTransformEnd}
             />
           </Layer>
+          <AssetPinLayer
+            pins={pinsForThisDrawing}
+            selectedId={selectedAssetId}
+            onSelect={onSelectAsset}
+          />
         </Stage>
       </div>
       {readout && <div style={readoutStyle} aria-live="polite">{readout}</div>}
