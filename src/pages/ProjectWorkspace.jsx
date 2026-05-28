@@ -18,6 +18,7 @@ import DefectTable from '../components/defect/DefectTable';
 import QuoteList from '../components/quote/QuoteList';
 import QuoteEditor from '../components/quote/QuoteEditor';
 import CertPackPanel from '../components/cert/CertPackPanel';
+import WorkOrderPanel from '../components/workorder/WorkOrderPanel';
 import useProjectStore from '../stores/useProjectStore';
 import useAssetStore from '../stores/useAssetStore';
 import useSystemLibraryStore from '../stores/useSystemLibraryStore';
@@ -37,6 +38,7 @@ const TAB_PHOTOS     = 'photos';
 const TAB_INSPECTION = 'inspections';
 const TAB_DEFECTS    = 'defects';
 const TAB_QUOTE      = 'quote';
+const TAB_WORK       = 'work';
 const TAB_CERTS      = 'certs';
 
 export default function ProjectWorkspace() {
@@ -123,6 +125,7 @@ export default function ProjectWorkspace() {
     { id: TAB_INSPECTION, label: 'Inspections',  icon: ClipboardCheck, count: projectInspections.length || undefined },
     { id: TAB_DEFECTS,    label: 'Defects',      icon: Bug,            count: openDefectCount || undefined },
     { id: TAB_QUOTE,      label: 'Quote',        icon: Calculator },
+    { id: TAB_WORK,       label: 'Work orders',  icon: Wrench },
     { id: TAB_CERTS,      label: 'Cert packs',   icon: FileText },
   ]), [projectAssets.length, projectInspections.length, openDefectCount]);
 
@@ -282,6 +285,14 @@ export default function ProjectWorkspace() {
           </Card>
         )
       )}
+      {tab === TAB_WORK && (
+        <WorkOrderPanel
+          project={project}
+          assets={projectAssets}
+          assetsById={assetsById}
+        />
+      )}
+
       {tab === TAB_CERTS && (
         <CertPackPanel
           project={project}
