@@ -15,12 +15,15 @@ import PhotoCapture from '../components/asset/PhotoCapture';
 import InspectionList from '../components/inspection/InspectionList';
 import PerformInspection from '../components/inspection/PerformInspection';
 import DefectTable from '../components/defect/DefectTable';
+import QuoteList from '../components/quote/QuoteList';
+import QuoteEditor from '../components/quote/QuoteEditor';
 import useProjectStore from '../stores/useProjectStore';
 import useAssetStore from '../stores/useAssetStore';
 import useSystemLibraryStore from '../stores/useSystemLibraryStore';
 import usePhotoStore from '../stores/usePhotoStore';
 import useInspectionStore from '../stores/useInspectionStore';
 import useDefectStore from '../stores/useDefectStore';
+import useQuoteStore from '../stores/useQuoteStore';
 import {
   PROJECT_STATUSES, PROJECT_STATUS_LABELS,
   PROJECT_TYPE_LABELS, REGION_LABELS, ASSET_STATUSES,
@@ -68,13 +71,24 @@ export default function ProjectWorkspace() {
   const verifyDefect     = useDefectStore((s) => s.verify);
   const deleteDefect     = useDefectStore((s) => s.deleteDefect);
 
+  const quotes               = useQuoteStore((s) => s.quotes);
+  const lineItemsByQuote     = useQuoteStore((s) => s.lineItemsByQuote);
+  const hydrateQuotes        = useQuoteStore((s) => s.hydrate);
+  const createQuote          = useQuoteStore((s) => s.createQuote);
+  const addQuoteLine         = useQuoteStore((s) => s.addLine);
+  const updateQuoteLine      = useQuoteStore((s) => s.updateLine);
+  const removeQuoteLine      = useQuoteStore((s) => s.removeLine);
+  const setQuoteStatus       = useQuoteStore((s) => s.setStatus);
+  const convertQuoteToAssets = useQuoteStore((s) => s.convertToAssets);
+
   useEffect(() => {
     hydrateProjects(); hydrateAssets(); hydrateSystems(); hydratePhotos();
-    hydrateInspections(); hydrateDefects();
-  }, [hydrateProjects, hydrateAssets, hydrateSystems, hydratePhotos, hydrateInspections, hydrateDefects]);
+    hydrateInspections(); hydrateDefects(); hydrateQuotes();
+  }, [hydrateProjects, hydrateAssets, hydrateSystems, hydratePhotos, hydrateInspections, hydrateDefects, hydrateQuotes]);
 
   const [selectedPhotoAssetId, setSelectedPhotoAssetId] = useState(null);
   const [walkingInspection, setWalkingInspection] = useState(null);
+  const [openQuoteId, setOpenQuoteId] = useState(null);
 
   const project = projects.find((p) => p.id === id);
 
@@ -232,7 +246,41 @@ export default function ProjectWorkspace() {
           />
         </Card>
       )}
-      {tab === TAB_QUOTE && <StubTab label="Quote" detail="Takeoff-from-plan and line-item quoting lands in phase 6." />}
+      {tab === TAB_QUOTE && (
+        openQuoteId ? (
+          (() => {
+            const q = quotes.find((x) => x.id === openQuoteId);
+            if (!q) { setOpenQuoteId(null); return null; }
+            return (
+              <QuoteEditor
+                quote={q}
+                lines={lineItemsByQuote[q.id] || []}
+                onBack={() => setOpenQuoteId(null)}
+                onAddLine={(input) => addQuoteLine(q.id, input)}
+                onUpdateLine={(lineId, patch) => updateQuoteLine(q.id, lineId, patch)}
+                onRemoveLine={(lineId) => removeQuoteLine(q.id, lineId)}
+                onSetStatus={(status) => setQuoteStatus(q.id, status)}
+                onConvert={async () => {
+                  const created = await convertQuoteToAssets(q.id);
+                  const n = Object.values(created).flat().length;
+                  alert(`${n} planned assets created. Head to Assets tab to walk them through install.`);
+                }}
+              />
+            );
+          })()
+        ) : (
+          <Card>
+            <QuoteList
+              quotes={quotes.filter((q) => q.projectId === id)}
+              onOpen={(q) => setOpenQuoteId(q.id)}
+              onCreate={async () => {
+                const q = await createQuote({ projectId: id });
+                setOpenQuoteId(q.id);
+              }}
+            />
+          </Card>
+        )
+      )}
       {tab === TAB_CERTS && <StubTab label="Cert packs" detail="Form 15, Form 16, AS 1851 baseline and install certification PDFs land in phase 7." />}
 
       {editingAsset && (
