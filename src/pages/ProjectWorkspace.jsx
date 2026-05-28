@@ -11,9 +11,11 @@ import Tabs from '../components/common/Tabs';
 import EmptyState from '../components/common/EmptyState';
 import AssetTable from '../components/asset/AssetTable';
 import AssetEditor from '../components/asset/AssetEditor';
+import PhotoCapture from '../components/asset/PhotoCapture';
 import useProjectStore from '../stores/useProjectStore';
 import useAssetStore from '../stores/useAssetStore';
 import useSystemLibraryStore from '../stores/useSystemLibraryStore';
+import usePhotoStore from '../stores/usePhotoStore';
 import {
   PROJECT_STATUSES, PROJECT_STATUS_LABELS,
   PROJECT_TYPE_LABELS, REGION_LABELS, ASSET_STATUSES,
@@ -45,8 +47,14 @@ export default function ProjectWorkspace() {
   const deleteAsset = useAssetStore((s) => s.deleteAsset);
 
   const hydrateSystems = useSystemLibraryStore((s) => s.hydrate);
+  const hydratePhotos  = usePhotoStore((s) => s.hydrate);
+  const allPhotos      = usePhotoStore((s) => s.photos);
 
-  useEffect(() => { hydrateProjects(); hydrateAssets(); hydrateSystems(); }, [hydrateProjects, hydrateAssets, hydrateSystems]);
+  useEffect(() => {
+    hydrateProjects(); hydrateAssets(); hydrateSystems(); hydratePhotos();
+  }, [hydrateProjects, hydrateAssets, hydrateSystems, hydratePhotos]);
+
+  const [selectedPhotoAssetId, setSelectedPhotoAssetId] = useState(null);
 
   const project = projects.find((p) => p.id === id);
 
@@ -138,7 +146,14 @@ export default function ProjectWorkspace() {
         </Card>
       )}
 
-      {tab === TAB_PHOTOS && <StubTab label="Photos" detail="Pre / during / post install + annual-inspection photo capture lands in phase 4." />}
+      {tab === TAB_PHOTOS && (
+        <PhotosTab
+          assets={projectAssets}
+          photos={allPhotos}
+          selectedAssetId={selectedPhotoAssetId}
+          onSelectAsset={setSelectedPhotoAssetId}
+        />
+      )}
       {tab === TAB_INSPECTION && <StubTab label="Inspections" detail="AS 1851 baseline, annual and 5-yearly inspection workflow lands in phase 5." />}
       {tab === TAB_DEFECTS && <StubTab label="Defects" detail="Defect register with A/B/C classification and rectification scheduling lands in phase 5." />}
       {tab === TAB_QUOTE && <StubTab label="Quote" detail="Takeoff-from-plan and line-item quoting lands in phase 6." />}
@@ -242,5 +257,61 @@ function StubTab({ label, detail }) {
       <strong>{label}</strong>
       <p style={{ fontSize: 13, color: 'var(--geist-fg-3)', marginTop: 8 }}>{detail}</p>
     </Card>
+  );
+}
+
+function PhotosTab({ assets, photos, selectedAssetId, onSelectAsset }) {
+  const counts = useMemo(() => {
+    const out = {};
+    for (const p of photos) (out[p.assetId] = (out[p.assetId] || 0) + 1);
+    return out;
+  }, [photos]);
+
+  const selected = assets.find((a) => a.id === selectedAssetId) || assets[0];
+
+  if (assets.length === 0) {
+    return (
+      <Card>
+        <strong>Photos</strong>
+        <p style={{ fontSize: 13, color: 'var(--geist-fg-3)', marginTop: 8 }}>
+          Add an asset first; photos attach to assets.
+        </p>
+      </Card>
+    );
+  }
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 12 }}>
+      <Card>
+        <strong style={{ fontSize: 12, color: 'var(--geist-fg-3)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Assets</strong>
+        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {assets.map((a) => {
+            const active = (selected && selected.id === a.id);
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => onSelectAsset(a.id)}
+                style={{
+                  textAlign: 'left',
+                  padding: '6px 8px',
+                  borderRadius: 4,
+                  border: '1px solid ' + (active ? 'var(--geist-fg)' : 'transparent'),
+                  background: active ? 'var(--geist-bg-2)' : 'transparent',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <code>{a.tag}</code>
+                <span style={{ color: 'var(--geist-fg-4)' }}>{counts[a.id] || 0}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+      {selected && <PhotoCapture asset={selected} />}
+    </div>
   );
 }
