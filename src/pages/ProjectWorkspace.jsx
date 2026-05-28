@@ -12,10 +12,15 @@ import EmptyState from '../components/common/EmptyState';
 import AssetTable from '../components/asset/AssetTable';
 import AssetEditor from '../components/asset/AssetEditor';
 import PhotoCapture from '../components/asset/PhotoCapture';
+import InspectionList from '../components/inspection/InspectionList';
+import PerformInspection from '../components/inspection/PerformInspection';
+import DefectTable from '../components/defect/DefectTable';
 import useProjectStore from '../stores/useProjectStore';
 import useAssetStore from '../stores/useAssetStore';
 import useSystemLibraryStore from '../stores/useSystemLibraryStore';
 import usePhotoStore from '../stores/usePhotoStore';
+import useInspectionStore from '../stores/useInspectionStore';
+import useDefectStore from '../stores/useDefectStore';
 import {
   PROJECT_STATUSES, PROJECT_STATUS_LABELS,
   PROJECT_TYPE_LABELS, REGION_LABELS, ASSET_STATUSES,
@@ -50,11 +55,26 @@ export default function ProjectWorkspace() {
   const hydratePhotos  = usePhotoStore((s) => s.hydrate);
   const allPhotos      = usePhotoStore((s) => s.photos);
 
+  const inspections             = useInspectionStore((s) => s.inspections);
+  const resultsByInspection     = useInspectionStore((s) => s.resultsByInspection);
+  const hydrateInspections      = useInspectionStore((s) => s.hydrate);
+  const scheduleInspection      = useInspectionStore((s) => s.scheduleInspection);
+  const completeInspection      = useInspectionStore((s) => s.completeInspection);
+  const cancelInspection        = useInspectionStore((s) => s.cancelInspection);
+
+  const defects          = useDefectStore((s) => s.defects);
+  const hydrateDefects   = useDefectStore((s) => s.hydrate);
+  const markRectified    = useDefectStore((s) => s.markRectified);
+  const verifyDefect     = useDefectStore((s) => s.verify);
+  const deleteDefect     = useDefectStore((s) => s.deleteDefect);
+
   useEffect(() => {
     hydrateProjects(); hydrateAssets(); hydrateSystems(); hydratePhotos();
-  }, [hydrateProjects, hydrateAssets, hydrateSystems, hydratePhotos]);
+    hydrateInspections(); hydrateDefects();
+  }, [hydrateProjects, hydrateAssets, hydrateSystems, hydratePhotos, hydrateInspections, hydrateDefects]);
 
   const [selectedPhotoAssetId, setSelectedPhotoAssetId] = useState(null);
+  const [walkingInspection, setWalkingInspection] = useState(null);
 
   const project = projects.find((p) => p.id === id);
 
@@ -63,16 +83,33 @@ export default function ProjectWorkspace() {
 
   const projectAssets = useMemo(() => assets.filter((a) => a.projectId === id), [assets, id]);
 
+  const projectInspections = useMemo(
+    () => inspections.filter((i) => i.projectId === id),
+    [inspections, id],
+  );
+
+  const assetIdSet = useMemo(() => new Set(projectAssets.map((a) => a.id)), [projectAssets]);
+  const projectDefects = useMemo(
+    () => defects.filter((d) => assetIdSet.has(d.assetId)),
+    [defects, assetIdSet],
+  );
+  const assetsById = useMemo(
+    () => Object.fromEntries(projectAssets.map((a) => [a.id, a])),
+    [projectAssets],
+  );
+
+  const openDefectCount = projectDefects.filter((d) => d.status !== 'verified').length;
+
   const tabs = useMemo(() => ([
     { id: TAB_OVERVIEW,   label: 'Overview',     icon: ClipboardCheck },
     { id: TAB_ASSETS,     label: 'Assets',       icon: Boxes,         count: projectAssets.length },
     { id: TAB_PLANS,      label: 'Plans',        icon: Map },
     { id: TAB_PHOTOS,     label: 'Photos',       icon: ImagePlus },
-    { id: TAB_INSPECTION, label: 'Inspections',  icon: ClipboardCheck },
-    { id: TAB_DEFECTS,    label: 'Defects',      icon: Bug },
+    { id: TAB_INSPECTION, label: 'Inspections',  icon: ClipboardCheck, count: projectInspections.length || undefined },
+    { id: TAB_DEFECTS,    label: 'Defects',      icon: Bug,            count: openDefectCount || undefined },
     { id: TAB_QUOTE,      label: 'Quote',        icon: Calculator },
     { id: TAB_CERTS,      label: 'Cert packs',   icon: FileText },
-  ]), [projectAssets.length]);
+  ]), [projectAssets.length, projectInspections.length, openDefectCount]);
 
   if (!project) {
     return (
@@ -154,8 +191,47 @@ export default function ProjectWorkspace() {
           onSelectAsset={setSelectedPhotoAssetId}
         />
       )}
-      {tab === TAB_INSPECTION && <StubTab label="Inspections" detail="AS 1851 baseline, annual and 5-yearly inspection workflow lands in phase 5." />}
-      {tab === TAB_DEFECTS && <StubTab label="Defects" detail="Defect register with A/B/C classification and rectification scheduling lands in phase 5." />}
+      {tab === TAB_INSPECTION && (
+        walkingInspection ? (
+          <PerformInspection
+            inspection={walkingInspection}
+            assets={projectAssets}
+            onCancel={() => setWalkingInspection(null)}
+            onSave={async (payload) => {
+              await completeInspection(walkingInspection.id, payload);
+              setWalkingInspection(null);
+            }}
+          />
+        ) : (
+          <Card>
+            <InspectionList
+              inspections={projectInspections}
+              results={resultsByInspection}
+              onSchedule={(input) => scheduleInspection({ ...input, projectId: id })}
+              onPerform={(i) => {
+                if (projectAssets.length === 0) {
+                  alert('Add assets first; inspections walk the asset register.');
+                  return;
+                }
+                setWalkingInspection(i);
+              }}
+              onCancel={cancelInspection}
+            />
+          </Card>
+        )
+      )}
+      {tab === TAB_DEFECTS && (
+        <Card>
+          <strong style={{ display: 'block', marginBottom: 10 }}>Defect register</strong>
+          <DefectTable
+            defects={projectDefects}
+            assetsById={assetsById}
+            onMarkRectified={markRectified}
+            onVerify={(defectId) => verifyDefect(defectId, {})}
+            onDelete={deleteDefect}
+          />
+        </Card>
+      )}
       {tab === TAB_QUOTE && <StubTab label="Quote" detail="Takeoff-from-plan and line-item quoting lands in phase 6." />}
       {tab === TAB_CERTS && <StubTab label="Cert packs" detail="Form 15, Form 16, AS 1851 baseline and install certification PDFs land in phase 7." />}
 
