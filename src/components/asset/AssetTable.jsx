@@ -1,22 +1,23 @@
 import { useMemo, useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
-import Button from '../common/Button';
-import SearchInput from '../common/SearchInput';
-import EmptyState from '../common/EmptyState';
-import { Boxes } from 'lucide-react';
+import { Pencil, Trash2, Boxes, Search, X } from 'lucide-react';
+import CalloutBalloon from '../draft/CalloutBalloon';
+import InkStamp from '../draft/InkStamp';
 import {
   ASSET_TYPES, ASSET_TYPE_LABELS,
   ASSET_STATUSES, ASSET_STATUS_LABELS,
   SUBSTRATE_LABELS,
 } from '../../utils/constants';
 
-const statusColour = {
-  [ASSET_STATUSES.PLANNED]:        { bg: 'var(--geist-bg-2)',                fg: 'var(--geist-fg-2)' },
-  [ASSET_STATUSES.INSTALLED]:      { bg: 'var(--geist-info-soft, #eff6ff)',  fg: 'var(--geist-info, #1d4ed8)' },
-  [ASSET_STATUSES.RECTIFICATION]:  { bg: 'var(--geist-warning-soft, #fffbeb)', fg: 'var(--geist-warning, #b45309)' },
-  [ASSET_STATUSES.CERTIFIED]:      { bg: 'var(--geist-success-soft, #f0fdf4)', fg: 'var(--geist-success, #15803d)' },
-  [ASSET_STATUSES.NONCONFORMANCE]: { bg: 'var(--geist-error-soft, #fef2f2)',  fg: 'var(--geist-error, #b91c1c)' },
-};
+function statusTone(status) {
+  switch (status) {
+    case ASSET_STATUSES.PLANNED:        return 'planned';
+    case ASSET_STATUSES.INSTALLED:      return 'installed';
+    case ASSET_STATUSES.RECTIFICATION:  return 'rectification';
+    case ASSET_STATUSES.CERTIFIED:      return 'certified';
+    case ASSET_STATUSES.NONCONFORMANCE: return 'nonconformance';
+    default:                            return 'draft';
+  }
+}
 
 export default function AssetTable({ assets, onEdit, onDelete }) {
   const [search, setSearch] = useState('');
@@ -37,91 +38,182 @@ export default function AssetTable({ assets, onEdit, onDelete }) {
 
   if (assets.length === 0) {
     return (
-      <EmptyState
-        icon={Boxes}
-        title="No assets yet"
-        description="Add the first asset (penetration, fire door, damper) to build the register."
-      />
+      <div style={emptyDraft}>
+        <Boxes size={20} color="var(--ink-4)" strokeWidth={2} />
+        <span style={{ marginLeft: 10 }}>no assets drawn yet, drop a pin on a plan or add manually</span>
+      </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <SearchInput value={search} onChange={setSearch} placeholder="Search tag, FRL, notes" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr auto', gap: 10, alignItems: 'center' }}>
+        <div style={searchWrap}>
+          <Search size={14} color="var(--ink-3)" style={{ marginRight: 8, flexShrink: 0 }} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="tag, FRL, notes"
+            style={searchInput}
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch('')} style={searchClear} aria-label="Clear">
+              <X size={12} />
+            </button>
+          )}
         </div>
         <select style={selectStyle} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-          <option value="all">All types</option>
+          <option value="all">ALL TYPES</option>
           {Object.values(ASSET_TYPES).map((t) => (
-            <option key={t} value={t}>{ASSET_TYPE_LABELS[t]}</option>
+            <option key={t} value={t}>{ASSET_TYPE_LABELS[t].toUpperCase()}</option>
           ))}
         </select>
         <select style={selectStyle} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="all">All statuses</option>
+          <option value="all">ALL STATUSES</option>
           {Object.values(ASSET_STATUSES).map((s) => (
-            <option key={s} value={s}>{ASSET_STATUS_LABELS[s]}</option>
+            <option key={s} value={s}>{ASSET_STATUS_LABELS[s].toUpperCase()}</option>
           ))}
         </select>
-        <span style={{ fontSize: 12, color: 'var(--geist-fg-4)' }}>{visible.length} of {assets.length}</span>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          letterSpacing: 'var(--tracking-label)',
+          textTransform: 'uppercase',
+          color: 'var(--ink-3)',
+          whiteSpace: 'nowrap',
+        }}>
+          {visible.length}/{assets.length}
+        </span>
       </div>
 
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ textAlign: 'left', color: 'var(--geist-fg-4)' }}>
-              <th style={th}>Tag</th>
-              <th style={th}>Type</th>
-              <th style={th}>Substrate</th>
-              <th style={th}>Required FRL</th>
-              <th style={th}>Achieved FRL</th>
-              <th style={th}>Status</th>
-              <th style={th} />
+            <tr>
+              {['Tag', 'Type', 'Substrate', 'Required FRL', 'Achieved FRL', 'Status', ''].map((h, i) => (
+                <th key={i} style={{
+                  ...th,
+                  textAlign: i === 6 ? 'right' : 'left',
+                }}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {visible.map((a) => {
-              const sc = statusColour[a.status] || statusColour[ASSET_STATUSES.PLANNED];
-              return (
-                <tr key={a.id} style={{ borderTop: '1px solid var(--geist-border)' }}>
-                  <td style={td}><code>{a.tag}</code></td>
-                  <td style={td}>{ASSET_TYPE_LABELS[a.assetType]}</td>
-                  <td style={td}>{a.substrate ? SUBSTRATE_LABELS[a.substrate] : '—'}</td>
-                  <td style={td}><code>{a.requiredFrl || '—'}</code></td>
-                  <td style={td}><code>{a.achievedFrl || '—'}</code></td>
-                  <td style={td}>
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 6,
-                      padding: '2px 8px', fontSize: 11, fontWeight: 600,
-                      borderRadius: 999, background: sc.bg, color: sc.fg,
-                    }}>
-                      {ASSET_STATUS_LABELS[a.status]}
-                    </span>
-                  </td>
-                  <td style={{ ...td, whiteSpace: 'nowrap' }}>
-                    <Button size="sm" variant="ghost" onClick={() => onEdit(a)}>
-                      <Pencil size={12} /> Edit
-                    </Button>{' '}
-                    <Button size="sm" variant="ghost" onClick={() => onDelete(a)}>
-                      <Trash2 size={12} /> Delete
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
+            {visible.map((a) => (
+              <tr key={a.id} className="xc-sched-row" style={{ cursor: 'default' }}>
+                <td style={td}><CalloutBalloon size="md">{a.tag}</CalloutBalloon></td>
+                <td style={tdMono}>{ASSET_TYPE_LABELS[a.assetType]}</td>
+                <td style={tdMono}>{a.substrate ? SUBSTRATE_LABELS[a.substrate] : '—'}</td>
+                <td style={tdMono}>{a.requiredFrl || '—'}</td>
+                <td style={tdMono}>{a.achievedFrl || '—'}</td>
+                <td style={td}>
+                  <InkStamp tone={statusTone(a.status)} size="sm" rotate={-2}>{a.status}</InkStamp>
+                </td>
+                <td style={{ ...td, whiteSpace: 'nowrap', textAlign: 'right' }}>
+                  <button type="button" onClick={() => onEdit(a)} style={iconBtn} aria-label="Edit">
+                    <Pencil size={12} />
+                  </button>
+                  {' '}
+                  <button type="button" onClick={() => onDelete(a)} style={{ ...iconBtn, color: 'var(--accent)', borderColor: 'var(--accent)' }} aria-label="Delete">
+                    <Trash2 size={12} />
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
+
+      <style>{`
+        .xc-sched-row { position: relative; }
+        .xc-sched-row::after {
+          content: "";
+          position: absolute;
+          left: 0; right: 100%; bottom: 0;
+          height: 1.5px;
+          background: var(--accent);
+          transition: right 220ms var(--geist-easing);
+        }
+        .xc-sched-row:hover::after { right: 0; }
+        .xc-sched-row:hover { background: rgba(200, 16, 46, 0.03) !important; }
+      `}</style>
     </div>
   );
 }
 
-const th = { padding: '6px 10px', fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 };
-const td = { padding: '8px 10px', verticalAlign: 'middle' };
-const selectStyle = {
-  padding: '6px 10px',
-  border: '1px solid var(--geist-border-strong)',
-  borderRadius: 4,
-  background: 'var(--geist-bg)',
+const th = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-3)',
+  fontWeight: 600,
+  padding: '10px 14px',
+  borderBottom: '1.5px solid var(--rule-ink)',
+  background: 'var(--paper-2)',
+};
+const td = {
+  padding: '12px 14px',
+  borderBottom: '1px solid var(--rule)',
+  verticalAlign: 'middle',
+};
+const tdMono = {
+  ...td,
+  fontFamily: 'var(--font-mono)',
   fontSize: 12,
+  letterSpacing: '0.04em',
+  color: 'var(--ink-2)',
+};
+const searchWrap = {
+  display: 'flex',
+  alignItems: 'center',
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  padding: '8px 10px',
+};
+const searchInput = {
+  flex: 1,
+  border: 'none',
+  outline: 'none',
+  background: 'transparent',
+  fontSize: 13,
+  color: 'var(--ink)',
+  fontFamily: 'var(--font-mono)',
+  letterSpacing: '0.04em',
+};
+const searchClear = {
+  background: 'transparent',
+  border: 'none',
+  color: 'var(--ink-4)',
+  cursor: 'pointer',
+  padding: 4,
+};
+const selectStyle = {
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  padding: '8px 10px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink)',
+  appearance: 'none',
+};
+const iconBtn = {
+  background: 'transparent',
+  border: '1px solid var(--rule-strong)',
+  padding: '5px 8px',
+  cursor: 'pointer',
+  color: 'var(--ink-3)',
+  display: 'inline-flex',
+  alignItems: 'center',
+};
+const emptyDraft = {
+  padding: '40px 20px',
+  textAlign: 'center',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-4)',
 };

@@ -1,25 +1,29 @@
 import { useMemo, useState } from 'react';
-import { Bug, CheckCheck, ShieldCheck } from 'lucide-react';
-import Button from '../common/Button';
-import SearchInput from '../common/SearchInput';
-import EmptyState from '../common/EmptyState';
+import { Bug, CheckCheck, ShieldCheck, Search, X } from 'lucide-react';
+import CalloutBalloon from '../draft/CalloutBalloon';
+import InkStamp from '../draft/InkStamp';
 import {
   DEFECT_CLASS_LABELS,
 } from '../../utils/constants';
 import { formatDate } from '../../utils/formatters';
 
-const SEVERITY_PALETTE = {
-  A: { bg: 'var(--geist-error-soft, #fef2f2)',   fg: 'var(--geist-error, #b91c1c)' },
-  B: { bg: 'var(--geist-warning-soft, #fffbeb)', fg: 'var(--geist-warning, #b45309)' },
-  C: { bg: 'var(--geist-bg-2)',                  fg: 'var(--geist-fg-2)' },
-};
+function severityTone(s) {
+  switch (s) {
+    case 'A': return 'nonconformance';
+    case 'B': return 'rectification';
+    case 'C': return 'planned';
+    default:  return 'draft';
+  }
+}
 
-const STATUS_PALETTE = {
-  open:        { bg: 'var(--geist-error-soft, #fef2f2)',   fg: 'var(--geist-error, #b91c1c)' },
-  in_progress: { bg: 'var(--geist-warning-soft, #fffbeb)', fg: 'var(--geist-warning, #b45309)' },
-  rectified:   { bg: 'var(--geist-info-soft, #eff6ff)',    fg: 'var(--geist-info, #1d4ed8)' },
-  verified:    { bg: 'var(--geist-success-soft, #f0fdf4)', fg: 'var(--geist-success, #15803d)' },
-};
+function statusTone(s) {
+  switch (s) {
+    case 'open':        return 'nonconformance';
+    case 'rectified':   return 'installed';
+    case 'verified':    return 'certified';
+    default:            return 'draft';
+  }
+}
 
 export default function DefectTable({
   defects, assetsById, onMarkRectified, onVerify, onDelete,
@@ -42,110 +46,145 @@ export default function DefectTable({
 
   if (defects.length === 0) {
     return (
-      <EmptyState
-        icon={ShieldCheck}
-        title="No defects raised"
-        description="When inspections fail, defects land here with their AS 1851 class A/B/C and rectification due date."
-      />
+      <div style={emptyDraft}>
+        <ShieldCheck size={20} color="var(--ink-4)" strokeWidth={2} />
+        <span style={{ marginLeft: 10 }}>no defects raised. clean register.</span>
+      </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <SearchInput value={search} onChange={setSearch} placeholder="Search tag, description, notes" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr auto', gap: 10, alignItems: 'center' }}>
+        <div style={searchWrap}>
+          <Search size={14} color="var(--ink-3)" style={{ marginRight: 8 }} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="tag, description, notes"
+            style={searchInput}
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch('')} style={searchClear}>
+              <X size={12} />
+            </button>
+          )}
         </div>
         <select style={selectStyle} value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)}>
-          <option value="all">All classes</option>
+          <option value="all">ALL CLASSES</option>
           {Object.entries(DEFECT_CLASS_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
+            <option key={k} value={k}>{v.toUpperCase()}</option>
           ))}
         </select>
         <select style={selectStyle} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="all">All statuses</option>
-          <option value="open">Open</option>
-          <option value="rectified">Rectified</option>
-          <option value="verified">Verified</option>
+          <option value="all">ALL STATUSES</option>
+          <option value="open">OPEN</option>
+          <option value="rectified">RECTIFIED</option>
+          <option value="verified">VERIFIED</option>
         </select>
-        <span style={{ fontSize: 12, color: 'var(--geist-fg-4)' }}>{visible.length} of {defects.length}</span>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          letterSpacing: 'var(--tracking-label)',
+          textTransform: 'uppercase',
+          color: 'var(--ink-3)',
+          whiteSpace: 'nowrap',
+        }}>
+          {visible.length}/{defects.length}
+        </span>
       </div>
 
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
-            <tr style={{ textAlign: 'left', color: 'var(--geist-fg-4)' }}>
-              <th style={th}>Asset</th>
-              <th style={th}>Class</th>
-              <th style={th}>Description</th>
-              <th style={th}>Raised</th>
-              <th style={th}>Due</th>
-              <th style={th}>Status</th>
-              <th style={th} aria-label="Actions" />
+            <tr>
+              {['Asset', 'Class', 'Description', 'Raised', 'Due', 'Status', ''].map((h, i) => (
+                <th key={i} style={th}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {visible.map((d) => {
               const asset = assetsById[d.assetId];
-              const sev = SEVERITY_PALETTE[d.severity] || SEVERITY_PALETTE.B;
-              const stat = STATUS_PALETTE[d.status] || STATUS_PALETTE.open;
               const overdue = d.status !== 'verified' && d.rectificationDueDate && new Date(d.rectificationDueDate) < new Date();
               return (
-                <tr key={d.id} style={{ borderTop: '1px solid var(--geist-border)' }}>
-                  <td style={td}><code>{asset?.tag || d.assetId.slice(0, 8)}</code></td>
+                <tr key={d.id} className="xc-sched-row">
                   <td style={td}>
-                    <Chip bg={sev.bg} fg={sev.fg}>Class {d.severity}</Chip>
+                    <CalloutBalloon size="md">{asset?.tag || d.assetId.slice(0, 8)}</CalloutBalloon>
                   </td>
                   <td style={td}>
-                    <div>{d.description || '—'}</div>
+                    <InkStamp tone={severityTone(d.severity)} size="sm" rotate={-3}>
+                      class {d.severity}
+                    </InkStamp>
+                  </td>
+                  <td style={td}>
+                    <div style={{ color: 'var(--ink)' }}>{d.description || '—'}</div>
                     {d.rectifiedNotes && (
-                      <div style={{ fontSize: 11, color: 'var(--geist-fg-4)', marginTop: 2 }}>
-                        Rectified: {d.rectifiedNotes}
+                      <div style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 10,
+                        color: 'var(--ink-3)',
+                        letterSpacing: '0.04em',
+                        marginTop: 4,
+                      }}>
+                        ▸ rectified: {d.rectifiedNotes}
                       </div>
                     )}
                   </td>
-                  <td style={td}>{formatDate(d.raisedAt)}</td>
-                  <td style={td}>
+                  <td style={tdMono}>{formatDate(d.raisedAt)}</td>
+                  <td style={{ ...tdMono, color: overdue ? 'var(--accent)' : 'var(--ink-2)' }}>
                     {d.rectificationDueDate ? (
-                      <span style={{ color: overdue ? 'var(--geist-error, #b91c1c)' : 'var(--geist-fg)' }}>
+                      <>
                         {formatDate(d.rectificationDueDate)}
-                        {overdue && ' (overdue)'}
-                      </span>
+                        {overdue && (
+                          <div style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 9,
+                            letterSpacing: 'var(--tracking-label)',
+                            textTransform: 'uppercase',
+                            color: 'var(--accent)',
+                            marginTop: 2,
+                            fontWeight: 600,
+                          }}>
+                            overdue
+                          </div>
+                        )}
+                      </>
                     ) : '—'}
                   </td>
                   <td style={td}>
-                    <Chip bg={stat.bg} fg={stat.fg}>{d.status}</Chip>
+                    <InkStamp tone={statusTone(d.status)} size="sm" rotate={-2}>{d.status}</InkStamp>
                   </td>
-                  <td style={{ ...td, whiteSpace: 'nowrap' }}>
+                  <td style={{ ...td, whiteSpace: 'nowrap', textAlign: 'right' }}>
                     {d.status === 'open' && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <button
+                        type="button"
                         onClick={async () => {
                           const note = window.prompt('Rectification note (what was done):');
                           if (note === null) return;
                           await onMarkRectified(d.id, { rectifiedNotes: note });
                         }}
+                        style={ghostBtn}
                       >
-                        <Bug size={12} /> Mark rectified
-                      </Button>
+                        <Bug size={11} /> rectify
+                      </button>
                     )}
                     {d.status === 'rectified' && (
-                      <Button size="sm" variant="ghost" onClick={() => onVerify(d.id)}>
-                        <CheckCheck size={12} /> Verify
-                      </Button>
+                      <button type="button" onClick={() => onVerify(d.id)} style={inkBtn}>
+                        <CheckCheck size={11} /> verify
+                      </button>
                     )}
                     {' '}
-                    <Button
-                      size="sm"
-                      variant="ghost"
+                    <button
+                      type="button"
                       onClick={async () => {
                         if (!window.confirm('Delete this defect record?')) return;
                         await onDelete(d.id);
                       }}
+                      style={{ ...ghostBtn, color: 'var(--accent)', borderColor: 'var(--accent)' }}
                     >
-                      Delete
-                    </Button>
+                      delete
+                    </button>
                   </td>
                 </tr>
               );
@@ -153,28 +192,115 @@ export default function DefectTable({
           </tbody>
         </table>
       </div>
+
+      <style>{`
+        .xc-sched-row { position: relative; }
+        .xc-sched-row::after {
+          content: "";
+          position: absolute;
+          left: 0; right: 100%; bottom: 0;
+          height: 1.5px;
+          background: var(--accent);
+          transition: right 220ms var(--geist-easing);
+        }
+        .xc-sched-row:hover::after { right: 0; }
+        .xc-sched-row:hover { background: rgba(200, 16, 46, 0.03) !important; }
+      `}</style>
     </div>
   );
 }
 
-function Chip({ bg, fg, children }) {
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 4,
-      padding: '2px 8px', fontSize: 11, fontWeight: 600,
-      borderRadius: 999, background: bg, color: fg,
-    }}>
-      {children}
-    </span>
-  );
-}
-
-const selectStyle = {
-  padding: '6px 10px',
-  border: '1px solid var(--geist-border-strong)',
-  borderRadius: 4,
-  background: 'var(--geist-bg)',
-  fontSize: 12,
+const th = {
+  textAlign: 'left',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-3)',
+  fontWeight: 600,
+  padding: '10px 14px',
+  borderBottom: '1.5px solid var(--rule-ink)',
+  background: 'var(--paper-2)',
 };
-const th = { padding: '6px 10px', fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 };
-const td = { padding: '8px 10px', verticalAlign: 'middle' };
+const td = {
+  padding: '12px 14px',
+  borderBottom: '1px solid var(--rule)',
+  verticalAlign: 'middle',
+};
+const tdMono = {
+  ...td,
+  fontFamily: 'var(--font-mono)',
+  fontSize: 12,
+  letterSpacing: '0.04em',
+};
+const searchWrap = {
+  display: 'flex',
+  alignItems: 'center',
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  padding: '8px 10px',
+};
+const searchInput = {
+  flex: 1,
+  border: 'none',
+  outline: 'none',
+  background: 'transparent',
+  fontSize: 13,
+  color: 'var(--ink)',
+  fontFamily: 'var(--font-mono)',
+  letterSpacing: '0.04em',
+};
+const searchClear = {
+  background: 'transparent',
+  border: 'none',
+  color: 'var(--ink-4)',
+  cursor: 'pointer',
+  padding: 4,
+};
+const selectStyle = {
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  padding: '8px 10px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink)',
+};
+const inkBtn = {
+  background: 'var(--ink)',
+  color: 'var(--paper-1)',
+  border: '1px solid var(--ink)',
+  padding: '6px 10px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 5,
+};
+const ghostBtn = {
+  background: 'transparent',
+  color: 'var(--ink-2)',
+  border: '1px solid var(--rule-strong)',
+  padding: '6px 10px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 5,
+};
+const emptyDraft = {
+  padding: '40px 20px',
+  textAlign: 'center',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-4)',
+};

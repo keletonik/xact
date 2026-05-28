@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Upload, Plus, Trash2 } from 'lucide-react';
-import Card from '../components/common/Card';
-import Button from '../components/common/Button';
+import PaperCard from '../components/draft/PaperCard';
 import FormField from '../components/common/FormField';
 import { useTheme } from '../hooks/useTheme';
 import { putBlob, getBlob } from '../services/db';
@@ -66,33 +65,43 @@ export default function Settings() {
   };
 
   return (
-    <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <h1 style={{ margin: 0, fontSize: 22 }}>Settings</h1>
+    <div className="xc-stagger" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <section style={{ borderBottom: '1.5px solid var(--rule-ink)', paddingBottom: 14 }}>
+        <div className="xc-stamp" style={{ marginBottom: 6 }}>system · settings</div>
+        <h1 className="xc-display-italic" style={{ margin: 0, fontSize: 48, lineHeight: 1 }}>
+          Cert pack branding
+        </h1>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 12 }}>
+          company name · default FRL · logo · signatory roster · theme
+        </p>
+      </section>
 
-      <Card>
-        <strong>Company</strong>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
-          <FormField label="Company name (printed on cert packs)">
+      <PaperCard title="company" meta="printed on every cert pack">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <FormField label="Company name">
             <input style={inputStyle} value={company} onChange={(e) => setCompany(e.target.value)} />
           </FormField>
-          <FormField label="Default required FRL">
+          <FormField label="Default required FRL" help="format: -/120/120">
             <input style={inputStyle} value={defaultFrl} onChange={(e) => setDefaultFrl(e.target.value)} placeholder="-/120/120" />
           </FormField>
-          <FormField label="Company logo (used in cert pack header)">
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <FormField label="Company logo (cert pack header)">
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               {logoUrl ? (
                 <img
                   src={logoUrl}
                   alt="Company logo"
-                  style={{ height: 48, border: '1px solid var(--geist-border)', borderRadius: 4, background: '#fff', padding: 4 }}
+                  style={{ height: 52, border: '1px solid var(--rule-strong)', background: '#fff', padding: 6 }}
                 />
               ) : (
                 <div style={{
-                  height: 48, width: 90,
-                  border: '1px dashed var(--geist-border-strong)',
-                  borderRadius: 4,
+                  height: 52, width: 100,
+                  border: '1px dashed var(--rule-strong)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--geist-fg-4)', fontSize: 11,
+                  color: 'var(--ink-4)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  letterSpacing: 'var(--tracking-label)',
+                  textTransform: 'uppercase',
                 }}>
                   no logo
                 </div>
@@ -104,85 +113,123 @@ export default function Settings() {
                   style={{ display: 'none' }}
                   onChange={(e) => handleLogo(e.target.files?.[0])}
                 />
-                <span style={pillBtn}>
-                  <Upload size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                  Upload
+                <span style={ghostBtn}>
+                  <Upload size={11} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                  upload
                 </span>
               </label>
               {logoUrl && (
-                <Button size="sm" variant="ghost" onClick={removeLogo}>
-                  Remove
-                </Button>
+                <button type="button" onClick={removeLogo} style={{ ...ghostBtn, color: 'var(--accent)', borderColor: 'var(--accent)' }}>
+                  remove
+                </button>
               )}
             </div>
           </FormField>
           <div>
-            <Button onClick={saveCompany}>Save</Button>
+            <button type="button" onClick={saveCompany} style={inkBtn}>save</button>
           </div>
         </div>
-      </Card>
+      </PaperCard>
 
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <strong>Signatory roster (cert pack signature page)</strong>
-          <Button size="sm" onClick={addSignatory}>
-            <Plus size={12} /> Add signatory
-          </Button>
-        </div>
+      <PaperCard
+        title="signatory roster"
+        meta={
+          <button type="button" onClick={addSignatory} style={inkBtn}>
+            <Plus size={11} /> add signatory
+          </button>
+        }
+      >
         {roster.length === 0 ? (
-          <p style={{ fontSize: 12, color: 'var(--geist-fg-4)', marginTop: 8 }}>
-            Empty roster: cert packs print blank installer / supervisor / certifier signature blocks.
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-4)', letterSpacing: '0.04em', margin: 0 }}>
+            empty roster, cert packs print blank installer / supervisor / certifier signature blocks
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {roster.map((r, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 6, alignItems: 'center' }}>
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr auto', gap: 8, alignItems: 'center' }}>
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  letterSpacing: 'var(--tracking-label)',
+                  color: 'var(--ink-4)',
+                }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
                 <input style={inputStyle} value={r.name} onChange={(e) => updateSignatory(i, { name: e.target.value })} placeholder="Name" />
                 <input style={inputStyle} value={r.role} onChange={(e) => updateSignatory(i, { role: e.target.value })} placeholder="Role (e.g. Supervisor)" />
-                <button type="button" onClick={() => removeSignatory(i)} style={iconBtn} aria-label="Remove signatory">
-                  <Trash2 size={14} />
+                <button type="button" onClick={() => removeSignatory(i)} style={iconBtn} aria-label="Remove">
+                  <Trash2 size={12} />
                 </button>
               </div>
             ))}
           </div>
         )}
-      </Card>
+      </PaperCard>
 
-      <Card>
-        <strong>Appearance</strong>
-        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-          <Button variant={theme === 'light' ? 'primary' : 'ghost'} onClick={() => setTheme('light')}>Light</Button>
-          <Button variant={theme === 'dark'  ? 'primary' : 'ghost'} onClick={() => setTheme('dark')}>Dark</Button>
+      <PaperCard title="appearance" meta="paper or board">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            onClick={() => setTheme('light')}
+            style={theme === 'light' ? inkBtn : ghostBtn}
+          >
+            paper (light)
+          </button>
+          <button
+            type="button"
+            onClick={() => setTheme('dark')}
+            style={theme === 'dark' ? inkBtn : ghostBtn}
+          >
+            board (dark)
+          </button>
         </div>
-      </Card>
+      </PaperCard>
     </div>
   );
 }
 
 const inputStyle = {
-  padding: '8px 10px',
-  border: '1px solid var(--geist-border-strong)',
-  borderRadius: 4,
-  background: 'var(--geist-bg)',
-  color: 'var(--geist-fg)',
-  fontSize: 13,
   width: '100%',
-  boxSizing: 'border-box',
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  padding: '10px 12px',
+  fontFamily: 'var(--font-sans)',
+  fontSize: 14,
+  color: 'var(--ink)',
 };
-const pillBtn = {
-  padding: '6px 12px',
-  border: '1px solid var(--geist-border-strong)',
-  borderRadius: 4,
-  background: 'var(--geist-bg)',
-  color: 'var(--geist-fg-2)',
-  fontSize: 12,
-  display: 'inline-block',
+const inkBtn = {
+  background: 'var(--ink)',
+  color: 'var(--paper-1)',
+  border: '1px solid var(--ink)',
+  padding: '8px 14px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 5,
+};
+const ghostBtn = {
+  background: 'transparent',
+  color: 'var(--ink-2)',
+  border: '1px solid var(--rule-strong)',
+  padding: '8px 14px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 5,
 };
 const iconBtn = {
   background: 'transparent',
-  border: '1px solid var(--geist-border)',
-  borderRadius: 4,
-  padding: 6,
+  border: '1px solid var(--rule-strong)',
+  padding: '8px 10px',
   cursor: 'pointer',
-  color: 'var(--geist-fg-3)',
+  color: 'var(--accent)',
+  borderColor: 'var(--accent)',
 };

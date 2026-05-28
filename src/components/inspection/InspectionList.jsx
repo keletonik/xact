@@ -1,13 +1,21 @@
 import { useMemo, useState } from 'react';
 import { Plus, ClipboardCheck, Play, Trash2 } from 'lucide-react';
-import Button from '../common/Button';
-import EmptyState from '../common/EmptyState';
-import FormField from '../common/FormField';
 import Modal from '../common/Modal';
+import FormField from '../common/FormField';
+import InkStamp from '../draft/InkStamp';
 import {
   INSPECTION_FREQUENCIES, INSPECTION_FREQUENCY_LABELS,
 } from '../../utils/constants';
 import { formatDate } from '../../utils/formatters';
+
+function statusTone(s) {
+  switch (s) {
+    case 'scheduled':   return 'draft';
+    case 'in_progress': return 'rectification';
+    case 'completed':   return 'certified';
+    default:            return 'planned';
+  }
+}
 
 export default function InspectionList({
   inspections, results, onSchedule, onPerform, onCancel,
@@ -27,31 +35,35 @@ export default function InspectionList({
   }, [inspections]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <strong>AS 1851 inspections</strong>
-        <Button size="sm" onClick={() => setShowSchedule(true)}>
-          <Plus size={12} /> Schedule inspection
-        </Button>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          letterSpacing: 'var(--tracking-label)',
+          textTransform: 'uppercase',
+          color: 'var(--ink-3)',
+        }}>
+          AS 1851 inspection schedule
+        </span>
+        <button type="button" onClick={() => setShowSchedule(true)} style={inkBtn}>
+          <Plus size={11} /> schedule
+        </button>
       </div>
 
       {sorted.length === 0 ? (
-        <EmptyState
-          icon={ClipboardCheck}
-          title="No inspections yet"
-          description="Schedule a baseline survey or routine inspection to walk the asset register."
-        />
+        <div style={emptyDraft}>
+          <ClipboardCheck size={20} color="var(--ink-4)" strokeWidth={2} />
+          <span style={{ marginLeft: 10 }}>no inspections scheduled. start a baseline or annual cycle.</span>
+        </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ textAlign: 'left', color: 'var(--geist-fg-4)' }}>
-                <th style={th}>Frequency</th>
-                <th style={th}>Scheduled</th>
-                <th style={th}>Performed</th>
-                <th style={th}>Result</th>
-                <th style={th}>Status</th>
-                <th style={th} aria-label="Actions" />
+              <tr>
+                {['Frequency', 'Scheduled', 'Performed', 'Result', 'Status', ''].map((h, i) => (
+                  <th key={i} style={th}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -59,35 +71,54 @@ export default function InspectionList({
                 const rs = results[i.id] || [];
                 const fails = rs.filter((r) => r.result === 'fail').length;
                 return (
-                  <tr key={i.id} style={{ borderTop: '1px solid var(--geist-border)' }}>
-                    <td style={td}>{INSPECTION_FREQUENCY_LABELS[i.frequency]}</td>
-                    <td style={td}>{i.scheduledDate ? formatDate(i.scheduledDate) : '—'}</td>
-                    <td style={td}>{i.performedDate ? formatDate(i.performedDate) : '—'}</td>
+                  <tr key={i.id} className="xc-sched-row">
                     <td style={td}>
-                      {rs.length === 0 ? '—' : `${rs.length - fails} pass / ${fails} fail`}
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 12,
+                        letterSpacing: 'var(--tracking-label)',
+                        textTransform: 'uppercase',
+                        color: 'var(--ink)',
+                        fontWeight: 500,
+                      }}>
+                        {INSPECTION_FREQUENCY_LABELS[i.frequency]}
+                      </span>
+                    </td>
+                    <td style={tdMono}>{i.scheduledDate ? formatDate(i.scheduledDate) : '—'}</td>
+                    <td style={tdMono}>{i.performedDate ? formatDate(i.performedDate) : '—'}</td>
+                    <td style={tdMono}>
+                      {rs.length === 0 ? '—' : (
+                        <span>
+                          <span style={{ color: 'var(--status-certified-ink)' }}>{rs.length - fails}</span>
+                          <span style={{ color: 'var(--ink-4)' }}> / </span>
+                          <span style={{ color: 'var(--accent)' }}>{fails}</span>
+                        </span>
+                      )}
                     </td>
                     <td style={td}>
-                      <StatusPill status={i.status} />
+                      <InkStamp tone={statusTone(i.status)} size="sm" rotate={-2}>
+                        {i.status.replace('_', ' ')}
+                      </InkStamp>
                     </td>
-                    <td style={{ ...td, whiteSpace: 'nowrap' }}>
+                    <td style={{ ...td, whiteSpace: 'nowrap', textAlign: 'right' }}>
                       {i.status !== 'completed' && (
-                        <Button size="sm" variant="ghost" onClick={() => onPerform(i)}>
-                          <Play size={12} /> Walk
-                        </Button>
+                        <button type="button" onClick={() => onPerform(i)} style={inkBtn}>
+                          <Play size={11} /> walk
+                        </button>
                       )}
                       {i.status !== 'completed' && (
                         <>
                           {' '}
-                          <Button
-                            size="sm"
-                            variant="ghost"
+                          <button
+                            type="button"
                             onClick={async () => {
                               if (!window.confirm('Cancel this inspection?')) return;
                               await onCancel(i.id);
                             }}
+                            style={{ ...ghostBtn, color: 'var(--accent)', borderColor: 'var(--accent)' }}
                           >
-                            <Trash2 size={12} /> Cancel
-                          </Button>
+                            <Trash2 size={11} /> cancel
+                          </button>
                         </>
                       )}
                     </td>
@@ -108,6 +139,20 @@ export default function InspectionList({
           }}
         />
       )}
+
+      <style>{`
+        .xc-sched-row { position: relative; }
+        .xc-sched-row::after {
+          content: "";
+          position: absolute;
+          left: 0; right: 100%; bottom: 0;
+          height: 1.5px;
+          background: var(--accent);
+          transition: right 220ms var(--geist-easing);
+        }
+        .xc-sched-row:hover::after { right: 0; }
+        .xc-sched-row:hover { background: rgba(200, 16, 46, 0.03) !important; }
+      `}</style>
     </div>
   );
 }
@@ -123,56 +168,87 @@ function ScheduleModal({ onClose, onSchedule }) {
   };
 
   return (
-    <Modal isOpen onClose={onClose} title="Schedule inspection">
-      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <Modal isOpen onClose={onClose} title="Schedule inspection" subtitle="AS 1851 § 16, 17, 18">
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <FormField label="Frequency" required>
-          <select style={inputStyle} value={frequency} onChange={(e) => setFrequency(e.target.value)}>
+          <select style={modalInput} value={frequency} onChange={(e) => setFrequency(e.target.value)}>
             {Object.values(INSPECTION_FREQUENCIES).map((f) => (
               <option key={f} value={f}>{INSPECTION_FREQUENCY_LABELS[f]}</option>
             ))}
           </select>
         </FormField>
         <FormField label="Scheduled date">
-          <input style={inputStyle} type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+          <input style={modalInput} type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
         </FormField>
         <FormField label="Notes">
-          <input style={inputStyle} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
+          <input style={modalInput} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" />
         </FormField>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <Button variant="ghost" type="button" onClick={onClose}>Cancel</Button>
-          <Button type="submit">Schedule</Button>
+          <button type="button" onClick={onClose} style={ghostBtn}>cancel</button>
+          <button type="submit" style={inkBtn}>schedule</button>
         </div>
       </form>
     </Modal>
   );
 }
 
-function StatusPill({ status }) {
-  const palette = {
-    scheduled:   { bg: 'var(--geist-bg-2)',                  fg: 'var(--geist-fg-2)' },
-    in_progress: { bg: 'var(--geist-warning-soft, #fffbeb)', fg: 'var(--geist-warning, #b45309)' },
-    completed:   { bg: 'var(--geist-success-soft, #f0fdf4)', fg: 'var(--geist-success, #15803d)' },
-  };
-  const c = palette[status] || palette.scheduled;
-  return (
-    <span style={{
-      padding: '2px 8px', fontSize: 11, fontWeight: 600,
-      borderRadius: 999, background: c.bg, color: c.fg,
-    }}>
-      {status.replace('_', ' ')}
-    </span>
-  );
-}
-
-const inputStyle = {
-  padding: '8px 10px',
-  border: '1px solid var(--geist-border-strong)',
-  borderRadius: 4,
-  background: 'var(--geist-bg)',
-  color: 'var(--geist-fg)',
-  fontSize: 13,
-  width: '100%',
-  boxSizing: 'border-box',
+const th = {
+  textAlign: 'left',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-3)',
+  fontWeight: 600,
+  padding: '10px 14px',
+  borderBottom: '1.5px solid var(--rule-ink)',
+  background: 'var(--paper-2)',
 };
-const th = { padding: '6px 10px', fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 };
-const td = { padding: '8px 10px', verticalAlign: 'middle' };
+const td = { padding: '12px 14px', borderBottom: '1px solid var(--rule)', verticalAlign: 'middle' };
+const tdMono = { ...td, fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.04em', color: 'var(--ink-2)' };
+const modalInput = {
+  width: '100%',
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  padding: '10px 12px',
+  fontFamily: 'var(--font-sans)',
+  fontSize: 14,
+  color: 'var(--ink)',
+};
+const inkBtn = {
+  background: 'var(--ink)',
+  color: 'var(--paper-1)',
+  border: '1px solid var(--ink)',
+  padding: '7px 12px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 5,
+};
+const ghostBtn = {
+  background: 'transparent',
+  color: 'var(--ink-2)',
+  border: '1px solid var(--rule-strong)',
+  padding: '7px 12px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 5,
+};
+const emptyDraft = {
+  padding: '40px 20px',
+  textAlign: 'center',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-4)',
+};

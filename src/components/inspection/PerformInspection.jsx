@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Check, X, AlertCircle, Save, ArrowLeft } from 'lucide-react';
-import Card from '../common/Card';
-import Button from '../common/Button';
+import PaperCard from '../draft/PaperCard';
+import CalloutBalloon from '../draft/CalloutBalloon';
 import FormField from '../common/FormField';
 import {
   ASSET_TYPE_LABELS, SUBSTRATE_LABELS,
@@ -10,14 +10,10 @@ import {
 } from '../../utils/constants';
 
 /**
- * Walk every asset in the project for an inspection, capture pass /
- * fail / na per asset, and a defect class plus note on fail.
- *
- * No partial save: the form gathers all results in memory and writes
- * one inspection on Save so the audit trail and defect raising stay
- * atomic. For a partial walk, the user marks remaining items as
- * pending in their own session and re-enters later (defect can be
- * raised manually in the meantime).
+ * The walk-the-register inspection sheet. Drafted as a single
+ * compliance log: scheduled date + notes at top, every asset row
+ * carries pass/fail/N/A radios, a defect-class selector, and a
+ * required note on fail. Save commits the entire log atomically.
  */
 export default function PerformInspection({ inspection, assets, onCancel, onSave }) {
   const [results, setResults] = useState(() => {
@@ -46,16 +42,15 @@ export default function PerformInspection({ inspection, assets, onCancel, onSave
     e.preventDefault();
     setError(null);
     if (summary.pending > 0) {
-      return setError(`${summary.pending} asset${summary.pending === 1 ? '' : 's'} still pending. Mark each pass, fail, or N/A.`);
+      return setError(`${summary.pending} asset${summary.pending === 1 ? '' : 's'} still pending. mark each pass, fail, or N/A.`);
     }
     const failWithoutNote = assets.find((a) => {
       const r = results[a.id];
       return r.result === 'fail' && !r.notes.trim();
     });
     if (failWithoutNote) {
-      return setError(`Asset ${failWithoutNote.tag} marked fail but has no defect description.`);
+      return setError(`asset ${failWithoutNote.tag} marked fail but has no defect description.`);
     }
-
     setSaving(true);
     try {
       await onSave({
@@ -69,78 +64,74 @@ export default function PerformInspection({ inspection, assets, onCancel, onSave
         })),
       });
     } catch (err) {
-      setError(err.message || 'Save failed');
+      setError(err.message || 'save failed');
       setSaving(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <Button variant="ghost" size="sm" onClick={onCancel}>
-        <ArrowLeft size={12} /> Back to inspections
-      </Button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <button type="button" onClick={onCancel} style={crumbBtn}>
+        <ArrowLeft size={11} /> back to inspections
+      </button>
 
-      <Card>
+      <PaperCard
+        title={`${INSPECTION_FREQUENCY_LABELS[inspection.frequency]} inspection`}
+        meta={`scheduled ${inspection.scheduledDate || '—'}`}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <strong>{INSPECTION_FREQUENCY_LABELS[inspection.frequency]} inspection</strong>
-            <div style={{ fontSize: 12, color: 'var(--geist-fg-4)', marginTop: 2 }}>
-              Scheduled {inspection.scheduledDate || '—'}
-            </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: 'var(--tracking-label)', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
+            walk the asset register
           </div>
-          <div style={{ display: 'flex', gap: 12, fontSize: 12, alignItems: 'center' }}>
-            <Tally label="pass" value={summary.pass} colour="var(--geist-success, #15803d)" />
-            <Tally label="fail" value={summary.fail} colour="var(--geist-error, #b91c1c)" />
-            <Tally label="N/A"  value={summary.na} colour="var(--geist-fg-4)" />
-            <Tally label="pending" value={summary.pending} colour="var(--geist-warning, #b45309)" />
+          <div style={{ display: 'flex', gap: 14, fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+            <Tally label="pass" value={summary.pass} colour="var(--status-certified-ink)" />
+            <Tally label="fail" value={summary.fail} colour="var(--accent)" />
+            <Tally label="N/A"  value={summary.na} colour="var(--ink-4)" />
+            <Tally label="pending" value={summary.pending} colour="var(--status-rectification-ink)" />
           </div>
         </div>
-      </Card>
+      </PaperCard>
 
-      <Card>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <PaperCard title="inspection log">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 14 }}>
           <FormField label="Performed date">
-            <input style={inputStyle} type="date" value={performedDate} onChange={(e) => setPerformedDate(e.target.value)} />
+            <input style={modalInput} type="date" value={performedDate} onChange={(e) => setPerformedDate(e.target.value)} />
           </FormField>
           <FormField label="Inspection notes">
-            <input style={inputStyle} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional overall note" />
+            <input style={modalInput} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional overall note" />
           </FormField>
         </div>
-      </Card>
+      </PaperCard>
 
-      <Card>
+      <PaperCard title="asset results" noPad>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ textAlign: 'left', color: 'var(--geist-fg-4)' }}>
-                <th style={th}>Tag</th>
-                <th style={th}>Type</th>
-                <th style={th}>Substrate</th>
-                <th style={th}>FRL</th>
-                <th style={th}>Result</th>
-                <th style={th}>Class</th>
-                <th style={th}>Notes</th>
+              <tr>
+                {['Tag', 'Type', 'Substrate', 'FRL', 'Result', 'Class', 'Defect note'].map((h, i) => (
+                  <th key={i} style={th}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {assets.map((a) => {
                 const r = results[a.id];
                 return (
-                  <tr key={a.id} style={{ borderTop: '1px solid var(--geist-border)' }}>
-                    <td style={td}><code>{a.tag}</code></td>
-                    <td style={td}>{ASSET_TYPE_LABELS[a.assetType]}</td>
-                    <td style={td}>{a.substrate ? SUBSTRATE_LABELS[a.substrate] : '—'}</td>
-                    <td style={td}><code>{a.achievedFrl || a.requiredFrl || '—'}</code></td>
+                  <tr key={a.id} style={{ borderTop: '1px solid var(--rule)' }}>
+                    <td style={td}><CalloutBalloon size="md">{a.tag}</CalloutBalloon></td>
+                    <td style={tdMono}>{ASSET_TYPE_LABELS[a.assetType]}</td>
+                    <td style={tdMono}>{a.substrate ? SUBSTRATE_LABELS[a.substrate] : '—'}</td>
+                    <td style={tdMono}>{a.achievedFrl || a.requiredFrl || '—'}</td>
                     <td style={td}>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <ResultButton current={r.result} value="pass" onClick={() => update(a.id, { result: 'pass' })} icon={Check}      label="Pass" colour="var(--geist-success, #15803d)" />
-                        <ResultButton current={r.result} value="fail" onClick={() => update(a.id, { result: 'fail' })} icon={X}          label="Fail" colour="var(--geist-error, #b91c1c)"  />
-                        <ResultButton current={r.result} value="na"   onClick={() => update(a.id, { result: 'na' })}   icon={AlertCircle} label="N/A"  colour="var(--geist-fg-3)" />
+                        <ResultButton current={r.result} value="pass" onClick={() => update(a.id, { result: 'pass' })} icon={Check}      label="Pass" colour="var(--status-certified-ink)" />
+                        <ResultButton current={r.result} value="fail" onClick={() => update(a.id, { result: 'fail' })} icon={X}          label="Fail" colour="var(--accent)"  />
+                        <ResultButton current={r.result} value="na"   onClick={() => update(a.id, { result: 'na' })}   icon={AlertCircle} label="N/A"  colour="var(--ink-3)" />
                       </div>
                     </td>
                     <td style={td}>
                       <select
-                        style={{ ...inputStyle, padding: '4px 6px', fontSize: 12 }}
+                        style={{ ...tableInput, fontSize: 11 }}
                         value={r.defectClass}
                         onChange={(e) => update(a.id, { defectClass: e.target.value })}
                         disabled={r.result !== 'fail'}
@@ -152,10 +143,10 @@ export default function PerformInspection({ inspection, assets, onCancel, onSave
                     </td>
                     <td style={{ ...td, minWidth: 220 }}>
                       <input
-                        style={{ ...inputStyle, padding: '4px 6px', fontSize: 12 }}
+                        style={tableInput}
                         value={r.notes}
                         onChange={(e) => update(a.id, { notes: e.target.value })}
-                        placeholder={r.result === 'fail' ? 'Defect description (required)' : 'Optional'}
+                        placeholder={r.result === 'fail' ? 'required: describe defect' : 'optional'}
                       />
                     </td>
                   </tr>
@@ -164,17 +155,19 @@ export default function PerformInspection({ inspection, assets, onCancel, onSave
             </tbody>
           </table>
         </div>
-      </Card>
+      </PaperCard>
 
       {error && (
-        <div style={{ color: 'var(--color-danger-500, #dc2626)', fontSize: 12 }}>{error}</div>
+        <div style={errBanner}>
+          {error}
+        </div>
       )}
 
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-        <Button variant="ghost" type="button" onClick={onCancel}>Cancel</Button>
-        <Button type="button" onClick={submit} disabled={saving} loading={saving}>
-          <Save size={12} /> Complete inspection
-        </Button>
+        <button type="button" onClick={onCancel} style={ghostBtn}>cancel</button>
+        <button type="button" onClick={submit} disabled={saving} style={{ ...inkBtn, opacity: saving ? 0.6 : 1 }}>
+          <Save size={11} /> {saving ? 'committing…' : 'complete inspection'}
+        </button>
       </div>
     </div>
   );
@@ -189,16 +182,19 @@ function ResultButton({ current, value, onClick, icon: Icon, label, colour }) {
       aria-pressed={active}
       title={label}
       style={{
-        padding: '4px 6px',
-        border: '1px solid ' + (active ? colour : 'var(--geist-border)'),
-        background: active ? colour : 'var(--geist-bg)',
-        color: active ? 'var(--geist-bg)' : 'var(--geist-fg-3)',
-        borderRadius: 4,
+        padding: '5px 7px',
+        border: `1px solid ${active ? colour : 'var(--rule-strong)'}`,
+        background: active ? colour : 'var(--paper-1)',
+        color: active ? 'var(--paper-1)' : 'var(--ink-3)',
         cursor: 'pointer',
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 3,
-        fontSize: 11,
+        gap: 4,
+        fontFamily: 'var(--font-mono)',
+        fontSize: 10,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        fontWeight: 600,
       }}
     >
       <Icon size={11} /> {label}
@@ -208,23 +204,93 @@ function ResultButton({ current, value, onClick, icon: Icon, label, colour }) {
 
 function Tally({ label, value, colour }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: colour }} />
-      <span style={{ color: 'var(--geist-fg-3)' }}>{label}</span>
-      <strong style={{ color: 'var(--geist-fg)' }}>{value}</strong>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+      <span style={{ width: 8, height: 8, background: colour, border: '1px solid var(--ink)' }} />
+      <span style={{ color: 'var(--ink-3)', letterSpacing: 'var(--tracking-label)', textTransform: 'uppercase' }}>{label}</span>
+      <strong style={{ color: 'var(--ink)' }}>{value}</strong>
     </span>
   );
 }
 
-const inputStyle = {
-  padding: '8px 10px',
-  border: '1px solid var(--geist-border-strong)',
-  borderRadius: 4,
-  background: 'var(--geist-bg)',
-  color: 'var(--geist-fg)',
-  fontSize: 13,
-  width: '100%',
-  boxSizing: 'border-box',
+const crumbBtn = {
+  background: 'transparent',
+  border: 'none',
+  color: 'var(--ink-3)',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  padding: 0,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 5,
+  textAlign: 'left',
 };
-const th = { padding: '6px 10px', fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 };
-const td = { padding: '8px 10px', verticalAlign: 'middle' };
+const th = {
+  textAlign: 'left',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-3)',
+  fontWeight: 600,
+  padding: '10px 14px',
+  borderBottom: '1.5px solid var(--rule-ink)',
+  background: 'var(--paper-2)',
+};
+const td = { padding: '10px 14px', verticalAlign: 'middle' };
+const tdMono = { ...td, fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.04em', color: 'var(--ink-2)' };
+const tableInput = {
+  width: '100%',
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  padding: '6px 8px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 12,
+  color: 'var(--ink)',
+};
+const modalInput = {
+  width: '100%',
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  padding: '10px 12px',
+  fontFamily: 'var(--font-sans)',
+  fontSize: 14,
+  color: 'var(--ink)',
+};
+const errBanner = {
+  padding: '10px 14px',
+  border: '1.5px solid var(--accent)',
+  color: 'var(--accent)',
+  backgroundImage: 'repeating-linear-gradient(45deg, rgba(200, 16, 46, 0.08) 0 8px, transparent 8px 16px)',
+  backgroundColor: 'var(--paper-1)',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 12,
+  letterSpacing: '0.04em',
+};
+const inkBtn = {
+  background: 'var(--ink)',
+  color: 'var(--paper-1)',
+  border: '1px solid var(--ink)',
+  padding: '8px 14px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+};
+const ghostBtn = {
+  background: 'transparent',
+  color: 'var(--ink-2)',
+  border: '1px solid var(--rule-strong)',
+  padding: '8px 14px',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 11,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  cursor: 'pointer',
+};

@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Mail, Lock, User, Building2, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import XactLogo from '../components/common/XactLogo';
-import Button from '../components/common/Button';
+import { Mail, Lock, User, Building2, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import AuthSheet from './_AuthSheet';
 
 export default function Register() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ name: '', company: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -16,122 +17,161 @@ export default function Register() {
     setTimeout(() => {
       setLoading(false);
       navigate('/');
-    }, 800);
+    }, 600);
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-      padding: 24,
-    }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{
-          width: '100%',
-          maxWidth: 480,
-          backgroundColor: 'var(--bg-primary)',
-          borderRadius: 'var(--radius-2xl)',
-          padding: '40px 40px',
-          boxShadow: 'var(--shadow-xl)',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <XactLogo size="lg" />
-          </div>
-          <h2 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
-            Create your account
-          </h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-            Start estimating smarter with Xact
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <InputField icon={User} label="First Name" placeholder="First name" />
-            <InputField icon={User} label="Last Name" placeholder="Last name" />
-          </div>
-          <InputField icon={Building2} label="Company" placeholder="Company name" />
-          <InputField icon={Mail} label="Email" type="email" placeholder="your@email.com" />
-          <div style={{ position: 'relative' }}>
-            <InputField
-              icon={Lock}
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Create a strong password"
-            />
+    <AuthSheet
+      stamp="auth · 02"
+      headline="Open"
+      headlineEm="an account."
+      crumb="New drafter, new sheet set"
+    >
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <Field label="Name" icon={User}>
+          <input
+            type="text"
+            value={form.name}
+            onChange={(e) => set({ name: e.target.value })}
+            placeholder="Kaspar Tavitian"
+            style={inputStyle}
+            required
+            autoFocus
+          />
+        </Field>
+        <Field label="Company / trading name" icon={Building2}>
+          <input
+            type="text"
+            value={form.company}
+            onChange={(e) => set({ company: e.target.value })}
+            placeholder="e.g. Smith Passive Fire Pty Ltd"
+            style={inputStyle}
+            required
+          />
+        </Field>
+        <Field label="Email" icon={Mail}>
+          <input
+            type="email"
+            value={form.email}
+            onChange={(e) => set({ email: e.target.value })}
+            placeholder="you@firm.com.au"
+            style={inputStyle}
+            required
+          />
+        </Field>
+        <Field
+          label="Password"
+          icon={Lock}
+          accessory={
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: 8,
-                bottom: 12,
-                padding: 4,
-                color: 'var(--text-tertiary)',
-                display: 'flex',
-              }}
+              style={{ background: 'transparent', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', padding: 4 }}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
-          </div>
+          }
+        >
+          <input
+            type={showPassword ? 'text' : 'password'}
+            value={form.password}
+            onChange={(e) => set({ password: e.target.value })}
+            placeholder="minimum 12 characters"
+            style={inputStyle}
+            required
+            minLength={12}
+          />
+        </Field>
 
-          <div style={{ marginTop: 4, marginBottom: 24 }}>
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
-              <input type="checkbox" style={{ marginTop: 3 }} />
-              <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                I agree to the Terms of Service and Privacy Policy
-              </span>
-            </label>
-          </div>
-
-          <Button type="submit" fullWidth loading={loading} iconRight={ArrowRight} size="lg">
-            Create Account
-          </Button>
-        </form>
-
-        <p style={{ textAlign: 'center', marginTop: 24, fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-          Already have an account?{' '}
-          <Link to="/login" style={{ color: 'var(--color-fire-500)', fontWeight: 600 }}>
-            Sign in
-          </Link>
+        <p style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          letterSpacing: '0.06em',
+          color: 'var(--ink-4)',
+          marginTop: 4,
+          lineHeight: 1.5,
+        }}>
+          By opening an account you agree to draft AU-jurisdiction passive-fire work to AS 4072.1, AS 1530.4, AS 1851 and the NCC, and to retain every cert pack on file.
         </p>
-      </motion.div>
-    </div>
+
+        <button type="submit" disabled={loading} style={{ ...primaryAction, opacity: loading ? 0.7 : 1 }}>
+          {loading ? 'opening…' : 'open account'} <ArrowRight size={14} />
+        </button>
+
+        <p style={{
+          textAlign: 'center',
+          marginTop: 4,
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          letterSpacing: 'var(--tracking-label)',
+          textTransform: 'uppercase',
+          color: 'var(--ink-4)',
+        }}>
+          existing account? <Link to="/login" style={{ color: 'var(--accent)', textDecoration: 'none' }}>sign on</Link>
+        </p>
+      </form>
+    </AuthSheet>
   );
 }
 
-function InputField({ icon: Icon, label, type = 'text', placeholder }) {
+function Field({ label, icon: Icon, accessory, children }) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
-        {label}
-      </label>
-      <div style={{ position: 'relative' }}>
-        <Icon size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
-        <input
-          type={type}
-          placeholder={placeholder}
-          style={{
-            width: '100%',
-            height: 42,
-            paddingLeft: 40,
-            paddingRight: 12,
-            backgroundColor: 'var(--bg-input)',
-            border: '1px solid var(--border-primary)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--text-primary)',
-            fontSize: '0.875rem',
-            outline: 'none',
-          }}
-        />
-      </div>
-    </div>
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <span style={fieldLabel}>{label}</span>
+      <span style={{ position: 'relative', display: 'block' }}>
+        {Icon && (
+          <Icon
+            size={14}
+            color="var(--ink-3)"
+            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+          />
+        )}
+        {children}
+        {accessory && (
+          <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)' }}>
+            {accessory}
+          </span>
+        )}
+      </span>
+    </label>
   );
 }
+
+const fieldLabel = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  color: 'var(--ink-3)',
+  fontWeight: 500,
+};
+const inputStyle = {
+  width: '100%',
+  height: 42,
+  padding: '0 12px 0 36px',
+  background: 'var(--paper-1)',
+  border: '1px solid var(--rule-strong)',
+  fontFamily: 'var(--font-sans)',
+  fontSize: 14,
+  color: 'var(--ink)',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+const primaryAction = {
+  width: '100%',
+  height: 44,
+  background: 'var(--ink)',
+  color: 'var(--paper-1)',
+  border: '1px solid var(--ink)',
+  fontFamily: 'var(--font-mono)',
+  fontSize: 12,
+  letterSpacing: 'var(--tracking-label)',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+};

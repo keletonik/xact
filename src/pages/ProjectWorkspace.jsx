@@ -198,13 +198,30 @@ export default function ProjectWorkspace() {
       }} />}
 
       {tab === TAB_ASSETS && (
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <strong>Asset register</strong>
-            <Button size="sm" onClick={() => setEditingAsset('new')}>
-              <Plus size={14} /> Add asset
-            </Button>
-          </div>
+        <PaperCard
+          title="asset register"
+          meta={
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+              {projectAssets.length} drafted
+              <button type="button" onClick={() => setEditingAsset('new')} style={{
+                background: 'var(--ink)',
+                color: 'var(--paper-1)',
+                border: '1px solid var(--ink)',
+                padding: '6px 10px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                letterSpacing: 'var(--tracking-label)',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+              }}>
+                <Plus size={11} /> add
+              </button>
+            </span>
+          }
+        >
           <AssetTable
             assets={projectAssets}
             onEdit={(asset) => setEditingAsset(asset)}
@@ -213,16 +230,30 @@ export default function ProjectWorkspace() {
               await deleteAsset(asset.id);
             }}
           />
-        </Card>
+        </PaperCard>
       )}
 
       {tab === TAB_PLANS && (
-        <Card>
-          <strong>Plans</strong>
-          <p style={{ fontSize: 13, color: 'var(--geist-fg-3)', marginTop: 8 }}>
-            Drawing upload, scale calibration, and the asset-pin overlay live in the global <Button size="sm" variant="ghost" onClick={() => navigate('/markup')}>Markup tool</Button> for phase 3a. The project-scoped plans tab with pin-drop-to-create-asset arrives in phase 3b.
+        <PaperCard title="plans" meta="drawing register">
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>
+            Drawing upload, scale calibration, and the asset-pin overlay live in the global Markup tool. Open a plan, calibrate, then enable Pin asset mode to drop pins directly onto drawings.
           </p>
-        </Card>
+          <div style={{ marginTop: 12 }}>
+            <button type="button" onClick={() => navigate('/markup')} style={{
+              background: 'var(--ink)',
+              color: 'var(--paper-1)',
+              border: '1px solid var(--ink)',
+              padding: '8px 14px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              letterSpacing: 'var(--tracking-label)',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+            }}>
+              open markup
+            </button>
+          </div>
+        </PaperCard>
       )}
 
       {tab === TAB_PHOTOS && (
@@ -245,26 +276,25 @@ export default function ProjectWorkspace() {
             }}
           />
         ) : (
-          <Card>
+          <PaperCard title="inspections" meta="as 1851 § 16 · 17 · 18">
             <InspectionList
               inspections={projectInspections}
               results={resultsByInspection}
               onSchedule={(input) => scheduleInspection({ ...input, projectId: id })}
               onPerform={(i) => {
                 if (projectAssets.length === 0) {
-                  alert('Add assets first; inspections walk the asset register.');
+                  alert('add assets first; inspections walk the asset register.');
                   return;
                 }
                 setWalkingInspection(i);
               }}
               onCancel={cancelInspection}
             />
-          </Card>
+          </PaperCard>
         )
       )}
       {tab === TAB_DEFECTS && (
-        <Card>
-          <strong style={{ display: 'block', marginBottom: 10 }}>Defect register</strong>
+        <PaperCard title="defect register" meta="class A · B · C">
           <DefectTable
             defects={projectDefects}
             assetsById={assetsById}
@@ -272,7 +302,7 @@ export default function ProjectWorkspace() {
             onVerify={(defectId) => verifyDefect(defectId, {})}
             onDelete={deleteDefect}
           />
-        </Card>
+        </PaperCard>
       )}
       {tab === TAB_QUOTE && (
         openQuoteId ? (
@@ -291,13 +321,13 @@ export default function ProjectWorkspace() {
                 onConvert={async () => {
                   const created = await convertQuoteToAssets(q.id);
                   const n = Object.values(created).flat().length;
-                  alert(`${n} planned assets created. Head to Assets tab to walk them through install.`);
+                  alert(`${n} planned assets created. head to assets tab to walk them through install.`);
                 }}
               />
             );
           })()
         ) : (
-          <Card>
+          <PaperCard title="quote register" meta="version per project">
             <QuoteList
               quotes={quotes.filter((q) => q.projectId === id)}
               onOpen={(q) => setOpenQuoteId(q.id)}
@@ -306,7 +336,7 @@ export default function ProjectWorkspace() {
                 setOpenQuoteId(q.id);
               }}
             />
-          </Card>
+          </PaperCard>
         )
       )}
       {tab === TAB_WORK && (
@@ -574,20 +604,18 @@ function PhotosTab({ assets, photos, selectedAssetId, onSelectAsset }) {
 
   if (assets.length === 0) {
     return (
-      <Card>
-        <strong>Photos</strong>
-        <p style={{ fontSize: 13, color: 'var(--geist-fg-3)', marginTop: 8 }}>
+      <PaperCard title="photos" meta="evidence per asset per stage">
+        <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>
           Add an asset first; photos attach to assets.
         </p>
-      </Card>
+      </PaperCard>
     );
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 12 }}>
-      <Card>
-        <strong style={{ fontSize: 12, color: 'var(--geist-fg-3)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Assets</strong>
-        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 14 }}>
+      <PaperCard title="asset register" noPad>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {assets.map((a) => {
             const active = (selected && selected.id === a.id);
             return (
@@ -597,23 +625,34 @@ function PhotosTab({ assets, photos, selectedAssetId, onSelectAsset }) {
                 onClick={() => onSelectAsset(a.id)}
                 style={{
                   textAlign: 'left',
-                  padding: '6px 8px',
-                  borderRadius: 4,
-                  border: '1px solid ' + (active ? 'var(--geist-fg)' : 'transparent'),
-                  background: active ? 'var(--geist-bg-2)' : 'transparent',
+                  padding: '10px 14px',
+                  border: 'none',
+                  borderBottom: '1px solid var(--rule)',
+                  borderLeft: '3px solid ' + (active ? 'var(--accent)' : 'transparent'),
+                  background: active ? 'var(--paper-2)' : 'var(--paper-1)',
                   cursor: 'pointer',
-                  fontSize: 12,
                   display: 'flex',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 12,
+                  color: 'var(--ink)',
+                  letterSpacing: '0.04em',
                 }}
               >
                 <code>{a.tag}</code>
-                <span style={{ color: 'var(--geist-fg-4)' }}>{counts[a.id] || 0}</span>
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  color: counts[a.id] ? 'var(--ink-2)' : 'var(--ink-4)',
+                }}>
+                  {String(counts[a.id] || 0).padStart(2, '0')}
+                </span>
               </button>
             );
           })}
         </div>
-      </Card>
+      </PaperCard>
       {selected && <PhotoCapture asset={selected} />}
     </div>
   );
