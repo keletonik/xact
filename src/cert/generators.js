@@ -45,6 +45,25 @@ export async function generateCertPack({
 
   let y = MARGIN_PT + 80;
 
+  // Prominent disclaimer banner (e.g. AFSS evidence pack must clearly
+  // state it is evidence-support only and not a certification).
+  if (config.disclaimer) {
+    const innerW = 595.28 - 2 * MARGIN_PT;
+    const padX = 10;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    const disclaimerLines = doc.splitTextToSize(config.disclaimer, innerW - 2 * padX);
+    const boxH = disclaimerLines.length * 11 + 16;
+    doc.setFillColor(255, 244, 244);
+    doc.setDrawColor(200, 16, 46);
+    doc.setLineWidth(1.5);
+    doc.rect(MARGIN_PT, y, innerW, boxH, 'FD');
+    doc.setTextColor(160, 12, 36);
+    doc.text(disclaimerLines, MARGIN_PT + padX, y + 13);
+    y += boxH + 14;
+    doc.setLineWidth(1);
+  }
+
   // Statement block
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -177,6 +196,16 @@ const CONFIGS = {
     assetFilter: (a) => [ASSET_STATUSES.INSTALLED, ASSET_STATUSES.CERTIFIED].includes(a.status),
     includePhotos: true,
     includeInspections: false,
+    includeDefects: true,
+  },
+
+  [CERT_PACK_TYPES.AFSS_EVIDENCE]: {
+    title: 'AFSS evidence support pack',
+    // Rendered prominently in a boxed banner ahead of the statement.
+    disclaimer: 'EVIDENCE SUPPORT PACK ONLY. This pack is NOT a fire safety statement and does NOT certify compliance. The final assessment of each essential fire safety measure, and any annual fire safety statement, must be completed by an appropriately authorised / accredited practitioner (fire safety) as required under the NSW Environmental Planning and Assessment regulation. This document collates evidence to support that human assessment.',
+    statement: 'This pack collates the passive-fire evidence held for the property to support the accredited practitioner preparing the annual fire safety statement: the asset register, tested-system references, photographic evidence, inspection outcomes and outstanding defects. Essential fire safety measure mapping is included only where supplied by the user. Items not inspected or not accessible are recorded as limitations rather than assessed.',
+    includePhotos: true,
+    includeInspections: true,
     includeDefects: true,
   },
 };
