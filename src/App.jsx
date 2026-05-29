@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import TitleBlock from './components/draft/TitleBlock';
@@ -56,7 +56,6 @@ function findRouteMeta(pathname) {
 export default function App() {
   const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage('xact-sidebar-collapsed', false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const projects = useProjectStore((s) => s.projects);
 
   const isAuthPage = authRoutes.includes(location.pathname);

@@ -7,7 +7,7 @@ import { MANUFACTURERS } from '../utils/constants';
  * Vendor CRUD. Seeded on first run with the canonical AU passive-fire
  * manufacturers so the team has a starting roster to extend.
  */
-const useVendorStore = create((set, get) => ({
+const useVendorStore = create((set) => ({
   vendors: [],
   ready: false,
 

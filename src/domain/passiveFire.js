@@ -1,6 +1,16 @@
 import {
   ASSET_TYPES, SUBSTRATES, SERVICE_TYPES, TEST_STANDARDS, MANUFACTURERS,
+  ASSET_STATUSES, PHOTO_STAGES,
 } from '../utils/constants';
+
+/**
+ * Evidence gate: an asset cannot be marked CERTIFIED without at least one
+ * post-install photo. Returns true if the gate is satisfied.
+ */
+export function canCertify(asset, photos) {
+  if (!asset || asset.status !== ASSET_STATUSES.INSTALLED) return false;
+  return (photos || []).some((p) => p.assetId === asset.id && p.stage === PHOTO_STAGES.POST_INSTALL);
+}
 
 /**
  * Passive-fire domain primitives.
@@ -98,4 +108,4 @@ export function assetTypeAllowedOn(assetType, substrate) {
   return true;
 }
 
-export { ASSET_TYPES, SUBSTRATES, SERVICE_TYPES, TEST_STANDARDS, MANUFACTURERS };
+export { ASSET_TYPES, SUBSTRATES, SERVICE_TYPES, TEST_STANDARDS, MANUFACTURERS, ASSET_STATUSES, PHOTO_STAGES };

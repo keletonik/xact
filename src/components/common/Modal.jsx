@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useId, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -64,7 +64,7 @@ export default function Modal({
 }) {
   const dialogRef = useRef(null);
   const triggerRef = useRef(null);
-  const titleId = useRef(`modal-title-${Math.random().toString(36).slice(2, 9)}`).current;
+  const titleId = `modal-title-${useId()}`;
 
   // Capture the trigger element so focus can return on close.
   useEffect(() => {

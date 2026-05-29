@@ -227,7 +227,7 @@ export default function MarkupCanvas({
       const out = tool.commit?.();
       if (out && onCommitObject) onCommitObject(out);
     }
-  }, [calibrationMode, calibState, getStagePoint, onCalibrated, onCommitObject, onSelectionChange, page, selectedIds, stagePos, tool, toolCtx]);
+  }, [assetPinMode, onCreateAssetAt, calibrationMode, calibState, getStagePoint, onCalibrated, onCommitObject, onSelectionChange, page, selectedIds, stagePos, tool, toolCtx]);
 
   const handlePointerMove = useCallback((e) => {
     if (isPanning && panOrigin.current) {

@@ -4,13 +4,14 @@ import Modal from '../common/Modal';
 import Button from '../common/Button';
 import FormField from '../common/FormField';
 import useSystemLibraryStore from '../../stores/useSystemLibraryStore';
+import usePhotoStore from '../../stores/usePhotoStore';
 import {
   ASSET_TYPES, ASSET_TYPE_LABELS,
   ASSET_STATUSES, ASSET_STATUS_LABELS,
   SUBSTRATES, SUBSTRATE_LABELS,
   SERVICE_TYPES, SERVICE_TYPE_LABELS,
 } from '../../utils/constants';
-import { searchSystems, assetTypeAllowedOn, frlMeets } from '../../domain/passiveFire';
+import { searchSystems, assetTypeAllowedOn, frlMeets, canCertify } from '../../domain/passiveFire';
 import { validFrl } from '../../utils/validators';
 
 /**
@@ -28,6 +29,7 @@ export default function AssetEditor({
   onSave,
 }) {
   const systems = useSystemLibraryStore((s) => s.systems);
+  const photos = usePhotoStore((s) => s.photos);
 
   const [common, setCommon] = useState(() => initial ? {
     assetType: initial.assetType,
@@ -121,6 +123,13 @@ export default function AssetEditor({
     }
     if (common.requiredFrl && common.achievedFrl && !frlMeets(common.requiredFrl, common.achievedFrl)) {
       return setError(`Achieved FRL ${common.achievedFrl} does not meet required ${common.requiredFrl}`);
+    }
+    // Evidence gate: an asset can only be moved to Certified once it is
+    // Installed and has at least one post-install photo on file.
+    const certifying = common.status === ASSET_STATUSES.CERTIFIED
+      && initial?.status !== ASSET_STATUSES.CERTIFIED;
+    if (certifying && !canCertify(initial, photos)) {
+      return setError('Cannot certify: the asset must be Installed and have at least one post-install photo as evidence before it can be marked Certified.');
     }
 
     const assetPatch = {
