@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  parseFrl, formatFrl, frlMeets, searchSystems, assetTypeAllowedOn,
-  ASSET_TYPES, SUBSTRATES, SERVICE_TYPES,
+  parseFrl, formatFrl, frlMeets, searchSystems, assetTypeAllowedOn, canCertify,
+  ASSET_TYPES, SUBSTRATES, SERVICE_TYPES, ASSET_STATUSES, PHOTO_STAGES,
 } from './passiveFire';
 
 describe('parseFrl', () => {
@@ -126,5 +126,28 @@ describe('assetTypeAllowedOn', () => {
     for (const sub of Object.values(SUBSTRATES)) {
       expect(assetTypeAllowedOn(ASSET_TYPES.PENETRATION, sub)).toBe(true);
     }
+  });
+});
+
+describe('canCertify (evidence gate)', () => {
+  const asset = { id: 'a1', status: ASSET_STATUSES.INSTALLED };
+  const postInstall = { assetId: 'a1', stage: PHOTO_STAGES.POST_INSTALL };
+  const preInstall = { assetId: 'a1', stage: PHOTO_STAGES.PRE_INSTALL };
+
+  it('allows an installed asset with a post-install photo', () => {
+    expect(canCertify(asset, [postInstall])).toBe(true);
+  });
+  it('blocks an installed asset with no post-install photo', () => {
+    expect(canCertify(asset, [preInstall])).toBe(false);
+  });
+  it('blocks when the post-install photo belongs to another asset', () => {
+    expect(canCertify(asset, [{ assetId: 'other', stage: PHOTO_STAGES.POST_INSTALL }])).toBe(false);
+  });
+  it('blocks an asset that is not yet installed', () => {
+    expect(canCertify({ id: 'a1', status: ASSET_STATUSES.PLANNED }, [postInstall])).toBe(false);
+  });
+  it('is null-safe for a missing asset or photo list', () => {
+    expect(canCertify(null, [postInstall])).toBe(false);
+    expect(canCertify(asset, null)).toBe(false);
   });
 });

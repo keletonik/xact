@@ -95,7 +95,7 @@ export function renderPdfPage({ doc, pageNumber, canvas, scale = 1.5 }) {
     cancel() {
       cancelled = true;
       if (renderTask) {
-        try { renderTask.cancel(); } catch (e) { /* idempotent */ }
+        try { renderTask.cancel(); } catch { /* idempotent */ }
       }
     },
   };

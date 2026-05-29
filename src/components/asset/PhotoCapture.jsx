@@ -5,7 +5,7 @@ import CalloutBalloon from '../draft/CalloutBalloon';
 import InkStamp from '../draft/InkStamp';
 import usePhotoStore, { resolveObjectURL } from '../../stores/usePhotoStore';
 import {
-  PHOTO_STAGES, PHOTO_STAGE_LABELS, ASSET_STATUSES,
+  PHOTO_STAGES, PHOTO_STAGE_LABELS,
 } from '../../utils/constants';
 import { formatDateTime } from '../../utils/formatters';
 
@@ -311,12 +311,3 @@ const tileDelete = {
   padding: 3,
   cursor: 'pointer',
 };
-
-/**
- * Gate: an asset cannot be marked CERTIFIED without at least one
- * post-install photo. Returns true if the gate is satisfied.
- */
-export function canCertify(asset, photos) {
-  if (asset.status !== ASSET_STATUSES.INSTALLED) return false;
-  return photos.some((p) => p.assetId === asset.id && p.stage === PHOTO_STAGES.POST_INSTALL);
-}

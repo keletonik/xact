@@ -180,6 +180,7 @@ export const CERT_PACK_TYPES = {
   AS_1851_BASELINE:     'as_1851_baseline',
   AS_1851_ANNUAL:       'as_1851_annual',
   INSTALL_CERTIFICATION:'install_certification',
+  AFSS_EVIDENCE:        'afss_evidence',
 };
 
 export const CERT_PACK_TYPE_LABELS = {
@@ -188,6 +189,7 @@ export const CERT_PACK_TYPE_LABELS = {
   [CERT_PACK_TYPES.AS_1851_BASELINE]:     'AS 1851 baseline survey',
   [CERT_PACK_TYPES.AS_1851_ANNUAL]:       'AS 1851 annual inspection',
   [CERT_PACK_TYPES.INSTALL_CERTIFICATION]:'Install certification pack',
+  [CERT_PACK_TYPES.AFSS_EVIDENCE]:        'AFSS evidence support pack',
 };
 
 export const MANUFACTURERS = {

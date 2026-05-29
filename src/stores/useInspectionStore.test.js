@@ -101,7 +101,7 @@ describe('useInspectionStore', () => {
 
 describe('useDefectStore', () => {
   it('verify moves the asset back to INSTALLED when no other defects remain open', async () => {
-    const { project, a1 } = await seed();
+    const { a1 } = await seed();
     const d = await useDefectStore.getState().raiseDefect({
       assetId: a1.id, severity: 'B', description: 'manual raise',
     });
@@ -115,7 +115,7 @@ describe('useDefectStore', () => {
   });
 
   it('verify leaves NONCONFORMANCE in place while other defects remain open on the same asset', async () => {
-    const { project, a1 } = await seed();
+    const { a1 } = await seed();
     const d1 = await useDefectStore.getState().raiseDefect({ assetId: a1.id, severity: 'B', description: 'one' });
     const d2 = await useDefectStore.getState().raiseDefect({ assetId: a1.id, severity: 'C', description: 'two' });
     await db.assets.put({ ...(await db.assets.get(a1.id)), status: ASSET_STATUSES.NONCONFORMANCE });
