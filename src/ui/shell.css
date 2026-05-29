@@ -85,11 +85,12 @@
 }
 .xc-title-logo .xc-mark {
   font-family: var(--font-display);
-  font-style: italic;
-  font-size: 30px;
+  font-weight: 900;
+  font-size: 26px;
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.06em;
   color: var(--paper-1);
+  text-transform: lowercase;
 }
 .xc-title-logo .xc-mark::after {
   content: "";
@@ -144,9 +145,9 @@
 }
 .xc-meta-cell .xc-value-em {
   font-family: var(--font-display);
-  font-style: italic;
-  font-size: 17px;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.025em;
   color: var(--paper-1);
 }
 
@@ -180,11 +181,11 @@
 }
 .xc-sub-em {
   font-family: var(--font-display);
-  font-style: italic;
-  font-size: 18px;
+  font-weight: 700;
+  font-size: 15px;
   line-height: 1;
   color: var(--ink);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.025em;
   white-space: nowrap;
 }
 .xc-sub-divider {
@@ -362,9 +363,9 @@
   background: var(--ink);
   color: var(--paper-1);
   font-family: var(--font-display);
-  font-style: italic;
-  font-size: 16px;
-  letter-spacing: -0.04em;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: -0.06em;
   position: relative;
   overflow: visible;
   flex-shrink: 0;

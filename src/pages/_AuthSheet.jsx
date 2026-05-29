@@ -45,10 +45,10 @@ export default function AuthSheet({ stamp, headline, headlineEm, crumb, children
         }}>
           <span style={{
             fontFamily: 'var(--font-display)',
-            fontStyle: 'italic',
-            fontSize: 22,
+            fontWeight: 900,
+            fontSize: 20,
             lineHeight: 1,
-            letterSpacing: '-0.04em',
+            letterSpacing: '-0.06em',
             color: 'var(--paper-1)',
           }}>
             xact

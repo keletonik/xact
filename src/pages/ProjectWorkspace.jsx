@@ -477,10 +477,12 @@ function OverviewCell({ label, value, accent }) {
       }}>{label}</span>
       <span style={{
         fontFamily: 'var(--font-display)',
-        fontStyle: 'italic',
-        fontSize: 34,
+        fontWeight: 800,
+        fontSize: 32,
         lineHeight: 1,
+        letterSpacing: '-0.04em',
         color: fg,
+        fontVariantNumeric: 'tabular-nums',
       }}>
         {value}
       </span>

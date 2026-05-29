@@ -4,8 +4,8 @@
    Aesthetic: a passive-fire app drafted like an AS 1100
    construction sheet. Cream drafting paper with a hairline
    blueprint grid undertone. Title-block chrome. AS-1742
-   safety red as the single sharp accent. Newsreader Italic for
-   display moments, Geist for body, Geist Mono for technical
+   safety red as the single sharp accent. Geist for display + body,
+   Geist Mono for technical
    readouts.
 
    Variable names retain the legacy --geist-* prefix because
@@ -93,8 +93,14 @@
   --geist-info:         var(--status-installed-ink);
   --geist-info-soft:    var(--status-installed-bg);
 
-  /* ---------- Typography ---------- */
-  --font-display:       "Newsreader", "Lyon", Georgia, serif;
+  /* ---------- Typography ----------
+     Single family, three weights of work. Geist (Vercel, free,
+     released 2024) is the contemporary technical-UI sans of record.
+     Display moments take Bold/Black at tight tracking, body takes
+     Regular/Medium, technical readouts take Geist Mono. No serif,
+     no italic, no decorative drift.
+   ---------------------------------------------------------------- */
+  --font-display:       "Geist", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-sans:          "Geist", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono:          "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 
@@ -298,23 +304,25 @@ body::before {
 
 #root { position: relative; z-index: 1; }
 
-/* Headings: Newsreader for the editorial-italic display moments,
-   Geist semibold otherwise. */
+/* Headings: Geist Bold/Black at tight tracking. No italic, no serif. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans);
-  letter-spacing: var(--geist-tracking-tighter);
-  font-weight: var(--geist-weight-semibold);
+  letter-spacing: -0.025em;
+  font-weight: 700;
   color: var(--ink);
-  line-height: var(--geist-leading-tight);
-}
-
-.xc-display, .xc-display-italic {
-  font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: -0.01em;
   line-height: 1.05;
 }
-.xc-display-italic { font-style: italic; }
+
+/* Display moments (page heroes, big stats). Bold Geist at confident
+   sizes with very tight tracking, mixed case. Cutting-edge in 2026
+   reads as a single confident sans, not a decorative italic. */
+.xc-display, .xc-display-italic {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  font-style: normal;
+}
 
 /* Drafting-stamp text: monospace caps with generous tracking,
    used for title-block labels, sheet metadata, and revision tags. */

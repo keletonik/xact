@@ -336,10 +336,12 @@ function KpiCell({ label, value, icon: Icon, accent = 'ink', onClick }) {
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
         <span style={{
           fontFamily: 'var(--font-display)',
-          fontStyle: 'italic',
-          fontSize: 38,
+          fontWeight: 800,
+          fontSize: 36,
           lineHeight: 1,
+          letterSpacing: '-0.04em',
           color: tone.fg,
+          fontVariantNumeric: 'tabular-nums',
         }}>
           {value}
         </span>
